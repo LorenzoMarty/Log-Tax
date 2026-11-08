@@ -1,7 +1,7 @@
 ---
 slug: log-tax-v1
 status: ready
-revision_count: 1
+revision_count: 2
 created: 2026-11-08
 issue: —
 ---
@@ -15,8 +15,8 @@ Demo pt-BR em que dono de empresa/pessoa física (e seu contador) conversa com u
 ## Requisitos
 
 - [x] REQ-1: Projeto Next.js+TS estrito sobe, `npm run lint`, `typecheck`, `test` verdes e pre-commit instalado — verificado por `npm run check`
-- [ ] REQ-2: `TaxEngine` (interface) com implementação mock determinística: diagnóstico, simulação, oportunidades; regras versionadas com id, jurisdição, fonte, vigência, confiança, `requiresValidation` — verificado por testes Vitest do motor (empresa seed ≈ R$ 42,8 mil/mês, 12,4%)
-- [ ] REQ-3: Sem dado suficiente o motor retorna `insufficient_data`/`not_applicable`/`none_found`, nunca valor inventado — verificado por testes
+- [x] REQ-2: `TaxEngine` (interface) com implementação mock determinística: diagnóstico, simulação, oportunidades; regras versionadas com id, jurisdição, fonte, vigência, confiança, `requiresValidation` — verificado por testes Vitest do motor (empresa seed = R$ 42,8 mil/mês, 12,2%)
+- [x] REQ-3: Sem dado suficiente o motor retorna `insufficient_data`/`not_applicable`/`none_found`, nunca valor inventado — verificado por testes
 - [ ] REQ-4: Dashboard = JSON de widgets (kpi, bar, line, breakdown, opportunities, deadlines, compare, checklist, text) com ordem/tamanho/tema/densidade, versionado com undo — verificado por testes do reducer + render dos widgets
 - [ ] REQ-5: Auth Supabase (magic link + Google) e RLS: usuário A não lê dados do B — verificado por teste de RLS com 2 usuários
 - [ ] REQ-6: Chat com Claude (Sonnet) + tool calling; 13 ferramentas escopadas por workspace/agente; destrutivas pedem confirmação — verificado por testes das ferramentas com LLM mockado
@@ -44,6 +44,7 @@ Demo pt-BR em que dono de empresa/pessoa física (e seu contador) conversa com u
 - Assumido: `ANTHROPIC_API_KEY` e projeto Supabase fornecidos por você via `.env.local`; até lá tudo roda com LLM mockado e Supabase local (CLI/Docker) — reversível, só config.
 - Assumido: repo `LorenzoMarty/Log-Tax` privado já existente; PRs com assignee `LorenzoMarty`, sem reviewer.
 - Assumido: spec versionada no repo.
+- Assumido: seed dá 12,2% (42,8/350), não 12,4% como no PRD, que é inconsistente (12,4% de 350k = 43,4k); mantive os valores em R$ e o 13,1% do cenário de R$ 500k.
 
 ## Fora de escopo
 
