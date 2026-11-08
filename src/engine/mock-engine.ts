@@ -9,7 +9,7 @@ import type {
   TaxLine,
 } from "./types";
 
-const DISCLAIMER = "Estimativa ilustrativa: valide com um contador antes de decidir.";
+export const DISCLAIMER = "Estimativa ilustrativa: valide com um contador antes de decidir.";
 const BASE_REVENUE = 350000;
 const SCENARIO_REVENUE = 500000;
 
