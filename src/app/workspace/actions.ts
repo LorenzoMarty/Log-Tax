@@ -1,0 +1,22 @@
+"use server";
+
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+
+export async function createDefaultWorkspaces() {
+  const supabase = await createClient();
+  const { count } = await supabase.from("workspaces").select("*", { count: "exact", head: true });
+  if (!count) {
+    await supabase.from("workspaces").insert([
+      { name: "Minha Empresa", kind: "empresa" },
+      { name: "Vida Pessoal", kind: "pessoal" },
+    ]);
+  }
+  redirect("/workspace");
+}
+
+export async function signOut() {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect("/login");
+}
