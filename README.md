@@ -10,3 +10,17 @@ npm run e2e      # Playwright
 ```
 
 Valores exibidos são estimativas ilustrativas; valide com um contador.
+
+## Banco e login (Supabase local)
+
+Requer Docker. Portas do projeto: 55321 (API), 55322 (Postgres), 55324 (Mailpit).
+
+```sh
+cp .env.example .env.local   # preencha as chaves com: npx supabase status -o env
+npm run db:start             # sobe o Supabase local e aplica as migrações
+npm run db:reset             # recria o banco do zero a partir das migrações
+npm run test:rls             # isolamento entre usuários (precisa do db:start)
+```
+
+Magic links chegam no Mailpit em http://127.0.0.1:55324. Login com Google exige
+`SUPABASE_AUTH_GOOGLE_CLIENT_ID` e `SUPABASE_AUTH_GOOGLE_SECRET` (não configurado por padrão).

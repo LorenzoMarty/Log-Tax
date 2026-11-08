@@ -10,9 +10,14 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "e2e": "playwright test",
-    "check": "npm run lint && npm run typecheck && npm test"
+    "check": "npm run lint && npm run typecheck && npm test",
+    "test:rls": "vitest run --config vitest.rls.config.mts",
+    "db:start": "supabase start -x imgproxy,edge-runtime,vector,logflare,studio",
+    "db:reset": "supabase db reset"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.119.0",
     "next": "15.5.4",
     "react": "19.1.0",
     "react-dom": "19.1.0"
@@ -31,6 +36,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
     "jsdom": "^31.0.0",
+    "supabase": "^3.0.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^5.1.0"
