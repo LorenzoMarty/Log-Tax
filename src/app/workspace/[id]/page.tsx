@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { alertStatuses } from "@/alerts/evaluate";
 import { ChatPanel } from "@/chat/chat-panel";
 import { loadWorkspaceState } from "@/chat/workspace-state";
+import { mockEngine } from "@/engine";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function WorkspaceChatPage({ params }: { params: Promise<{ id: string }> }) {
@@ -23,7 +25,7 @@ export default async function WorkspaceChatPage({ params }: { params: Promise<{ 
           Todos os espaços
         </Link>
       </header>
-      <ChatPanel workspaceId={id} initialMessages={state.messages} initialDashboard={state.dashboard} />
+      <ChatPanel workspaceId={id} initialMessages={state.messages} initialDashboard={state.dashboard} initialAlerts={alertStatuses(mockEngine, state.company, state.alerts)} />
     </main>
   );
 }

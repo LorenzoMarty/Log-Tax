@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Dashboard } from "@/dashboard/types";
+import { alertStatuses, type AlertStatus } from "@/alerts/evaluate";
 import { mockEngine } from "@/engine";
 import { createMemoryStore } from "./memory-store";
 import { runTurn, type PendingConfirmation } from "./orchestrator";
@@ -11,6 +12,7 @@ export interface ChatReply {
   events: { name: string; status: string }[];
   pendingConfirmations: PendingConfirmation[];
   dashboard: Dashboard;
+  alerts: AlertStatus[];
   messages: DisplayMessage[];
 }
 
@@ -49,6 +51,7 @@ export async function handleChat(
     events: result.events.map((e) => ({ name: e.name, status: e.outcome.status })),
     pendingConfirmations: result.pendingConfirmations,
     dashboard: store.getDashboard(),
+    alerts: alertStatuses(mockEngine, store.getCompany(), store.listAlerts()),
     messages,
   };
 }

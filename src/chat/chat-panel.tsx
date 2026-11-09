@@ -1,14 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { AlertBar } from "@/alerts/alert-bar";
+import type { AlertStatus } from "@/alerts/evaluate";
 import { DashboardView } from "@/dashboard/dashboard-view";
 import type { Dashboard } from "@/dashboard/types";
 import type { PendingConfirmation } from "./orchestrator";
 import type { DisplayMessage } from "./workspace-state";
 
-export function ChatPanel(props: { workspaceId: string; initialMessages: DisplayMessage[]; initialDashboard: Dashboard }) {
+export function ChatPanel(props: { workspaceId: string; initialMessages: DisplayMessage[]; initialDashboard: Dashboard; initialAlerts?: AlertStatus[] }) {
   const [messages, setMessages] = useState(props.initialMessages);
   const [dashboard, setDashboard] = useState(props.initialDashboard);
+  const [alerts, setAlerts] = useState(props.initialAlerts ?? []);
   const [pending, setPending] = useState<PendingConfirmation[]>([]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -29,6 +32,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
       if (!res.ok) throw new Error(data.error ?? "Algo deu errado.");
       setMessages((m) => [...m, { role: "assistant", text: data.text }]);
       setDashboard(data.dashboard);
+      setAlerts(data.alerts ?? []);
       setPending(data.pendingConfirmations ?? []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Algo deu errado.");
@@ -47,7 +51,10 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
-      <DashboardView dashboard={dashboard} />
+      <div className="space-y-3">
+        <AlertBar alerts={alerts} />
+        <DashboardView dashboard={dashboard} />
+      </div>
       <section aria-label="Conversa com a IA" className="flex flex-col gap-3 rounded-3xl border border-neutral-200 p-4">
         <div aria-live="polite" className="flex max-h-[28rem] flex-col gap-2 overflow-y-auto">
           {messages.length === 0 && <p className="text-sm text-neutral-500">O que você precisa resolver?</p>}
