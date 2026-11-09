@@ -1,17 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { AgentList } from "@/agents/agent-list";
 import { AlertBar } from "@/alerts/alert-bar";
 import type { AlertStatus } from "@/alerts/evaluate";
 import { DashboardView } from "@/dashboard/dashboard-view";
 import type { Dashboard } from "@/dashboard/types";
 import type { PendingConfirmation } from "./orchestrator";
+import type { Agent } from "./types";
 import type { DisplayMessage } from "./workspace-state";
 
-export function ChatPanel(props: { workspaceId: string; initialMessages: DisplayMessage[]; initialDashboard: Dashboard; initialAlerts?: AlertStatus[] }) {
+export function ChatPanel(props: { workspaceId: string; initialMessages: DisplayMessage[]; initialDashboard: Dashboard; initialAlerts?: AlertStatus[]; agentId?: string; initialAgents?: Agent[] }) {
   const [messages, setMessages] = useState(props.initialMessages);
   const [dashboard, setDashboard] = useState(props.initialDashboard);
   const [alerts, setAlerts] = useState(props.initialAlerts ?? []);
+  const [agents, setAgents] = useState(props.initialAgents ?? []);
   const [pending, setPending] = useState<PendingConfirmation[]>([]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -26,13 +29,14 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workspaceId: props.workspaceId, message, approve }),
+        body: JSON.stringify({ workspaceId: props.workspaceId, agentId: props.agentId, message, approve }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Algo deu errado.");
       setMessages((m) => [...m, { role: "assistant", text: data.text }]);
       setDashboard(data.dashboard);
       setAlerts(data.alerts ?? []);
+      setAgents(data.agents ?? agents);
       setPending(data.pendingConfirmations ?? []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Algo deu errado.");
@@ -52,6 +56,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
       <div className="space-y-3">
+        <AgentList workspaceId={props.workspaceId} agents={agents} currentAgentId={props.agentId} />
         <AlertBar alerts={alerts} />
         <DashboardView dashboard={dashboard} />
       </div>

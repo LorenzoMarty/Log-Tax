@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 
 const body = z.object({
   workspaceId: z.uuid(),
+  agentId: z.uuid().optional(),
   message: z.string().trim().min(1).max(4000),
   approve: z.array(z.string().max(2000)).max(10).optional(),
 });
