@@ -24,3 +24,16 @@ npm run test:rls             # isolamento entre usuários (precisa do db:start)
 
 Magic links chegam no Mailpit em http://127.0.0.1:55324. Login com Google exige
 `SUPABASE_AUTH_GOOGLE_CLIENT_ID` e `SUPABASE_AUTH_GOOGLE_SECRET` (não configurado por padrão).
+
+## Chat com a IA
+
+Rota `POST /api/chat` (exige login). Usa a OpenAI (Responses API, `store:false`):
+
+```sh
+# .env.local
+OPENAI_API_KEY=...        # obrigatório para a IA real
+OPENAI_MODEL=...          # opcional (padrão em src/chat/openai-llm.ts)
+LOG_TAX_LLM=scripted      # opcional, só em desenvolvimento: IA roteirizada por palavras-chave, sem chave
+```
+
+O e2e (`npm run e2e`) roda a jornada da empresa com `LOG_TAX_LLM=scripted` contra o Supabase local.
