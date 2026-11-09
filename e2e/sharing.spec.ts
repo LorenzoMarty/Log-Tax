@@ -1,5 +1,6 @@
-import { expect, test, type Browser, type Page } from "@playwright/test";
-import { login } from "./helpers";
+import { expect, test, type Browser } from "@playwright/test";
+import { createAndOpen, login } from "./helpers";
+import { inviteToWorkspace, openSharePanel } from "./workspace-actions";
 
 // Two isolated browsers: the owner and the accountant. Real magic links, real database.
 test.setTimeout(90_000);
@@ -7,8 +8,7 @@ async function ownerWithDashboard(browser: Browser) {
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
   const email = await login(page, "dono");
-  await page.getByRole("button", { name: "Criar meus espaços" }).click();
-  await page.getByRole("link", { name: /Minha Empresa/ }).click();
+  await createAndOpen(page, /Minha Empresa/);
   await expect(page).toHaveURL(/\/workspace\/[0-9a-f-]{36}$/);
   await page.waitForLoadState("networkidle");
   await page.getByLabel("Mensagem").fill("Empresa");
@@ -17,27 +17,11 @@ async function ownerWithDashboard(browser: Browser) {
   return { ctx, page, email, url: page.url() };
 }
 
-// The dev server may load a page twice after a redirect; settle first, then open the panel and check it stayed open.
-async function openShare(page: Page) {
-  await page.waitForLoadState("networkidle");
-  const panel = page.locator("details", { hasText: "Compartilhar este espaço" });
-  if ((await panel.getAttribute("open")) === null) await panel.locator("summary").click();
-  await expect(panel).toHaveAttribute("open", "");
-}
-
-async function invite(page: Page, email: string, role: "Leitura" | "Comentário") {
-  await openShare(page);
-  await page.getByLabel(/Email de quem vai receber/).fill(email);
-  await page.getByLabel("Papel").selectOption({ label: role });
-  await page.getByRole("button", { name: "Convidar" }).click();
-  await expect(page.getByRole("status")).toContainText("Convite criado");
-}
-
 test("owner invites the accountant, who accepts, comments, and cannot chat; access can be removed", async ({ browser }) => {
   const owner = await ownerWithDashboard(browser);
   const guestEmail = `contadora-${Date.now()}@example.com`;
-  await invite(owner.page, guestEmail, "Comentário");
-  await openShare(owner.page);
+  await inviteToWorkspace(owner.page, guestEmail, "Comentário");
+  await openSharePanel(owner.page);
   await expect(owner.page.getByRole("list", { name: "Quem tem acesso" })).toContainText(`${guestEmail} — Comentário (convite pendente)`);
 
   // the accountant signs in with that email and finds the invitation
@@ -72,7 +56,7 @@ test("owner invites the accountant, who accepts, comments, and cannot chat; acce
   await owner.page.getByLabel("Comentário", { exact: true }).fill("Ok, vou revisar.");
   await owner.page.getByRole("button", { name: "Comentar" }).click();
   await expect(owner.page.getByTestId("comment")).toHaveCount(2);
-  await openShare(owner.page);
+  await openSharePanel(owner.page);
   await expect(owner.page.getByRole("list", { name: "Quem tem acesso" })).toContainText(`${guestEmail} — Comentário`);
   await expect(owner.page.getByRole("list", { name: "Quem tem acesso" })).not.toContainText("pendente");
 
@@ -90,7 +74,7 @@ test("owner invites the accountant, who accepts, comments, and cannot chat; acce
 test("a reader only reads: no comment form, no chat API; a pending invite can be cancelled", async ({ browser }) => {
   const owner = await ownerWithDashboard(browser);
   const readerEmail = `leitor-${Date.now()}@example.com`;
-  await invite(owner.page, readerEmail, "Leitura");
+  await inviteToWorkspace(owner.page, readerEmail, "Leitura");
 
   const ctx = await browser.newContext();
   const reader = await ctx.newPage();
@@ -117,8 +101,8 @@ test("a reader only reads: no comment form, no chat API; a pending invite can be
 
   // cancelling a pending invite
   const pendingEmail = `pendente-${Date.now()}@example.com`;
-  await invite(owner.page, pendingEmail, "Leitura");
-  await openShare(owner.page);
+  await inviteToWorkspace(owner.page, pendingEmail, "Leitura");
+  await openSharePanel(owner.page);
   await owner.page.getByRole("button", { name: "Cancelar convite" }).click();
   await expect(owner.page.getByRole("status")).toContainText("Convite cancelado");
   await expect(owner.page.getByRole("list", { name: "Quem tem acesso" })).not.toContainText(pendingEmail);

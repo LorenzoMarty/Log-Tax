@@ -16,6 +16,8 @@ import { SharePanel, type InviteRow, type MemberRow } from "@/sharing/share-pane
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+export const metadata = { title: "Espaço" };
+
 export default async function WorkspaceChatPage({
   params,
   searchParams,

@@ -11,6 +11,10 @@ test("magic link login, create workspaces, sign out", async ({ page }) => {
   const email = await login(page);
   await expect(page.getByText(email)).toBeVisible();
 
+  // a signed-in visitor on the landing page goes straight to their spaces
+  await page.goto("/");
+  await expect(page).toHaveURL(/\/workspace$/);
+
   await page.getByRole("button", { name: "Criar meus espaços" }).click();
   await expect(page.getByText("Minha Empresa")).toBeVisible();
   await expect(page.getByText("Vida Pessoal")).toBeVisible();

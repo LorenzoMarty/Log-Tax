@@ -120,7 +120,7 @@ function Body({ w }: { w: Widget }) {
 export function WidgetView({ widget, showDisclaimer }: { widget: Widget; showDisclaimer: boolean }) {
   return (
     <section data-testid={`widget-${widget.id}`} className="rounded-2xl border border-current/15 p-4">
-      <h2 className="mb-3 text-sm font-medium opacity-70">{widget.title}</h2>
+      <h3 className="mb-3 text-sm font-medium opacity-70">{widget.title}</h3>
       <Body w={widget} />
       {showDisclaimer && <p className="mt-3 text-[11px] opacity-60">Estimativa ilustrativa, valide com um contador.</p>}
     </section>

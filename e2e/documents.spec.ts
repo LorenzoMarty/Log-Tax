@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { login } from "./helpers";
+import { createAndOpen, login } from "./helpers";
+import { inviteToWorkspace } from "./workspace-actions";
 
 test.setTimeout(120_000);
 
@@ -12,8 +13,7 @@ test("documents: consent, upload, identification, download, refusal and deletion
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
   await login(page, "docs");
-  await page.getByRole("button", { name: "Criar meus espaços" }).click();
-  await page.getByRole("link", { name: /Minha Empresa/ }).click();
+  await createAndOpen(page, /Minha Empresa/);
   await expect(page).toHaveURL(/\/workspace\/[0-9a-f-]{36}$/);
   await page.waitForLoadState("networkidle");
   const workspaceId = page.url().split("/").pop()!;
@@ -67,11 +67,8 @@ test("documents: consent, upload, identification, download, refusal and deletion
   expect(await download.text()).toContain("<nfeProc>");
 
   // a reader sees and downloads documents, but cannot upload or delete
-  await page.locator("details", { hasText: "Compartilhar este espaço" }).locator("summary").click();
   const readerEmail = `leitor-docs-${Date.now()}@example.com`;
-  await page.getByLabel(/Email de quem vai receber/).fill(readerEmail);
-  await page.getByRole("button", { name: "Convidar" }).click();
-  await expect(page.getByRole("status")).toContainText("Convite criado");
+  await inviteToWorkspace(page, readerEmail, "Leitura");
   const readerCtx = await browser.newContext();
   const reader = await readerCtx.newPage();
   await login(reader, "x", readerEmail);

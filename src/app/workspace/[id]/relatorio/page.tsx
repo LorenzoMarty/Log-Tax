@@ -11,6 +11,8 @@ import { ReportView } from "@/report/report-view";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Printable report of a workspace. Anyone with access to the workspace can open it (RLS decides). */
+export const metadata = { title: "Relatório" };
+
 export default async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!UUID.test(id)) notFound();

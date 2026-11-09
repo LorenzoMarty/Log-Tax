@@ -15,7 +15,7 @@ export function AlertBar({ alerts }: { alerts: AlertStatus[] }) {
       ))}
       <details className="text-sm">
         <summary className="flex cursor-pointer items-center gap-2">
-          <span aria-label={bell} className={`rounded-full px-2 py-0.5 text-xs font-medium ${fired.length ? "bg-amber-600 text-white" : "bg-neutral-200"}`}>
+          <span aria-label={bell} className={`rounded-full px-2 py-0.5 text-xs font-medium ${fired.length ? "bg-amber-800 text-white" : "bg-neutral-200"}`}>
             <span aria-hidden>🔔 {fired.length}</span>
           </span>
           Meus alertas ({alerts.length})

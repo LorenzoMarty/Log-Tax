@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { login } from "./helpers";
+import { createAndOpen, login } from "./helpers";
 
 // Browser → /api/chat → real OpenAI → Supabase. Costs tokens: `E2E_REAL_LLM=1 npx playwright test real-llm`.
 test.skip(!process.env.E2E_REAL_LLM, "set E2E_REAL_LLM=1 (and OPENAI_API_KEY) to run against the real model");
@@ -7,8 +7,7 @@ test.setTimeout(180_000);
 
 test("real model answers from the engine and builds a dashboard block", async ({ page }) => {
   await login(page, "real");
-  await page.getByRole("button", { name: "Criar meus espaços" }).click();
-  await page.getByRole("link", { name: /Minha Empresa/ }).click();
+  await createAndOpen(page, /Minha Empresa/);
 
   await page.getByLabel("Mensagem").fill("Quanto estou pagando de imposto por mês?");
   await page.getByRole("button", { name: "Enviar" }).click();

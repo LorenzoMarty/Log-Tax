@@ -69,14 +69,15 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
-      <div className="space-y-3">
-        <AgentList workspaceId={props.workspaceId} agents={agents} currentAgentId={props.agentId} />
-        <AlertBar alerts={alerts} />
-        <DashboardView dashboard={dashboard} />
-      </div>
-      <section aria-label="Conversa com a IA" className="flex flex-col gap-3 rounded-3xl border border-neutral-200 p-4">
-        <div aria-live="polite" className="flex max-h-[28rem] flex-col gap-2 overflow-y-auto">
+    <div className="space-y-4">
+      <AgentList workspaceId={props.workspaceId} agents={agents} currentAgentId={props.agentId} />
+      <AlertBar alerts={alerts} />
+      <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
+        <div className="order-2 lg:order-none">
+          <DashboardView dashboard={dashboard} />
+        </div>
+      <section aria-label="Conversa com a IA" className="order-1 flex flex-col gap-3 rounded-3xl border border-neutral-200 p-4 lg:order-none">
+        <div role="log" aria-label="Mensagens da conversa" aria-live="polite" tabIndex={0} className="flex max-h-[28rem] flex-col gap-2 overflow-y-auto">
           {messages.length === 0 && <p className="text-sm text-neutral-500">O que você precisa resolver?</p>}
           {messages.map((m, i) => (
             <p
@@ -120,6 +121,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
           </button>
         </form>
       </section>
+    </div>
     </div>
   );
 }
