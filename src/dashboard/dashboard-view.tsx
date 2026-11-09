@@ -7,23 +7,25 @@ const SPAN: Record<WidgetSize, string> = {
   lg: "sm:col-span-2 xl:col-span-4",
 };
 
-const THEME = {
-  light: "bg-white text-neutral-900",
-  dark: "bg-neutral-950 text-neutral-100",
-} as const;
-
+/** Painel do espaço: um Panel do design system Log; `theme` troca os tokens só aqui dentro. */
 export function DashboardView({ dashboard }: { dashboard: Dashboard }) {
-  const gap = dashboard.density === "compact" ? "gap-2 p-2" : "gap-4 p-4";
+  const compact = dashboard.density === "compact";
+  const gap = compact ? "var(--space-2)" : "var(--space-4)";
   return (
-    <div data-theme={dashboard.theme} data-density={dashboard.density} className={`rounded-3xl ${THEME[dashboard.theme]} ${gap}`}>
-      <h1 className="px-1 pb-2 text-xl font-semibold tracking-tight">{dashboard.name}</h1>
+    <div
+      data-theme={dashboard.theme}
+      data-density={dashboard.density}
+      className="lg-panel"
+      style={compact ? { padding: "var(--space-4)", gap: "var(--space-3)" } : undefined}
+    >
+      <h1 className="lg-heading-1">{dashboard.name}</h1>
       {dashboard.widgets.length === 0 ? (
-        <p className="text-sm opacity-70">Nenhum bloco ainda. Peça à IA para adicionar algo.</p>
+        <p className="text-sm text-ink-muted">Nenhum bloco ainda. Peça à IA para adicionar algo.</p>
       ) : (
-        <div className={`grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 ${gap}`}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4" style={{ gap }}>
           {dashboard.widgets.map((w) => (
             <div key={w.id} className={SPAN[w.size]}>
-              <WidgetView widget={w} showDisclaimer={ESTIMATE_KINDS.includes(w.kind)} />
+              <WidgetView widget={w} compact={compact} showDisclaimer={ESTIMATE_KINDS.includes(w.kind)} />
             </div>
           ))}
         </div>

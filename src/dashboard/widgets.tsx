@@ -1,19 +1,43 @@
+import { Icon } from "@/ui/log";
 import type { Point, Widget } from "./types";
 
 export const brl = (n: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(n);
 
+const compactBrl = (n: number) =>
+  new Intl.NumberFormat("pt-BR", { notation: "compact", maximumFractionDigits: 1 }).format(n);
+
+/** Barras do design system Log: topo arredondado de 4px, até 28px de largura, grade em `chart-grid`, série `chart-1`. */
 function BarChart({ data, label }: { data: Point[]; label: string }) {
+  const W = 420, H = 170, padL = 40, padB = 20, padT = 6;
   const max = Math.max(...data.map((d) => d.value), 1);
+  const ih = H - padB - padT, iw = W - padL;
+  const y = (v: number) => padT + ih - (v / max) * ih;
+  const bw = Math.min(28, (iw / Math.max(data.length, 1)) * 0.5);
   return (
-    <div role="img" aria-label={label} className="flex h-32 items-end gap-1">
-      {data.map((d) => (
-        <div key={d.label} className="flex flex-1 flex-col items-center gap-1">
-          <div className="w-full rounded-t bg-current opacity-70" style={{ height: `${(d.value / max) * 100}%` }} title={`${d.label}: ${brl(d.value)}`} />
-          <span className="text-[10px] opacity-60">{d.label}</span>
-        </div>
+    <svg role="img" aria-label={label} viewBox={`0 0 ${W} ${H}`} width="100%" className="block overflow-visible">
+      {[0, 0.5, 1].map((f) => (
+        <g key={f}>
+          <line className="lg-grid" x1={padL} x2={W} y1={y(max * f)} y2={y(max * f)} />
+          <text className="lg-axis" x={padL - 6} y={y(max * f) + 4} textAnchor="end">
+            {compactBrl(max * f)}
+          </text>
+        </g>
       ))}
-    </div>
+      {data.map((d, i) => {
+        const cx = padL + (iw * (i + 0.5)) / data.length, x = cx - bw / 2, top = y(d.value), h = padT + ih - top, r = Math.min(4, h);
+        return (
+          <g key={d.label}>
+            <path className="lg-bar lg-s1" d={`M${x},${top + h}V${top + r}Q${x},${top} ${x + r},${top}H${x + bw - r}Q${x + bw},${top} ${x + bw},${top + r}V${top + h}Z`}>
+              <title>{`${d.label}: ${brl(d.value)}`}</title>
+            </path>
+            <text className="lg-axis" x={cx} y={H - 4} textAnchor="middle">
+              {d.label}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
   );
 }
 
@@ -25,7 +49,10 @@ function LineChart({ data, label }: { data: Point[]; label: string }) {
   const points = data.map((d, i) => `${i * step},${36 - ((d.value - min) / span) * 32}`).join(" ");
   return (
     <svg role="img" aria-label={label} viewBox="0 0 100 40" preserveAspectRatio="none" className="h-32 w-full">
-      <polyline points={points} fill="none" stroke="currentColor" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+      {[4, 20, 36].map((gy) => (
+        <line key={gy} className="lg-grid" x1="0" x2="100" y1={gy} y2={gy} vectorEffect="non-scaling-stroke" />
+      ))}
+      <polyline points={points} fill="none" stroke="var(--chart-1)" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
     </svg>
   );
 }
@@ -34,9 +61,9 @@ function Body({ w }: { w: Widget }) {
   switch (w.kind) {
     case "kpi":
       return (
-        <div>
-          <p className="whitespace-nowrap text-2xl font-semibold tracking-tight sm:text-3xl">{w.value}</p>
-          {w.caption && <p className="text-sm opacity-70">{w.caption}</p>}
+        <div className="flex flex-col gap-2">
+          <p className="lg-stat-value whitespace-nowrap">{w.value}</p>
+          {w.caption && <p className="text-sm text-ink-muted">{w.caption}</p>}
         </div>
       );
     case "bar":
@@ -46,15 +73,15 @@ function Body({ w }: { w: Widget }) {
     case "breakdown": {
       const max = Math.max(...w.items.map((i) => i.amount), 1);
       return (
-        <ul className="space-y-2">
+        <ul className="flex flex-col gap-3">
           {w.items.map((i) => (
             <li key={i.label} className="text-sm">
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-2">
                 <span>{i.label}</span>
-                <span>{brl(i.amount)}</span>
+                <span className="tabular-nums">{brl(i.amount)}</span>
               </div>
-              <div className="mt-1 h-1.5 rounded bg-current opacity-20">
-                <div className="h-full rounded bg-current" style={{ width: `${(i.amount / max) * 100}%` }} />
+              <div className="lg-stat-bar mt-2">
+                <span style={{ width: `${(i.amount / max) * 100}%` }} />
               </div>
             </li>
           ))}
@@ -63,22 +90,27 @@ function Body({ w }: { w: Widget }) {
     }
     case "opportunities":
       return (
-        <ul className="space-y-2 text-sm">
+        <ul className="flex flex-col gap-3 text-sm">
           {w.items.map((i) => (
             <li key={i.title} className="flex justify-between gap-2">
               <span>{i.title}</span>
-              <span className="whitespace-nowrap font-medium">{brl(i.monthlySavings)}/mês</span>
+              <span className="whitespace-nowrap font-semibold tabular-nums text-brand-ink">{brl(i.monthlySavings)}/mês</span>
             </li>
           ))}
         </ul>
       );
     case "deadlines":
       return (
-        <ul className="space-y-2 text-sm">
+        <ul className="flex flex-col gap-3 text-sm">
           {w.items.map((i) => (
-            <li key={i.label} className="flex justify-between gap-2">
-              <span>{i.label}</span>
-              <time dateTime={i.date}>{new Date(`${i.date}T12:00:00`).toLocaleDateString("pt-BR")}</time>
+            <li key={i.label} className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2">
+                <Icon name="calendar" className="text-ink-muted" />
+                {i.label}
+              </span>
+              <time dateTime={i.date} className="tabular-nums text-ink-muted">
+                {new Date(`${i.date}T12:00:00`).toLocaleDateString("pt-BR")}
+              </time>
             </li>
           ))}
         </ul>
@@ -86,27 +118,38 @@ function Body({ w }: { w: Widget }) {
     case "compare":
       return (
         <div className="text-sm">
-          <div className="grid grid-cols-3 gap-2 font-medium opacity-70">
-            <span />
-            <span>{w.labels?.[0] ?? "Hoje"}</span>
-            <span>{w.labels?.[1] ?? "Potencial"}</span>
+          <div className="overflow-x-auto">
+          <table className="lg-table">
+            <thead>
+              <tr>
+                <th scope="col" />
+                <th scope="col" className="!text-right">{w.labels?.[0] ?? "Hoje"}</th>
+                <th scope="col" className="!text-right">{w.labels?.[1] ?? "Potencial"}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {w.rows.map((r) => (
+                <tr key={r.label}>
+                  <td>{r.label}</td>
+                  <td className="lg-num">{r.today}</td>
+                  <td className="lg-num">{r.potential}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
           </div>
-          {w.rows.map((r) => (
-            <div key={r.label} className="grid grid-cols-3 gap-2 py-1">
-              <span>{r.label}</span>
-              <span>{r.today}</span>
-              <span>{r.potential}</span>
-            </div>
-          ))}
-          {w.summary && <p className="mt-2 font-semibold">{w.summary}</p>}
+          {w.summary && <p className="mt-3 font-semibold text-brand-ink">{w.summary}</p>}
         </div>
       );
     case "checklist":
       return (
-        <ul className="space-y-1 text-sm">
+        <ul className="flex flex-col gap-2 text-sm">
           {w.items.map((i) => (
-            <li key={i.label}>
-              <span aria-hidden>{i.done ? "☑" : "☐"}</span> <span className={i.done ? "line-through opacity-60" : ""}>{i.label}</span>
+            <li key={i.label} className="flex items-center gap-2">
+              <span className={i.done ? "text-brand-ink" : "text-ink-subtle"}>
+                <Icon name={i.done ? "checks" : "more"} />
+              </span>
+              <span className={i.done ? "text-ink-muted line-through" : ""}>{i.label}</span>
               <span className="sr-only">{i.done ? " (feito)" : " (pendente)"}</span>
             </li>
           ))}
@@ -117,12 +160,12 @@ function Body({ w }: { w: Widget }) {
   }
 }
 
-export function WidgetView({ widget, showDisclaimer }: { widget: Widget; showDisclaimer: boolean }) {
+export function WidgetView({ widget, showDisclaimer, compact = false }: { widget: Widget; showDisclaimer: boolean; compact?: boolean }) {
   return (
-    <section data-testid={`widget-${widget.id}`} className="rounded-2xl border border-current/15 p-4">
-      <h2 className="mb-3 text-sm font-medium opacity-70">{widget.title}</h2>
+    <section data-testid={`widget-${widget.id}`} className="lg-surface-card h-full text-ink" style={compact ? { padding: "var(--space-3)" } : undefined}>
+      <h2 className="mb-3 text-[14px] leading-5 font-semibold text-ink">{widget.title}</h2>
       <Body w={widget} />
-      {showDisclaimer && <p className="mt-3 text-[11px] opacity-60">Estimativa ilustrativa, valide com um contador.</p>}
+      {showDisclaimer && <p className="mt-3 text-xs font-medium text-ink-subtle">Estimativa ilustrativa, valide com um contador.</p>}
     </section>
   );
 }

@@ -11,6 +11,18 @@ npm run e2e      # Playwright
 
 Valores exibidos são estimativas ilustrativas; valide com um contador.
 
+## Design system "Log"
+
+A interface usa o design system **Log** (superfícies táteis: elevado = clicável, afundado = recebe conteúdo).
+
+- `src/styles/log-tokens.json` — tokens exportados do sistema (cores claro/escuro, sombras, raios, espaço, tipografia).
+- `src/styles/log-tokens.css` — gerado: `node scripts/gen-log-tokens.mjs src/styles/log-tokens.json src/styles/log-tokens.css`.
+- `src/styles/log.css` — estilos dos componentes (classes `lg-*`).
+- `src/ui/log.tsx` — componentes React (`Button`, `Input`, `Badge`, `Panel`, `Icon`, `Logo`).
+- `public/brand/` — logotipos e símbolo; `src/app/icon.svg` é o favicon.
+
+O tema segue o sistema operacional; `data-theme="light|dark"` num elemento troca os tokens só dentro dele (é assim que o painel aplica o próprio tema).
+
 ## Banco e login (Supabase local)
 
 Requer Docker. Portas do projeto: 55321 (API), 55322 (Postgres), 55324 (Mailpit).

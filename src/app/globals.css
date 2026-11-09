@@ -1,26 +1,99 @@
 @import "tailwindcss";
+@import "../styles/log-tokens.css";
+@import "../styles/log.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* Cores do design system "Log" disponíveis como utilitários (bg-surface, text-ink-muted…). */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+  --color-brand: var(--brand-500);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-tint: var(--brand-tint);
+  --color-inverse: var(--inverse);
+  --color-on-inverse: var(--on-inverse);
+  --color-warning-tint: var(--warning-tint);
+  --color-warning-ink: var(--warning-ink);
+  --color-danger-tint: var(--danger-tint);
+  --color-danger-ink: var(--danger-ink);
+  --color-chart-1: var(--chart-1);
+  --color-chart-grid: var(--chart-grid);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Cartão elevado genérico (blocos do painel, itens de lista). */
+.lg-surface-card {
+  background: var(--surface-raised);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-raised);
+  padding: var(--space-5);
+}
+
+a.lg-surface-card {
+  display: block;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+a.lg-surface-card:hover {
+  transform: translateY(-1px);
+}
+a.lg-surface-card:active {
+  box-shadow: var(--shadow-pressed);
+  transform: translateY(1px);
+}
+a:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.lg-display {
+  margin: 0;
+  font: 600 40px/44px var(--font-sans);
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+.lg-heading-1 {
+  margin: 0;
+  font: 600 28px/34px var(--font-sans);
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+/* Mensagens do chat: a do usuário é a pílula `inverse`; a da IA, um cartão elevado. */
+.lg-msg {
+  margin: 0;
+  max-width: 90%;
+  white-space: pre-line;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font: 400 14px/20px var(--font-sans);
+}
+.lg-msg-user {
+  align-self: flex-end;
+  background: var(--inverse);
+  color: var(--on-inverse);
+  box-shadow: var(--shadow-inverse);
+}
+.lg-msg-assistant {
+  align-self: flex-start;
+  background: var(--surface-raised);
+  color: var(--ink);
+  box-shadow: var(--shadow-raised-sm);
+}
+
+/* Telas estreitas: painéis e cartões com menos respiro para caber o conteúdo. */
+@media (max-width: 640px) {
+  .lg-panel {
+    padding: var(--space-4);
   }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  .lg-surface-card {
+    padding: var(--space-4);
+  }
+  .lg-table th,
+  .lg-table td {
+    padding: var(--space-2);
+  }
 }
