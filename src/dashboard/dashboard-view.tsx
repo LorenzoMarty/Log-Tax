@@ -18,7 +18,7 @@ export function DashboardView({ dashboard }: { dashboard: Dashboard }) {
       className="lg-panel"
       style={compact ? { padding: "var(--space-4)", gap: "var(--space-3)" } : undefined}
     >
-      <h1 className="lg-heading-1">{dashboard.name}</h1>
+      <h2 className="lg-heading-1">{dashboard.name}</h2>
       {dashboard.widgets.length === 0 ? (
         <p className="text-sm text-ink-muted">Nenhum bloco ainda. Peça à IA para adicionar algo.</p>
       ) : (

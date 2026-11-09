@@ -40,6 +40,12 @@ describe("ReportView", () => {
     expect(screen.getByRole("columnheader", { name: "Completa" })).toBeInTheDocument();
   });
 
+  it("is a page of its own: a main landmark and no table header without a name", () => {
+    render(<ReportView report={buildReport({ ...input, kind: "pessoal", workspaceName: "Vida Pessoal" })} />);
+    expect(screen.getByRole("main")).toBeInTheDocument();
+    for (const h of screen.getAllByRole("columnheader")) expect(h).toHaveAccessibleName();
+  });
+
   it("offers printing and hides the controls from the printout", () => {
     render(<ReportView report={buildReport(input)} backHref="/workspace/ws1" />);
     const controls = screen.getByRole("button", { name: "Imprimir" }).closest("[data-print='hide']");

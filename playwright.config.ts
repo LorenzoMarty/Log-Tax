@@ -2,6 +2,10 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./e2e",
+  // The tests share one `next dev` server: too many workers make it compile pages under load and flake.
+  workers: 3,
+  // `next dev` compiles each route on its first visit (seconds, and the workspace page keeps growing): give assertions room.
+  expect: { timeout: 15_000 },
   webServer: {
     command: "npm run dev",
     url: "http://localhost:3000",

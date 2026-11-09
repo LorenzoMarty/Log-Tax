@@ -118,7 +118,7 @@ function Body({ w }: { w: Widget }) {
     case "compare":
       return (
         <div className="text-sm">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" role="region" aria-label={`${w.title} (tabela, role para o lado)`} tabIndex={0}>
           <table className="lg-table">
             <thead>
               <tr>
@@ -163,7 +163,7 @@ function Body({ w }: { w: Widget }) {
 export function WidgetView({ widget, showDisclaimer, compact = false }: { widget: Widget; showDisclaimer: boolean; compact?: boolean }) {
   return (
     <section data-testid={`widget-${widget.id}`} className="lg-surface-card h-full text-ink" style={compact ? { padding: "var(--space-3)" } : undefined}>
-      <h2 className="mb-3 text-[14px] leading-5 font-semibold text-ink">{widget.title}</h2>
+      <h3 className="mb-3 text-[14px] leading-5 font-semibold text-ink">{widget.title}</h3>
       <Body w={widget} />
       {showDisclaimer && <p className="mt-3 text-xs font-medium text-ink-subtle">Estimativa ilustrativa, valide com um contador.</p>}
     </section>

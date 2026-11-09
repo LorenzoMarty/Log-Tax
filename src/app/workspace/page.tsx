@@ -7,6 +7,8 @@ import { MESSAGES } from "@/sharing/messages";
 import { ROLE_LABEL, type Role } from "@/sharing/schema";
 import { createDefaultWorkspaces, signOut } from "./actions";
 
+export const metadata = { title: "Seus espaços" };
+
 export default async function WorkspacePage({ searchParams }: { searchParams: Promise<{ msg?: string }> }) {
   const supabase = await createClient();
   const {
@@ -28,8 +30,8 @@ export default async function WorkspacePage({ searchParams }: { searchParams: Pr
     <main className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-10">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <Logo height={32} />
-        <form action={signOut} className="flex items-center gap-3 text-sm text-ink-muted">
-          <span>{user.email}</span>
+        <form action={signOut} className="flex min-w-0 flex-wrap items-center gap-3 text-sm text-ink-muted">
+          <span className="break-all">{user.email}</span>
           <Button type="submit" variant="ghost" size="sm">
             Sair
           </Button>

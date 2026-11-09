@@ -1,7 +1,7 @@
 ---
 slug: log-tax-v1
-status: ready
-revision_count: 9
+status: done
+revision_count: 10
 created: 2026-11-08
 issue: —
 ---
@@ -27,8 +27,8 @@ Demo pt-BR em que dono de empresa/pessoa física (e seu contador) conversa com u
 - [x] REQ-11: Compartilhar workspace com contador por email, papéis leitura e comentário; leitor não escreve (RLS) — verificado por teste de RLS
 - [x] REQ-12: Upload (Storage, acesso por workspace) com tipo identificado e campos básicos extraídos (mock), consentimento e apagar — verificado por teste + e2e
 - [x] REQ-13: Relatório imprimível (resumo, impostos, oportunidades, premissas, validações) — verificado por teste de render
-- [ ] REQ-14: Todo resultado exibe aviso "estimativa ilustrativa, valide com contador"; nenhum texto diz "garantido" — verificado por teste de snapshot/regex nas telas e no system prompt
-- [ ] REQ-15: UI mobile-first pt-BR, sem sidebar enorme, a11y básica — verificado por audit accesslint nas telas principais
+- [x] REQ-14: Todo resultado exibe aviso "estimativa ilustrativa, valide com contador"; nenhum texto diz "garantido" — verificado por teste de snapshot/regex nas telas e no system prompt
+- [x] REQ-15: UI mobile-first pt-BR, sem sidebar enorme, a11y básica — verificado por audit accesslint nas telas principais
 
 ## Critérios de concluído
 

@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Log Tax",
+  title: { default: "Log Tax", template: "%s · Log Tax" },
   description: "Inteligência tributária conversacional",
 };
 

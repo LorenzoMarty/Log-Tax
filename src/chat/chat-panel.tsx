@@ -70,14 +70,15 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
   }
 
   return (
-    <div className="grid items-start gap-6 lg:grid-cols-[1fr_380px]">
-      <div className="flex flex-col gap-4">
-        <AgentList workspaceId={props.workspaceId} agents={agents} currentAgentId={props.agentId} />
-        <AlertBar alerts={alerts} />
-        <DashboardView dashboard={dashboard} />
-      </div>
-      <Panel label="Conversa com a IA" className="lg:sticky lg:top-6">
-        <div aria-live="polite" className="flex max-h-[28rem] flex-col gap-3 overflow-y-auto p-1">
+    <div className="flex flex-col gap-4">
+      <AgentList workspaceId={props.workspaceId} agents={agents} currentAgentId={props.agentId} />
+      <AlertBar alerts={alerts} />
+      <div className="grid items-start gap-6 lg:grid-cols-[1fr_380px]">
+        <div className="order-2 min-w-0 lg:order-none">
+          <DashboardView dashboard={dashboard} />
+        </div>
+      <Panel label="Conversa com a IA" className="order-1 min-w-0 lg:order-none lg:sticky lg:top-6">
+        <div role="log" aria-label="Mensagens da conversa" aria-live="polite" tabIndex={0} className="flex max-h-[28rem] flex-col gap-3 overflow-y-auto p-1">
           {messages.length === 0 && <p className="text-sm text-ink-muted">O que você precisa resolver?</p>}
           {messages.map((m, i) => (
             <p key={i} data-role={m.role} className={`lg-msg lg-msg-${m.role === "user" ? "user" : "assistant"} whitespace-pre-line`}>
@@ -105,12 +106,13 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
           </p>
         )}
         <form onSubmit={submit} className="flex gap-2">
-          <Input aria-label="Mensagem" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Quero entender meus impostos..." className="flex-1" />
+          <Input aria-label="Mensagem" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Quero entender meus impostos..." className="min-w-0 flex-1" />
           <Button type="submit" variant="primary" disabled={busy}>
             Enviar
           </Button>
         </form>
       </Panel>
+    </div>
     </div>
   );
 }
