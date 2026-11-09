@@ -3,8 +3,8 @@ import { WidgetView } from "./widgets";
 
 const SPAN: Record<WidgetSize, string> = {
   sm: "",
-  md: "sm:col-span-2 lg:col-span-2",
-  lg: "sm:col-span-2 lg:col-span-4",
+  md: "sm:col-span-2",
+  lg: "sm:col-span-2 xl:col-span-4",
 };
 
 const THEME = {
@@ -20,7 +20,7 @@ export function DashboardView({ dashboard }: { dashboard: Dashboard }) {
       {dashboard.widgets.length === 0 ? (
         <p className="text-sm opacity-70">Nenhum bloco ainda. Peça à IA para adicionar algo.</p>
       ) : (
-        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 ${gap}`}>
+        <div className={`grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 ${gap}`}>
           {dashboard.widgets.map((w) => (
             <div key={w.id} className={SPAN[w.size]}>
               <WidgetView widget={w} showDisclaimer={ESTIMATE_KINDS.includes(w.kind)} />

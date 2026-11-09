@@ -35,7 +35,7 @@ function Body({ w }: { w: Widget }) {
     case "kpi":
       return (
         <div>
-          <p className="text-3xl font-semibold tracking-tight">{w.value}</p>
+          <p className="whitespace-nowrap text-2xl font-semibold tracking-tight sm:text-3xl">{w.value}</p>
           {w.caption && <p className="text-sm opacity-70">{w.caption}</p>}
         </div>
       );
