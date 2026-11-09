@@ -29,6 +29,17 @@ test("company journey: context → diagnosis → dashboard → opportunities →
 
   await say(page, "Por que você chegou nessa conclusão?", /Lucro Presumido/);
 
+  // scenario simulation: one block, rewritten when the parameter changes
+  await say(page, "E se meu faturamento subir para R$ 500 mil?", /65\.500/);
+  const sim = page.getByTestId("widget-simulacao");
+  await expect(sim).toContainText("Cenário");
+  await expect(sim).toContainText("13,1%");
+  await expect(sim).toContainText(/estimativa ilustrativa/i);
+  await say(page, "E se for 600 mil?", /600\.000/);
+  await expect(page.getByTestId("widget-simulacao")).toHaveCount(1);
+  await expect(sim).toContainText("R$ 600.000");
+  await expect(sim).not.toContainText("R$ 500.000");
+
   // destructive action: nothing disappears until the user confirms
   await say(page, "Tira o painel de carga tributária", /Você confirma/);
   await expect(page.getByTestId("widget-kpi")).toBeVisible();

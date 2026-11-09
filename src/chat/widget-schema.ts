@@ -28,6 +28,7 @@ export const widgetSchema = z.discriminatedUnion("kind", [
     kind: z.literal("compare"),
     rows: z.array(z.strictObject({ label: z.string(), today: z.string(), potential: z.string() })),
     summary: z.string().optional(),
+    labels: z.tuple([z.string(), z.string()]).optional(),
   }),
   z.strictObject({
     ...base,

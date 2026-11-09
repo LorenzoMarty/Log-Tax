@@ -22,6 +22,12 @@ describe("system prompt", () => {
     for (const s of sentences) expect(s).toMatch(/nunca|não/i);
   });
 
+  it("explains how to present and adjust a simulation on the dashboard", () => {
+    expect(prompt).toMatch(/run_simulation/);
+    expect(prompt).toMatch(/Atual[\s\S]*Cenário/);
+    expect(prompt).toMatch(/simulacao/);
+  });
+
   it("asks for plain text because the chat does not render Markdown", () => {
     expect(prompt).toMatch(/não use markdown/i);
   });

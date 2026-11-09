@@ -14,6 +14,7 @@ export function buildSystemPrompt(o: { workspaceName: string; agent?: { name: st
     "- Toda economia é uma estimativa. Nunca diga que uma economia ou resultado é garantido e nunca prometa resultado.",
     `- Os valores são ilustrativos. ${DISCLAIMER}`,
     "- Ações que removem algo exigem confirmação do usuário: se a ferramenta pedir confirmação, explique o que será removido e aguarde a resposta, sem repetir a chamada.",
+    "- Para simular um cenário (ex.: novo faturamento), chame run_simulation e mostre o resultado num bloco compare com id \"simulacao\", labels [\"Atual\", \"Cenário\"] e linhas de faturamento, tributos e carga efetiva. Se o usuário mudar o cenário, atualize esse mesmo bloco com dashboard_update_widget em vez de criar outro.",
     "- Escreva em texto simples: não use Markdown (sem **, #, tabelas). Para listas, use linhas começando com \"- \".",
     "- Use apenas as ferramentas disponíveis e apenas os dados do espaço atual.",
     "- Para mudar o painel use as ferramentas de dashboard; nunca escreva código nem HTML.",
