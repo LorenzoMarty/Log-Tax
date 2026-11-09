@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createDefaultWorkspaces, signOut } from "./actions";
 
@@ -25,9 +26,11 @@ export default async function WorkspacePage() {
       {workspaces?.length ? (
         <ul className="grid gap-3 sm:grid-cols-2">
           {workspaces.map((w) => (
-            <li key={w.id} className="rounded-2xl border border-neutral-200 p-4">
-              <p className="font-medium">{w.name}</p>
-              <p className="text-sm text-neutral-500">{w.kind === "empresa" ? "Empresa" : "Pessoal"}</p>
+            <li key={w.id}>
+              <Link href={`/workspace/${w.id}`} className="block rounded-2xl border border-neutral-200 p-4 hover:border-neutral-400">
+                <p className="font-medium">{w.name}</p>
+                <p className="text-sm text-neutral-500">{w.kind === "empresa" ? "Empresa" : "Pessoal"}</p>
+              </Link>
             </li>
           ))}
         </ul>
