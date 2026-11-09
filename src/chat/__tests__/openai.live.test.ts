@@ -43,6 +43,23 @@ describe("OpenAI end to end", () => {
     expect(second.text).toMatch(/87[.,]6|validad|contador/i);
   });
 
+  it("simulates a revenue scenario with the engine and shows Atual × Cenário on the dashboard", async () => {
+    const c = ctx();
+    const first = await runTurn({ llm, ctx: c, history: [], userMessage: "E se meu faturamento mensal subir para R$ 500 mil?" });
+    expect(names(first)).toContain("run_simulation");
+    expect(first.text).toMatch(/65\.[45]\d\d|65[.,]5/); // engine says 65.499,99; the model may round to 65,5 mil
+    expect(first.text).toContain(DISCLAIMER);
+    const block = () => c.store.getDashboard().widgets.filter((w) => w.kind === "compare");
+    expect(block()).toHaveLength(1);
+    expect(JSON.stringify(block()[0])).toMatch(/Cenário/);
+
+    // changing the parameter must rewrite the same block, not stack another one
+    const second = await runTurn({ llm, ctx: c, history: first.history, userMessage: "E se for R$ 600 mil?" });
+    expect(names(second)).toContain("run_simulation");
+    expect(block()).toHaveLength(1);
+    expect(JSON.stringify(block()[0])).toMatch(/600/);
+  });
+
   it("never removes a widget without the user's confirmation", async () => {
     const c = ctx();
     c.store.dispatch({ type: "add", widget: { id: "kpi", kind: "kpi", title: "Carga", size: "md", value: "R$ 1" } });
@@ -70,6 +87,8 @@ describe("OpenAI end to end", () => {
     c.store.saveCompany({ monthlyRevenue: undefined });
     const r = await runTurn({ llm, ctx: c, history: [], userMessage: "Quanto pago de imposto?" });
     expect(r.text).toMatch(/faturamento|dados|informa/i);
-    expect(r.text).not.toMatch(/R\$\s?\d/);
+    // an example figure while asking for data is fine; stating a tax total (or the seed's 42.800) is not
+    expect(r.text).not.toMatch(/42[.,]8/);
+    expect(c.store.getCompany().monthlyRevenue).toBeUndefined();
   });
 });
