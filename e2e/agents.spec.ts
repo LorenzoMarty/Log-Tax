@@ -1,19 +1,14 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { createAndOpen, login } from "./helpers";
+import { sendChatMessage } from "./workspace-actions";
 
 // Specialised agents in a real browser (scripted LLM, local Supabase).
-const say = async (page: Page, text: string, reply: RegExp) => {
-  await page.getByLabel("Mensagem").fill(text);
-  await page.getByRole("button", { name: "Enviar" }).click();
-  await expect(page.locator('[data-role="assistant"]').filter({ hasText: reply }).last()).toBeVisible();
-};
-
 test("create an agent by chat, talk to it inside its scope, edit it by chat", async ({ page }) => {
   await login(page, "agents");
   await createAndOpen(page, /Minha Empresa/);
   await expect(page.getByRole("navigation", { name: "Minhas IAs" })).toHaveCount(0);
 
-  await say(page, "Crie uma IA para minha empresa", /Criei a "IA da Empresa"/);
+  await sendChatMessage(page, "Crie uma IA para minha empresa", /Criei a "IA da Empresa"/);
   const nav = page.getByRole("navigation", { name: "Minhas IAs" });
   await expect(nav).toContainText("IA da Empresa");
   await expect(nav).toContainText("5 ferramentas");
@@ -27,7 +22,7 @@ test("create an agent by chat, talk to it inside its scope, edit it by chat", as
   await expect(page.getByText("O que você precisa resolver?")).toBeVisible();
 
   // in scope it answers from the engine; out of scope it cannot touch the dashboard
-  await say(page, "Empresa", /42\.800/);
+  await sendChatMessage(page, "Empresa", /42\.800/);
   await expect(page.getByTestId(/^widget-/)).toHaveCount(0);
   await expect(page.getByText(/nenhum bloco/i)).toBeVisible();
 
@@ -36,7 +31,7 @@ test("create an agent by chat, talk to it inside its scope, edit it by chat", as
   await expect(page).not.toHaveURL(/\?ia=/);
   await page.waitForLoadState("networkidle");
   await expect(page.getByText("Criei a \"IA da Empresa\"").first()).toBeVisible();
-  await say(page, "Mude o objetivo da IA da Empresa para Cuidar do planejamento tributário", /atualizei o objetivo/);
+  await sendChatMessage(page, "Mude o objetivo da IA da Empresa para Cuidar do planejamento tributário", /atualizei o objetivo/);
   await expect(nav).toContainText("Cuidar do planejamento tributário");
 
   await page.reload();

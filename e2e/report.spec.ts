@@ -1,13 +1,8 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { createAndOpen, login } from "./helpers";
+import { sendChatMessage } from "./workspace-actions";
 
 test.setTimeout(90_000);
-
-const say = async (page: Page, text: string, reply: RegExp) => {
-  await page.getByLabel("Mensagem").fill(text);
-  await page.getByRole("button", { name: "Enviar" }).click();
-  await expect(page.locator('[data-role="assistant"]').filter({ hasText: reply }).last()).toBeVisible();
-};
 
 test("company report: asked in the chat, opened as a printable page with every section", async ({ browser }) => {
   const ctx = await browser.newContext();
@@ -18,7 +13,7 @@ test("company report: asked in the chat, opened as a printable page with every s
   await page.waitForLoadState("networkidle");
   const space = page.url();
 
-  await say(page, "Gere um relatório da minha situação tributária", /Gerei o relatório/);
+  await sendChatMessage(page, "Gere um relatório da minha situação tributária", /Gerei o relatório/);
   await page.getByRole("link", { name: "abrir o relatório" }).click();
   await expect(page).toHaveURL(`${space}/relatorio`);
 
@@ -62,7 +57,7 @@ test("personal report: IR comparison with the refund", async ({ page }) => {
   await expect(page).toHaveURL(/\/workspace\/[0-9a-f-]{36}$/);
   await page.waitForLoadState("networkidle");
 
-  await say(page, "Gere um relatório do meu imposto de renda", /Gerei o relatório/);
+  await sendChatMessage(page, "Gere um relatório do meu imposto de renda", /Gerei o relatório/);
   await page.getByRole("link", { name: "abrir o relatório" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Relatório de Imposto de Renda");
   await expect(page.getByRole("region", { name: "Resumo" })).toContainText("Restituição R$ 1.308");
