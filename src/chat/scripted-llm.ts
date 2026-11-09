@@ -74,6 +74,24 @@ const PLANS: Plan[] = [
     },
   },
   {
+    match: /avis|alert/i,
+    steps: [
+      (_p, text) => ({
+        name: "create_alert",
+        args: { metric: "monthlyTotal", operator: /abaixo|menos de|menor/i.test(text) ? "lt" : "gt", threshold: revenueFrom(text) ?? 0 },
+      }),
+    ],
+    reply: ([r], text) =>
+      r?.status === "ok"
+        ? `Pronto! Vou te avisar aqui no painel quando seus impostos mensais ficarem ${/abaixo|menos de|menor/i.test(text) ? "abaixo" : "acima"} de ${money(revenueFrom(text) ?? 0)}.`
+        : "Não consegui criar o alerta. Qual valor mensal devo usar como limite?",
+  },
+  {
+    match: /faturamento (mensal )?(atual )?(é|foi|passou a ser)/i,
+    steps: [(_p, text) => ({ name: "save_company_data", args: { monthlyRevenue: revenueFrom(text) ?? 0 } })],
+    reply: ([r]) => (r?.status === "ok" ? "Atualizei o faturamento mensal da empresa." : "Não consegui salvar esse valor."),
+  },
+  {
     match: /^empresa/i,
     steps: [
       () => ({ name: "get_tax_diagnosis", args: {} }),
