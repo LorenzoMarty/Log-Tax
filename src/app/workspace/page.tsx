@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { Badge, Button, Icon, Logo } from "@/ui/log";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { acceptInvite, declineInvite } from "@/sharing/actions";
@@ -26,40 +27,41 @@ export default async function WorkspacePage({ searchParams }: { searchParams: Pr
   const notice = msg ? MESSAGES[msg] : undefined;
 
   return (
-    <main className="mx-auto max-w-2xl space-y-6 px-4 py-10">
+    <main className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-10">
       <header className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Seus espaços</h1>
-        <form action={signOut} className="flex min-w-0 flex-wrap items-center gap-3 text-sm">
+        <Logo height={32} />
+        <form action={signOut} className="flex min-w-0 flex-wrap items-center gap-3 text-sm text-ink-muted">
           <span className="break-all">{user.email}</span>
-          <button type="submit" className="rounded-lg border border-neutral-300 px-3 py-1.5">
+          <Button type="submit" variant="ghost" size="sm">
             Sair
-          </button>
+          </Button>
         </form>
       </header>
+      <h1 className="lg-display">Seus espaços</h1>
 
       {notice && (
-        <p role="status" className={`rounded-xl px-4 py-3 text-sm ${notice.ok ? "bg-green-50 text-green-900" : "bg-red-50 text-red-800"}`}>
+        <p role="status" className={`rounded-[var(--radius-md)] px-4 py-3 text-sm ${notice.ok ? "bg-brand-tint text-brand-ink" : "bg-danger-tint text-danger-ink"}`}>
           {notice.text}
         </p>
       )}
 
       {invites && invites.length > 0 && (
-        <section aria-label="Convites" className="space-y-2">
+        <section aria-label="Convites" className="flex flex-col gap-2">
           {invites.map((i) => (
-            <div key={i.id} data-testid="invite" className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            <div key={i.id} data-testid="invite" className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius-md)] bg-warning-tint px-4 py-3 text-sm text-warning-ink">
               <p>
                 <strong>{i.invited_by_email}</strong> convidou você para <strong>{i.workspace_name}</strong> ({ROLE_LABEL[i.role as Role]}).
               </p>
               <div className="flex gap-2">
                 <form action={acceptInvite.bind(null, i.id)}>
-                  <button type="submit" className="rounded-lg bg-amber-900 px-3 py-1.5 text-white">
+                  <Button type="submit" variant="inverse" size="sm">
                     Aceitar
-                  </button>
+                  </Button>
                 </form>
                 <form action={declineInvite.bind(null, i.id)}>
-                  <button type="submit" className="rounded-lg border border-amber-900 px-3 py-1.5">
+                  <Button type="submit" variant="ghost" size="sm">
                     Recusar
-                  </button>
+                  </Button>
                 </form>
               </div>
             </div>
@@ -68,15 +70,20 @@ export default async function WorkspacePage({ searchParams }: { searchParams: Pr
       )}
 
       {workspaces?.length ? (
-        <ul className="grid gap-3 sm:grid-cols-2">
+        <ul className="grid gap-4 sm:grid-cols-2">
           {workspaces.map((w) => {
             const role = roleOf.get(w.id);
             return (
               <li key={w.id}>
-                <Link href={`/workspace/${w.id}`} className="block rounded-2xl border border-neutral-200 p-4 hover:border-neutral-400">
-                  <p className="font-medium">{w.name}</p>
-                  <p className="text-sm text-neutral-500">{w.kind === "empresa" ? "Empresa" : "Pessoal"}</p>
-                  {w.owner_id !== user.id && role && <p className="mt-1 text-xs text-neutral-500">Compartilhado com você · {ROLE_LABEL[role]}</p>}
+                <Link href={`/workspace/${w.id}`} className="lg-surface-card">
+                  <span className="flex items-center justify-between gap-3">
+                    <span className="font-semibold text-ink">{w.name}</span>
+                    <Icon name="chevronRight" className="text-ink-muted" />
+                  </span>
+                  <span className="mt-3 flex flex-wrap items-center gap-2">
+                    <Badge tone={w.kind === "empresa" ? "info" : "brand"}>{w.kind === "empresa" ? "Empresa" : "Pessoal"}</Badge>
+                    {w.owner_id !== user.id && role && <span className="text-xs text-ink-muted">Compartilhado com você · {ROLE_LABEL[role]}</span>}
+                  </span>
                 </Link>
               </li>
             );
@@ -86,9 +93,9 @@ export default async function WorkspacePage({ searchParams }: { searchParams: Pr
 
       {owned.length === 0 && (
         <form action={createDefaultWorkspaces}>
-          <button type="submit" className="rounded-xl bg-neutral-900 px-4 py-3 text-white">
+          <Button type="submit" variant="primary" icon="plus">
             Criar meus espaços
-          </button>
+          </Button>
         </form>
       )}
     </main>

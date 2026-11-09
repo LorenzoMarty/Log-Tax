@@ -9,11 +9,11 @@ export function AgentList({ workspaceId, agents, currentAgentId }: { workspaceId
       <a
         href={href}
         aria-current={current ? "page" : undefined}
-        className={`block rounded-2xl border px-3 py-2 text-sm ${current ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-200 hover:border-neutral-400"}`}
+        className={`block rounded-2xl border px-3 py-2 text-sm ${current ? "border-transparent bg-inverse text-on-inverse" : "border-line hover:border-ink-muted"}`}
       >
         <span className="block font-medium">{title}</span>
         {lines.map((l) => (
-          <span key={l} className={`block text-xs ${current ? "text-neutral-300" : "text-neutral-500"}`}>
+          <span key={l} className={`block text-xs ${current ? "text-on-inverse" : "text-ink-muted"}`}>
             {l}
           </span>
         ))}

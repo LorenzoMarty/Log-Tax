@@ -109,28 +109,31 @@ test("public pages", async ({ page }) => {
   }
 });
 
-test("a dark operating-system preference does not break contrast (the interface is light-only)", async ({ page }) => {
+// The design system follows the OS theme; the dark tokens must keep the same contrast as the light ones (#31 found
+// a 1.9:1 page when dark mode only half-applied).
+test("the dark theme keeps contrast on the public pages", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "dark" });
   for (const path of ["/", "/login", "/demo"]) {
     await page.goto(path);
-    await auditScreen(page, `${path} with dark preference`);
+    await auditScreen(page, `${path} in dark theme`);
   }
-  const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  expect(bg).toBe("rgb(255, 255, 255)");
 });
 
-test("signed-in screens, with a populated workspace, documents, sharing and the report", async ({ page, browser }) => {
-  await login(page, "a11y");
-  await auditScreen(page, "workspaces list");
-  await expectPageOutline(page, "Seus espaços · Log Tax");
-  await createAndOpen(page, /Minha Empresa/);
-  const space = page.url();
-  await auditScreen(page, "empty workspace");
-  await runChatScript(page, COMPANY_JOURNEY);
-  await auditScreen(page, "populated workspace (dashboard, alert, agents)");
-  await expectPageOutline(page, "Espaço · Log Tax");
-  await auditDocumentsAndSharing(page);
-  await auditReportAndAgent(page, space);
-  await auditPersonalSpace(page);
-  await auditGuestView(browser, page, space);
-});
+for (const colorScheme of ["light", "dark"] as const) {
+  test(`signed-in screens in the ${colorScheme} theme, with a populated workspace, documents, sharing and the report`, async ({ page, browser }) => {
+    await page.emulateMedia({ colorScheme });
+    await login(page, "a11y");
+    await auditScreen(page, "workspaces list");
+    await expectPageOutline(page, "Seus espaços · Log Tax");
+    await createAndOpen(page, /Minha Empresa/);
+    const space = page.url();
+    await auditScreen(page, "empty workspace");
+    await runChatScript(page, COMPANY_JOURNEY);
+    await auditScreen(page, "populated workspace (dashboard, alert, agents)");
+    await expectPageOutline(page, "Espaço · Log Tax");
+    await auditDocumentsAndSharing(page);
+    await auditReportAndAgent(page, space);
+    await auditPersonalSpace(page);
+    await auditGuestView(browser, page, space);
+  });
+}

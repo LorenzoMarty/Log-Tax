@@ -6,6 +6,7 @@ import { AlertBar } from "@/alerts/alert-bar";
 import type { AlertStatus } from "@/alerts/evaluate";
 import { DashboardView } from "@/dashboard/dashboard-view";
 import type { Dashboard } from "@/dashboard/types";
+import { Button, Input, Panel } from "@/ui/log";
 import type { PendingConfirmation } from "./orchestrator";
 import type { Agent } from "./types";
 import type { DisplayMessage } from "./workspace-state";
@@ -69,58 +70,48 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       <AgentList workspaceId={props.workspaceId} agents={agents} currentAgentId={props.agentId} />
       <AlertBar alerts={alerts} />
-      <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
-        <div className="order-2 lg:order-none">
+      <div className="grid items-start gap-6 lg:grid-cols-[1fr_380px]">
+        <div className="order-2 min-w-0 lg:order-none">
           <DashboardView dashboard={dashboard} />
         </div>
-      <section aria-label="Conversa com a IA" className="order-1 flex flex-col gap-3 rounded-3xl border border-neutral-200 p-4 lg:order-none">
-        <div role="log" aria-label="Mensagens da conversa" aria-live="polite" tabIndex={0} className="flex max-h-[28rem] flex-col gap-2 overflow-y-auto">
-          {messages.length === 0 && <p className="text-sm text-neutral-500">O que você precisa resolver?</p>}
+      <Panel label="Conversa com a IA" className="order-1 min-w-0 lg:order-none lg:sticky lg:top-6">
+        <div role="log" aria-label="Mensagens da conversa" aria-live="polite" tabIndex={0} className="flex max-h-[28rem] flex-col gap-3 overflow-y-auto p-1">
+          {messages.length === 0 && <p className="text-sm text-ink-muted">O que você precisa resolver?</p>}
           {messages.map((m, i) => (
-            <p
-              key={i}
-              data-role={m.role}
-              className={`whitespace-pre-line rounded-2xl px-3 py-2 text-sm ${m.role === "user" ? "self-end bg-neutral-900 text-white" : "self-start bg-neutral-100"}`}
-            >
+            <p key={i} data-role={m.role} className={`lg-msg lg-msg-${m.role === "user" ? "user" : "assistant"} whitespace-pre-line`}>
               {m.role === "assistant" ? withReportLinks(m.text) : m.text}
             </p>
           ))}
-          {busy && <p className="text-sm text-neutral-500">Pensando…</p>}
+          {busy && <p className="text-sm text-ink-subtle">Pensando…</p>}
         </div>
         {pending.map((p) => (
-          <div key={p.key} className="rounded-2xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+          <div key={p.key} className="rounded-[var(--radius-md)] bg-warning-tint p-4 text-sm text-warning-ink">
             <p>{p.summary}</p>
-            <div className="mt-2 flex gap-2">
-              <button type="button" disabled={busy} onClick={() => send("Sim, pode confirmar.", [p.key])} className="rounded-lg bg-amber-900 px-3 py-1.5 text-white">
+            <div className="mt-3 flex gap-2">
+              <Button variant="inverse" size="sm" disabled={busy} onClick={() => send("Sim, pode confirmar.", [p.key])}>
                 Confirmar
-              </button>
-              <button type="button" disabled={busy} onClick={() => send("Não, cancele.")} className="rounded-lg border border-amber-900 px-3 py-1.5">
+              </Button>
+              <Button variant="ghost" size="sm" disabled={busy} onClick={() => send("Não, cancele.")}>
                 Cancelar
-              </button>
+              </Button>
             </div>
           </div>
         ))}
         {error && (
-          <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-800">
+          <p role="alert" className="rounded-[var(--radius-sm)] bg-danger-tint px-4 py-3 text-sm text-danger-ink">
             {error}
           </p>
         )}
         <form onSubmit={submit} className="flex gap-2">
-          <input
-            aria-label="Mensagem"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Quero entender meus impostos..."
-            className="min-w-0 flex-1 rounded-xl border border-neutral-300 px-3 py-2"
-          />
-          <button type="submit" disabled={busy} className="rounded-xl bg-neutral-900 px-4 text-white">
+          <Input aria-label="Mensagem" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Quero entender meus impostos..." className="min-w-0 flex-1" />
+          <Button type="submit" variant="primary" disabled={busy}>
             Enviar
-          </button>
+          </Button>
         </form>
-      </section>
+      </Panel>
     </div>
     </div>
   );

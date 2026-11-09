@@ -8,6 +8,7 @@ import { DashboardView } from "@/dashboard/dashboard-view";
 import { DocumentsPanel, type DocumentRow } from "@/documents/documents-panel";
 import { mockEngine } from "@/engine";
 import { createClient } from "@/lib/supabase/server";
+import { Icon, Logo } from "@/ui/log";
 import { leaveWorkspace } from "@/sharing/actions";
 import { Comments, type CommentRow } from "@/sharing/comments";
 import { MESSAGES } from "@/sharing/messages";
@@ -73,19 +74,23 @@ export default async function WorkspaceChatPage({
   );
 
   return (
-    <main className="mx-auto max-w-6xl space-y-4 px-4 py-6">
-      <header className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {state.workspaceName}
-          {state.agent && <span className="font-normal text-neutral-500"> · {state.agent.name}</span>}
-        </h1>
-        <Link href="/workspace" className="text-sm underline">
+    <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6">
+      <header className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Logo height={28} symbolOnly />
+          <h1 className="lg-heading-1">
+            {state.workspaceName}
+            {state.agent && <span className="font-normal text-ink-muted"> · {state.agent.name}</span>}
+          </h1>
+        </div>
+        <Link href="/workspace" className="lg-btn lg-btn-ghost lg-btn-sm">
+          <Icon name="chevronLeft" />
           Todos os espaços
         </Link>
       </header>
 
       {notice && (
-        <p role="status" className={`rounded-xl px-4 py-3 text-sm ${notice.ok ? "bg-green-50 text-green-900" : "bg-red-50 text-red-800"}`}>
+        <p role="status" className={`rounded-xl px-4 py-3 text-sm ${notice.ok ? "bg-brand-tint text-brand-ink" : "bg-danger-tint text-danger-ink"}`}>
           {notice.text}
         </p>
       )}
@@ -107,12 +112,12 @@ export default async function WorkspaceChatPage({
         </>
       ) : (
         <>
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-neutral-200 px-4 py-3 text-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-line px-4 py-3 text-sm">
             <p data-testid="shared-banner">
               Compartilhado com você · <strong>{ROLE_LABEL[state.role]}</strong>. Você vê o painel, os alertas e os comentários; só o dono conversa com a IA.
             </p>
             <form action={leaveWorkspace.bind(null, id)}>
-              <button type="submit" className="rounded-lg border border-neutral-300 px-3 py-1.5">
+              <button type="submit" className="rounded-lg border border-line px-3 py-1.5">
                 Sair deste espaço
               </button>
             </form>

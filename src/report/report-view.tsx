@@ -36,7 +36,7 @@ export function ReportView({ report, backHref }: { report: Report; backHref?: st
     </p>
   );
   return (
-    <main className="mx-auto max-w-3xl space-y-5 px-4 py-8 print:max-w-none print:p-0">
+    <main data-theme="light" className="mx-auto max-w-3xl bg-surface text-ink space-y-5 px-4 py-8 print:max-w-none print:p-0">
       <div data-print="hide" className="flex flex-wrap items-center justify-between gap-2 print:hidden">
         {backHref ? (
           <a href={backHref} className="text-sm underline">

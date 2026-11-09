@@ -53,6 +53,18 @@ npm run dev                    # http://localhost:3000
 4. Converse. Sem chave da OpenAI, use a IA roteirizada (só em desenvolvimento): `LOG_TAX_LLM=scripted` no `.env.local`.
    Ela responde a frases como *"Quero organizar meus impostos"*, *"Empresa"*, *"Como posso pagar menos?"*, *"E se o faturamento subir para R$ 500 mil?"*, *"Me avise se meus impostos passarem de R$ 20 mil"*, *"Crie uma IA para minha empresa"* e *"Gere um relatório"*.
 
+## Design system "Log"
+
+A interface usa o design system **Log** (superfícies táteis: elevado = clicável, afundado = recebe conteúdo).
+
+- `src/styles/log-tokens.json` — tokens exportados do sistema (cores claro/escuro, sombras, raios, espaço, tipografia).
+- `src/styles/log-tokens.css` — gerado: `node scripts/gen-log-tokens.mjs src/styles/log-tokens.json src/styles/log-tokens.css`.
+- `src/styles/log.css` — estilos dos componentes (classes `lg-*`).
+- `src/ui/log.tsx` — componentes React (`Button`, `Input`, `Badge`, `Panel`, `Icon`, `Logo`).
+- `public/brand/` — logotipos e símbolo; `src/app/icon.svg` é o favicon.
+
+O tema segue o sistema operacional; `data-theme="light|dark"` num elemento troca os tokens só dentro dele (é assim que o painel aplica o próprio tema).
+
 Portas do Supabase local: 55321 (API), 55322 (Postgres), 55324 (Mailpit). Para recomeçar do zero: `npm run db:reset`.
 
 ### Variáveis de ambiente (`.env.local`)

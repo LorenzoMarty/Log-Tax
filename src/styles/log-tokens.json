@@ -1,0 +1,493 @@
+{
+ "name": "Log",
+ "version": 1,
+ "color": {
+  "themes": [
+   {
+    "id": "light",
+    "name": "Claro"
+   },
+   {
+    "id": "dark",
+    "name": "Escuro"
+   }
+  ],
+  "tokens": [
+   {
+    "name": "canvas",
+    "value": {
+     "light": "#E3E6EE",
+     "dark": "#0D0F13"
+    },
+    "usage": "Fundo da página; o vão entre painéis."
+   },
+   {
+    "name": "surface",
+    "value": {
+     "light": "#ECEEF4",
+     "dark": "#151820"
+    },
+    "usage": "Painéis grandes (Panel) assentados sobre `canvas`."
+   },
+   {
+    "name": "surface-raised",
+    "value": {
+     "light": "#F6F7FA",
+     "dark": "#1C2029"
+    },
+    "usage": "Cartões, botões soft e tiles elevados dentro de um painel."
+   },
+   {
+    "name": "surface-sunken",
+    "value": {
+     "light": "#DDE1E9",
+     "dark": "#0A0C10"
+    },
+    "usage": "Campos, trilhos de toggle e áreas afundadas (com `shadow-inset`)."
+   },
+   {
+    "name": "line",
+    "value": {
+     "light": "#D0D5DF",
+     "dark": "#272C37"
+    },
+    "usage": "Divisores finos dentro de cartões; nunca como borda principal — a profundidade vem das sombras."
+   },
+   {
+    "name": "ink",
+    "value": {
+     "light": "#14161B",
+     "dark": "#E5E7EB"
+    },
+    "usage": "Texto principal em `canvas`, `surface`, `surface-raised` e `surface-sunken`. #E5E7EB é o cinza claro do logotipo."
+   },
+   {
+    "name": "ink-muted",
+    "value": {
+     "light": "#4A505D",
+     "dark": "#A3A9B6"
+    },
+    "usage": "Texto secundário, rótulos de coluna e legendas nas mesmas superfícies que `ink`."
+   },
+   {
+    "name": "ink-subtle",
+    "value": {
+     "light": "#5C6271",
+     "dark": "#8B91A0"
+    },
+    "usage": "Placeholder e metadados (datas, contagens) — tamanho mínimo 12px."
+   },
+   {
+    "name": "brand-300",
+    "value": {
+     "light": "#9AF0D0",
+     "dark": "#9AF0D0"
+    },
+    "usage": "Tinta clara do símbolo (faixa da base). Destaques e fundos de seleção suaves; nunca texto."
+   },
+   {
+    "name": "brand-400",
+    "value": {
+     "light": "#5EE6B5",
+     "dark": "#5EE6B5"
+    },
+    "usage": "Topo do degradê do símbolo. Indicadores, anéis de progresso, ícones sobre `inverse`."
+   },
+   {
+    "name": "brand-500",
+    "value": {
+     "light": "#1FBF8A",
+     "dark": "#1FBF8A"
+    },
+    "usage": "Verde Log — base do degradê. Preenchimento do botão primário e estados ativos."
+   },
+   {
+    "name": "brand-ink",
+    "value": {
+     "light": "#0B6E4E",
+     "dark": "#5EE6B5"
+    },
+    "usage": "Texto e ícones verdes sobre `surface`, `surface-raised` e `brand-tint`."
+   },
+   {
+    "name": "brand-tint",
+    "value": {
+     "light": "#D3F5E7",
+     "dark": "#123328"
+    },
+    "usage": "Fundo de badges e linhas selecionadas na cor da marca."
+   },
+   {
+    "name": "on-brand",
+    "value": {
+     "light": "#05261A",
+     "dark": "#05261A"
+    },
+    "usage": "Texto e ícones sobre `brand-500` e `brand-400` (nunca branco)."
+   },
+   {
+    "name": "inverse",
+    "value": {
+     "light": "#14161B",
+     "dark": "#E5E7EB"
+    },
+    "usage": "Pílula selecionada (aba ativa, tile ativo, toggle ligado) — o contraste máximo da referência."
+   },
+   {
+    "name": "on-inverse",
+    "value": {
+     "light": "#F6F7FA",
+     "dark": "#14161B"
+    },
+    "usage": "Texto e ícones sobre `inverse`."
+   },
+   {
+    "name": "info",
+    "value": {
+     "light": "#5B7DD1",
+     "dark": "#7F9CE6"
+    },
+    "usage": "Série azul em gráficos e o ponto de status informativo."
+   },
+   {
+    "name": "info-tint",
+    "value": {
+     "light": "#DCE4F7",
+     "dark": "#1B2540"
+    },
+    "usage": "Fundo do badge informativo."
+   },
+   {
+    "name": "info-ink",
+    "value": {
+     "light": "#2D4A97",
+     "dark": "#B3C6F5"
+    },
+    "usage": "Texto sobre `info-tint`."
+   },
+   {
+    "name": "danger",
+    "value": {
+     "light": "#D9605F",
+     "dark": "#EE8584"
+    },
+    "usage": "Ponto de notificação, série de alerta em gráficos."
+   },
+   {
+    "name": "danger-tint",
+    "value": {
+     "light": "#F8DEDD",
+     "dark": "#3A1C1D"
+    },
+    "usage": "Fundo do badge de erro/atraso."
+   },
+   {
+    "name": "danger-ink",
+    "value": {
+     "light": "#9C2F2E",
+     "dark": "#F7B6B5"
+    },
+    "usage": "Texto sobre `danger-tint`."
+   },
+   {
+    "name": "warning",
+    "value": {
+     "light": "#E2A23B",
+     "dark": "#F0B95C"
+    },
+    "usage": "Série de atenção em gráficos; ponto de status pendente."
+   },
+   {
+    "name": "warning-tint",
+    "value": {
+     "light": "#F8EACB",
+     "dark": "#3A2C12"
+    },
+    "usage": "Fundo do badge de atenção."
+   },
+   {
+    "name": "warning-ink",
+    "value": {
+     "light": "#7A4F05",
+     "dark": "#F5D08A"
+    },
+    "usage": "Texto sobre `warning-tint`."
+   },
+   {
+    "name": "focus",
+    "value": {
+     "light": "#0B6E4E",
+     "dark": "#5EE6B5"
+    },
+    "usage": "Anel de foco de 2px com 2px de afastamento, em qualquer superfície."
+   },
+   {
+    "name": "chart-1",
+    "value": {
+     "light": "#13A877",
+     "dark": "#17AD7C"
+    },
+    "usage": "Série categórica 1 (sempre a primeira). Só marcas de gráfico — texto fica em `ink`."
+   },
+   {
+    "name": "chart-2",
+    "value": {
+     "light": "#5B7DD1",
+     "dark": "#6B8BE0"
+    },
+    "usage": "Série categórica 2."
+   },
+   {
+    "name": "chart-3",
+    "value": {
+     "light": "#E2A23B",
+     "dark": "#C0862A"
+    },
+    "usage": "Série categórica 3. Abaixo de 3:1 no tema claro: sempre com legenda com valores ou rótulo direto."
+   },
+   {
+    "name": "chart-4",
+    "value": {
+     "light": "#B4568C",
+     "dark": "#CC6AA2"
+    },
+    "usage": "Série categórica 4. Uma 5ª série vira \"Outros\" em `chart-other`."
+   },
+   {
+    "name": "chart-other",
+    "value": {
+     "light": "#9AA1AF",
+     "dark": "#5A6170"
+    },
+    "usage": "Agrupamento \"Outros\" e trilho vazio de anéis."
+   },
+   {
+    "name": "chart-grid",
+    "value": {
+     "light": "#DCE0E8",
+     "dark": "#2A2F3A"
+    },
+    "usage": "Linhas de grade e eixo — recessivas."
+   }
+  ]
+ },
+ "type": {
+  "fonts": [],
+  "families": {
+   "sans": "Inter, \"Helvetica Neue\", Helvetica, Arial, sans-serif"
+  },
+  "groups": [
+   {
+    "name": "Display",
+    "family": "sans",
+    "styles": [
+     {
+      "name": "display",
+      "fontSize": "40px",
+      "lineHeight": "44px",
+      "fontWeight": 600,
+      "letterSpacing": "-0.03em",
+      "sample": "Jornada do cliente",
+      "usage": "Título de página (uma vez por tela)."
+     },
+     {
+      "name": "heading-1",
+      "fontSize": "28px",
+      "lineHeight": "34px",
+      "fontWeight": 600,
+      "letterSpacing": "-0.02em",
+      "sample": "Notas fiscais",
+      "usage": "Título de seção grande."
+     },
+     {
+      "name": "heading-2",
+      "fontSize": "18px",
+      "lineHeight": "24px",
+      "fontWeight": 600,
+      "letterSpacing": "-0.01em",
+      "sample": "Novos lançamentos",
+      "usage": "Título de Panel."
+     }
+    ]
+   },
+   {
+    "name": "Texto",
+    "family": "sans",
+    "styles": [
+     {
+      "name": "body-strong",
+      "fontSize": "14px",
+      "lineHeight": "20px",
+      "fontWeight": 600,
+      "sample": "Apurar ICMS do período",
+      "usage": "Título de StepCard, itens de navegação, botões."
+     },
+     {
+      "name": "body",
+      "fontSize": "14px",
+      "lineHeight": "20px",
+      "fontWeight": 400,
+      "sample": "Envie o comprovante ao cliente",
+      "usage": "Texto corrido e células de tabela."
+     },
+     {
+      "name": "caption",
+      "fontSize": "12px",
+      "lineHeight": "16px",
+      "fontWeight": 500,
+      "sample": "2026-10-01 · 09:41",
+      "usage": "Metadados, rótulos de coluna, legendas de gráfico."
+     },
+     {
+      "name": "numeral",
+      "fontSize": "32px",
+      "lineHeight": "36px",
+      "fontWeight": 600,
+      "letterSpacing": "-0.03em",
+      "sample": "R$ 18.420",
+      "usage": "Números de destaque em cartões de indicador."
+     }
+    ]
+   }
+  ]
+ },
+ "spacing": {
+  "tokens": [
+   {
+    "name": "space-1",
+    "value": "4px",
+    "usage": "Gap entre ícone e rótulo pequeno."
+   },
+   {
+    "name": "space-2",
+    "value": "8px",
+    "usage": "Gap entre IconButtons agrupados e entre avatares."
+   },
+   {
+    "name": "space-3",
+    "value": "12px",
+    "usage": "Padding interno de StepCard e badges."
+   },
+   {
+    "name": "space-4",
+    "value": "16px",
+    "usage": "Gap entre cartões dentro de um painel."
+   },
+   {
+    "name": "space-5",
+    "value": "24px",
+    "usage": "Padding de cartões e tiles."
+   },
+   {
+    "name": "space-6",
+    "value": "32px",
+    "usage": "Padding de Panel."
+   },
+   {
+    "name": "space-7",
+    "value": "48px",
+    "usage": "Respiro entre painéis e seções da página."
+   }
+  ]
+ },
+ "radius": {
+  "tokens": [
+   {
+    "name": "radius-sm",
+    "value": "10px",
+    "usage": "Badges retangulares, células, tooltips."
+   },
+   {
+    "name": "radius-md",
+    "value": "16px",
+    "usage": "Campos e StepCards."
+   },
+   {
+    "name": "radius-lg",
+    "value": "24px",
+    "usage": "Tiles e cartões dentro de um painel."
+   },
+   {
+    "name": "radius-xl",
+    "value": "32px",
+    "usage": "Painéis grandes (Panel)."
+   },
+   {
+    "name": "radius-pill",
+    "value": "999px",
+    "usage": "Botões, abas, badges, IconButtons e avatares."
+   }
+  ]
+ },
+ "shadow": {
+  "note": "O coração da identidade: toda superfície elevada combina uma drop shadow fria e longa com um inner shadow — brilho de 1px no topo e sombra suave na base. Afundados usam o inverso.",
+  "tokens": [
+   {
+    "name": "shadow-raised",
+    "value": {
+     "light": "0 14px 28px -10px rgba(84,94,122,0.30), 0 2px 6px rgba(84,94,122,0.10), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -2px 3px rgba(150,160,184,0.16)",
+     "dark": "0 16px 30px -12px rgba(0,0,0,0.70), 0 2px 6px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.07), inset 0 -2px 3px rgba(0,0,0,0.30)"
+    },
+    "usage": "Cartões e tiles: sombra externa longa e macia + brilho interno no topo. A assinatura do sistema."
+   },
+   {
+    "name": "shadow-raised-sm",
+    "value": {
+     "light": "0 6px 14px -6px rgba(84,94,122,0.32), 0 1px 2px rgba(84,94,122,0.12), inset 0 1px 0 rgba(255,255,255,0.95), inset 0 -1px 2px rgba(150,160,184,0.18)",
+     "dark": "0 8px 16px -8px rgba(0,0,0,0.70), 0 1px 2px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 2px rgba(0,0,0,0.30)"
+    },
+    "usage": "Botões soft e IconButton em repouso."
+   },
+   {
+    "name": "shadow-panel",
+    "value": {
+     "light": "0 24px 48px -24px rgba(84,94,122,0.28), inset 0 1px 0 rgba(255,255,255,0.75), inset 0 0 0 1px rgba(255,255,255,0.35)",
+     "dark": "0 24px 48px -24px rgba(0,0,0,0.80), inset 0 1px 0 rgba(255,255,255,0.05), inset 0 0 0 1px rgba(255,255,255,0.03)"
+    },
+    "usage": "Painéis grandes sobre `canvas` — mais difusa que `shadow-raised`, para não competir com os cartões dentro."
+   },
+   {
+    "name": "shadow-inset",
+    "value": {
+     "light": "inset 0 2px 6px rgba(84,94,122,0.22), inset 0 1px 1px rgba(84,94,122,0.12), inset 0 -1px 0 rgba(255,255,255,0.85)",
+     "dark": "inset 0 2px 6px rgba(0,0,0,0.65), inset 0 1px 1px rgba(0,0,0,0.50), inset 0 -1px 0 rgba(255,255,255,0.05)"
+    },
+    "usage": "Campos de texto, trilhos e grupos afundados: a luz vem de cima, então a sombra fica na borda superior."
+   },
+   {
+    "name": "shadow-pressed",
+    "value": {
+     "light": "inset 0 3px 8px rgba(84,94,122,0.28), inset 0 -1px 0 rgba(255,255,255,0.70)",
+     "dark": "inset 0 3px 8px rgba(0,0,0,0.70), inset 0 -1px 0 rgba(255,255,255,0.04)"
+    },
+    "usage": "Estado :active de qualquer superfície elevada — a peça afunda."
+   },
+   {
+    "name": "shadow-brand",
+    "value": {
+     "light": "0 12px 24px -10px rgba(31,191,138,0.65), inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -2px 4px rgba(5,38,26,0.22)",
+     "dark": "0 12px 26px -10px rgba(31,191,138,0.55), inset 0 1px 0 rgba(255,255,255,0.45), inset 0 -2px 4px rgba(5,38,26,0.30)"
+    },
+    "usage": "Botão primário e elementos preenchidos em `brand-500`: brilho verde embaixo, luz interna no topo."
+   },
+   {
+    "name": "shadow-inverse",
+    "value": {
+     "light": "0 12px 22px -10px rgba(20,22,27,0.55), inset 0 1px 0 rgba(255,255,255,0.20), inset 0 -2px 4px rgba(0,0,0,0.35)",
+     "dark": "0 12px 22px -10px rgba(0,0,0,0.80), inset 0 1px 0 rgba(255,255,255,0.90), inset 0 -2px 4px rgba(84,94,122,0.30)"
+    },
+    "usage": "Pílula `inverse` selecionada (aba ativa, tile ativo, toggle)."
+   }
+  ]
+ },
+ "gradient": {
+  "note": "O degradê do símbolo Log.",
+  "tokens": [
+   {
+    "name": "gradient-brand",
+    "value": "linear-gradient(160deg, #5EE6B5 0%, #1FBF8A 100%)",
+    "usage": "Somente no símbolo, em anéis de gráfico e no botão primário grande. Nunca como fundo de seção."
+   }
+  ]
+ }
+}

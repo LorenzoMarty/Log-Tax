@@ -17,22 +17,22 @@ const kb = (n: number | null) => (n === null ? "" : n < 1024 * 100 ? `${Math.max
 /** Documents of a workspace: the owner uploads and deletes, members only read and download. */
 export function DocumentsPanel({ workspaceId, documents, canEdit }: { workspaceId: string; documents: DocumentRow[]; canEdit: boolean }) {
   return (
-    <section aria-label="Documentos" className="space-y-3 rounded-3xl border border-neutral-200 p-4 text-sm">
+    <section aria-label="Documentos" className="space-y-3 rounded-3xl border border-line p-4 text-sm">
       <h2 className="font-medium">Documentos ({documents.length})</h2>
       {canEdit && <UploadForm workspaceId={workspaceId} />}
       {documents.length === 0 ? (
-        <p className="text-neutral-500">Nenhum documento ainda.</p>
+        <p className="text-ink-muted">Nenhum documento ainda.</p>
       ) : (
         <ul className="space-y-2">
           {documents.map((d) => {
             const fields = formatExtracted(d.extracted?.fields ?? {});
             const missing = (d.extracted?.missing ?? []).map((m) => MISSING_LABEL[m] ?? m);
             return (
-              <li key={d.id} data-testid="document" className="rounded-2xl bg-neutral-50 px-3 py-2">
+              <li key={d.id} data-testid="document" className="rounded-2xl bg-surface-sunken px-3 py-2">
                 <p className="flex flex-wrap items-center gap-2">
                   <strong>{d.name}</strong>
-                  <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-xs">{DOC_LABEL[d.doc_type ?? "outro"]}</span>
-                  <span className="text-xs text-neutral-500">
+                  <span className="rounded-full bg-surface-sunken px-2 py-0.5 text-xs">{DOC_LABEL[d.doc_type ?? "outro"]}</span>
+                  <span className="text-xs text-ink-muted">
                     {kb(d.size_bytes)} · leitura {d.extracted?.confidence ?? "baixa"}
                   </span>
                 </p>
@@ -40,15 +40,15 @@ export function DocumentsPanel({ workspaceId, documents, canEdit }: { workspaceI
                   <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 text-xs">
                     {fields.map(([label, value]) => (
                       <div key={label} className="contents">
-                        <dt className="text-neutral-500">{label}</dt>
+                        <dt className="text-ink-muted">{label}</dt>
                         <dd>{value}</dd>
                       </div>
                     ))}
                   </dl>
                 )}
-                {missing.length > 0 && <p className="mt-1 text-xs text-amber-900">Não consegui ler: {missing.join(", ")}.</p>}
+                {missing.length > 0 && <p className="mt-1 text-xs text-warning-ink">Não consegui ler: {missing.join(", ")}.</p>}
                 {(d.extracted?.notes ?? []).map((n) => (
-                  <p key={n} className="mt-1 text-xs text-neutral-500">
+                  <p key={n} className="mt-1 text-xs text-ink-muted">
                     {n}
                   </p>
                 ))}

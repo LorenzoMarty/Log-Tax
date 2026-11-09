@@ -35,17 +35,17 @@ export function UploadForm({ workspaceId }: { workspaceId: string }) {
       <input type="hidden" name="workspaceId" value={workspaceId} />
       <label className="flex flex-col gap-1">
         Documento (PDF, XML, PNG, JPG ou TXT, até 10 MB)
-        <input name="file" type="file" required accept=".pdf,.xml,.png,.jpg,.jpeg,.txt" className="rounded-xl border border-neutral-300 px-3 py-2" />
+        <input name="file" type="file" required accept=".pdf,.xml,.png,.jpg,.jpeg,.txt" className="rounded-xl border border-line px-3 py-2" />
       </label>
-      <label className="flex items-start gap-2 text-xs text-neutral-700">
+      <label className="flex items-start gap-2 text-xs text-ink-muted">
         <input name="consent" type="checkbox" required className="mt-0.5" />
         <span>{CONSENT_TEXT}</span>
       </label>
-      <button type="submit" disabled={busy} className="rounded-xl bg-neutral-900 px-4 py-2 text-white disabled:opacity-60">
+      <button type="submit" disabled={busy} className="rounded-xl bg-inverse px-4 py-2 text-on-inverse disabled:opacity-60">
         {busy ? "Enviando…" : "Anexar documento"}
       </button>
       {status && (
-        <p role={status.ok ? "status" : "alert"} className={`rounded-xl px-3 py-2 text-xs ${status.ok ? "bg-green-50 text-green-900" : "bg-red-50 text-red-800"}`}>
+        <p role={status.ok ? "status" : "alert"} className={`rounded-xl px-3 py-2 text-xs ${status.ok ? "bg-brand-tint text-brand-ink" : "bg-danger-tint text-danger-ink"}`}>
           {status.text}
         </p>
       )}
