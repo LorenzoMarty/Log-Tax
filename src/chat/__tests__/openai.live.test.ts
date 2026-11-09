@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { alertStatuses } from "@/alerts/evaluate";
 import { DISCLAIMER, mockEngine } from "@/engine";
 import { createMemoryStore } from "../memory-store";
 import { createOpenAiLlm } from "../openai-llm";
@@ -30,6 +31,8 @@ describe("OpenAI end to end", () => {
     const r = await runTurn({ llm, ctx: c, history: [], userMessage: "Me avise se meus impostos mensais passarem de R$ 20 mil." });
     expect(names(r)).toContain("create_alert");
     expect(c.store.listAlerts()[0]?.rule).toMatchObject({ metric: "monthlyTotal", operator: "gt", threshold: 20000 });
+    // the demo company pays ~R$ 42.8k/month, so the alert the model created must fire
+    expect(alertStatuses(mockEngine, c.store.getCompany(), c.store.listAlerts())[0]?.triggered).toBe(true);
   });
 
   it("builds a dashboard widget on request and keeps the conversation across turns", async () => {

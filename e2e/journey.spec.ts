@@ -40,6 +40,16 @@ test("company journey: context → diagnosis → dashboard → opportunities →
   await expect(sim).toContainText("R$ 600.000");
   await expect(sim).not.toContainText("R$ 500.000");
 
+  // in-app alert: created by chat, fires at once, re-evaluated when the data changes
+  await say(page, "Me avise se meus impostos passarem de R$ 20 mil", /20\.000/);
+  await expect(page.getByTestId("alert-banner")).toContainText("Impostos por mês acima de R$ 20.000");
+  await expect(page.getByLabel("1 alerta disparado")).toBeVisible();
+  await say(page, "Meu faturamento mensal é R$ 100 mil", /Atualizei o faturamento/);
+  await expect(page.getByTestId("alert-banner")).toHaveCount(0);
+  await expect(page.getByLabel("Nenhum alerta disparado")).toBeVisible();
+  await say(page, "Meu faturamento mensal é R$ 400 mil", /Atualizei o faturamento/);
+  await expect(page.getByTestId("alert-banner")).toBeVisible();
+
   // destructive action: nothing disappears until the user confirms
   await say(page, "Tira o painel de carga tributária", /Você confirma/);
   await expect(page.getByTestId("widget-kpi")).toBeVisible();
@@ -51,6 +61,7 @@ test("company journey: context → diagnosis → dashboard → opportunities →
   await expect(page.getByTestId("widget-breakdown")).toBeVisible();
   await expect(page.getByTestId("widget-kpi")).toHaveCount(0);
   await expect(page.getByText("Quero organizar meus impostos")).toBeVisible();
+  await expect(page.getByTestId("alert-banner")).toContainText("Impostos por mês acima de R$ 20.000"); // evaluated on open
 });
 
 test("chat is unusable without a session", async ({ request }) => {
