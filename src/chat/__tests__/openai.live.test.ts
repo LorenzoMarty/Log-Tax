@@ -110,6 +110,14 @@ describe("OpenAI end to end", () => {
     expect(second.text).toMatch(/29[.,]?56|1[.,]?93/); // new complete-model tax or refund
   });
 
+  it("generates the report and hands the user the link to the printable page", async () => {
+    const c = ctx();
+    c.scope.workspaceId = "11111111-2222-4333-8444-555555555555";
+    const r = await runTurn({ llm, ctx: c, history: [], userMessage: "Gere um relatório da minha situação tributária." });
+    expect(names(r)).toContain("generate_report");
+    expect(r.text).toContain(`/workspace/${c.scope.workspaceId}/relatorio`);
+  });
+
   it("never removes a widget without the user's confirmation", async () => {
     const c = ctx();
     c.store.dispatch({ type: "add", widget: { id: "kpi", kind: "kpi", title: "Carga", size: "md", value: "R$ 1" } });

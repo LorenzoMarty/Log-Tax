@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { DISCLAIMER } from "@/engine";
 import type { Widget } from "@/dashboard/types";
 import type { ToolContext, ToolOutcome, ToolSpec, Scope } from "./types";
 import { widgetSchema } from "./widget-schema";
@@ -100,19 +99,12 @@ const TOOLS: Tool[] = [
   }),
   defineTool({
     name: "generate_report",
-    kinds: ["empresa"],
-    description: "Reúne diagnóstico, oportunidades e premissas num relatório.",
+    description: "Gera o relatório imprimível do espaço (resumo, impostos, oportunidades, economia potencial, premissas e itens a validar) e devolve o caminho para abri-lo.",
     schema: none,
-    engine: true,
-    run(ctx) {
-      const c = ctx.store.getCompany();
-      return {
-        title: `Relatório tributário — ${c.name}`,
-        diagnosis: ctx.engine.diagnose(c),
-        opportunities: ctx.engine.opportunities(c),
-        disclaimer: DISCLAIMER,
-      };
-    },
+    run: (ctx) => ({
+      title: ctx.scope.kind === "pessoal" ? "Relatório de Imposto de Renda" : "Relatório tributário",
+      url: `/workspace/${ctx.scope.workspaceId}/relatorio`,
+    }),
   }),
   defineTool({
     name: "save_company_data",

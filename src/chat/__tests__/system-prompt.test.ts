@@ -49,6 +49,11 @@ describe("system prompt", () => {
     expect(prompt).not.toMatch(/get_ir_diagnosis/);
   });
 
+  it("tells the model to hand the report link to the user", () => {
+    expect(prompt).toMatch(/generate_report/);
+    expect(prompt).toMatch(/relatório/i);
+  });
+
   it("asks for plain text because the chat does not render Markdown", () => {
     expect(prompt).toMatch(/não use markdown/i);
   });
