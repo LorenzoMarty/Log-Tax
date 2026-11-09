@@ -64,7 +64,7 @@ export interface OpportunitySet {
 export interface TaxRule {
   id: string;
   name: string;
-  category: "tax" | "opportunity";
+  category: "tax" | "opportunity" | "person";
   jurisdiction: string;
   conditions: string;
   requiredData: string[];
@@ -84,4 +84,42 @@ export interface TaxEngine {
   diagnose(profile: CompanyProfile): EngineResult<Diagnosis>;
   simulate(profile: CompanyProfile, overrides: Partial<CompanyProfile>): EngineResult<Simulation>;
   opportunities(profile: CompanyProfile): EngineResult<OpportunitySet>;
+  diagnosePerson(profile: PersonProfile): EngineResult<PersonDiagnosis>;
+}
+
+
+export interface PersonProfile {
+  id: string;
+  name: string;
+  kind: "pessoa";
+  annualGrossIncome?: number;
+  /** INSS already paid in the year (deductible in the complete model). */
+  inssPaid?: number;
+  dependents?: number;
+  healthExpenses?: number;
+  educationExpenses?: number;
+  privatePension?: number;
+  /** IR already withheld at source during the year; without it no refund/amount-due is computed. */
+  taxWithheld?: number;
+}
+
+export interface IrScenario {
+  model: "simplificada" | "completa";
+  deductions: number;
+  taxableBase: number;
+  tax: number;
+  /** withheld − tax: positive is a refund (restituição), negative is tax still to pay. */
+  balance?: number;
+}
+
+export interface PersonDiagnosis {
+  annualGrossIncome: number;
+  simplified: IrScenario;
+  complete: IrScenario;
+  best: "simplificada" | "completa";
+  /** How much the best model saves compared with the simplified one (0 when simplified is best). */
+  annualSavings: number;
+  assumptions: string[];
+  disclaimer: string;
+  rulesVersion: string;
 }

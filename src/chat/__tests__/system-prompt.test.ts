@@ -41,6 +41,14 @@ describe("system prompt", () => {
     expect(prompt).not.toMatch(/id=/);
   });
 
+  it("points personal workspaces to the IR tools and company ones away from them", () => {
+    const pf = buildSystemPrompt({ workspaceName: "Vida Pessoal", kind: "pessoal" });
+    expect(pf).toMatch(/get_ir_diagnosis/);
+    expect(pf).toMatch(/pessoa física/i);
+    expect(buildSystemPrompt({ workspaceName: "Minha Empresa", kind: "empresa" })).not.toMatch(/get_ir_diagnosis/);
+    expect(prompt).not.toMatch(/get_ir_diagnosis/);
+  });
+
   it("asks for plain text because the chat does not render Markdown", () => {
     expect(prompt).toMatch(/não use markdown/i);
   });

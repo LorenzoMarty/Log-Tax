@@ -2,6 +2,9 @@ import { ENGINE_VERSION, RULES } from "./rules";
 import type {
   CompanyProfile,
   Diagnosis,
+  IrScenario,
+  PersonDiagnosis,
+  PersonProfile,
   EngineResult,
   Opportunity,
   OpportunitySet,
@@ -108,11 +111,79 @@ function opportunities(p: CompanyProfile): EngineResult<OpportunitySet> {
   return { status: "ok", value: { items, annualSavings } };
 }
 
+// Illustrative IRPF: the 2025 monthly table annualised (limits and deductions x 12). Not legal advice.
+const IR_BRACKETS = [
+  { upTo: 27110.4, rate: 0, deduction: 0 },
+  { upTo: 33919.8, rate: 0.075, deduction: 2033.28 },
+  { upTo: 45012.6, rate: 0.15, deduction: 4577.28 },
+  { upTo: 55976.16, rate: 0.225, deduction: 7953.24 },
+  { upTo: Infinity, rate: 0.275, deduction: 10752 },
+];
+const DEPENDENT_DEDUCTION = 2275.08;
+const EDUCATION_CAP = 3561.5;
+const SIMPLIFIED_RATE = 0.2;
+const SIMPLIFIED_CAP = 16754.34;
+
+function irTax(base: number): number {
+  if (base <= 0) return 0;
+  const b = IR_BRACKETS.find((x) => base <= x.upTo)!;
+  return round2(Math.max(0, base * b.rate - b.deduction));
+}
+
+function irScenario(model: IrScenario["model"], gross: number, deductions: number, withheld?: number): IrScenario {
+  const taxableBase = Math.max(0, gross - deductions);
+  const tax = irTax(taxableBase);
+  return {
+    model,
+    deductions: round2(deductions),
+    taxableBase: round2(taxableBase),
+    tax,
+    balance: withheld === undefined ? undefined : round2(withheld - tax),
+  };
+}
+
+function diagnosePerson(p: PersonProfile): EngineResult<PersonDiagnosis> {
+  if (p.annualGrossIncome === undefined) return { status: "insufficient_data", missing: ["annualGrossIncome"] };
+  const gross = p.annualGrossIncome;
+  const complete = irScenario(
+    "completa",
+    gross,
+    (p.inssPaid ?? 0) +
+      (p.dependents ?? 0) * DEPENDENT_DEDUCTION +
+      (p.healthExpenses ?? 0) +
+      Math.min(p.educationExpenses ?? 0, EDUCATION_CAP) +
+      (p.privatePension ?? 0),
+    p.taxWithheld,
+  );
+  const simplified = irScenario("simplificada", gross, Math.min(gross * SIMPLIFIED_RATE, SIMPLIFIED_CAP), p.taxWithheld);
+  return {
+    status: "ok",
+    value: {
+      annualGrossIncome: gross,
+      simplified,
+      complete,
+      best: complete.tax < simplified.tax ? "completa" : "simplificada",
+      annualSavings: round2(Math.max(0, simplified.tax - complete.tax)),
+      assumptions: [
+        "Tabela mensal do IRPF de 2025 anualizada (valores ilustrativos, não conferidos com a legislação).",
+        "Dependente: R$ 2.275,08/ano. Educação limitada a R$ 3.561,50. Desconto simplificado: 20% da renda, limitado a R$ 16.754,34.",
+        p.taxWithheld === undefined
+          ? "Sem o imposto retido na fonte, não é possível calcular restituição nem imposto a pagar."
+          : "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+        `Regras versão ${ENGINE_VERSION}.`,
+      ],
+      disclaimer: DISCLAIMER,
+      rulesVersion: ENGINE_VERSION,
+    },
+  };
+}
+
 export const mockEngine: TaxEngine = {
   version: ENGINE_VERSION,
   rules: () => RULES,
   diagnose,
   opportunities,
+  diagnosePerson,
   simulate(profile, overrides) {
     const current = diagnose(profile);
     if (current.status !== "ok") return current;

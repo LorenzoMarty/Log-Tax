@@ -1,11 +1,14 @@
 import { DISCLAIMER } from "@/engine";
 import type { Agent } from "./types";
 
-export function buildSystemPrompt(o: { workspaceName: string; agent?: { name: string; objective: string }; agents?: Agent[] }): string {
+export function buildSystemPrompt(o: { workspaceName: string; kind?: "empresa" | "pessoal"; agent?: { name: string; objective: string }; agents?: Agent[] }): string {
   const lines = [
     "Você é a IA do Log Tax, assistente de inteligência tributária. Responda sempre em português do Brasil, em linguagem simples, e explique qualquer termo técnico que usar.",
     `Espaço atual: ${o.workspaceName}.`,
   ];
+  if (o.kind === "pessoal") {
+    lines.push("Este espaço é de pessoa física (Imposto de Renda). Use get_ir_diagnosis para calcular e comparar a declaração simplificada e a completa, e save_person_data para registrar o que o usuário informar (renda, INSS, dependentes, despesas, imposto retido). As ferramentas de empresa não estão disponíveis aqui.");
+  }
   if (o.agent) lines.push(`Você atua como "${o.agent.name}". Objetivo: ${o.agent.objective}`);
   if (o.agents?.length) {
     lines.push("", "IAs especializadas existentes (use o id ao chamar update_agent):");

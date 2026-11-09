@@ -4,6 +4,7 @@ import { DISCLAIMER, mockEngine } from "@/engine";
 import { createMemoryStore } from "../memory-store";
 import { createOpenAiLlm } from "../openai-llm";
 import { runTurn } from "../orchestrator";
+import { buildSystemPrompt } from "../system-prompt";
 import type { ToolContext } from "../types";
 
 // Real model, real tools, in-memory store. Costs tokens: run on demand with `npm run test:live`.
@@ -87,6 +88,26 @@ describe("OpenAI end to end", () => {
     expect(names(r).filter((n) => n !== "get_tax_diagnosis")).toEqual([]); // nothing else was even attempted
     expect(c.store.getDashboard().widgets.some((w) => w.id === "kpi")).toBe(true);
     expect(c.store.listAlerts()).toHaveLength(0);
+  });
+
+  it("personal workspace: calculates IR from the engine, compares both models and records new data", async () => {
+    const c = ctx();
+    const scope = { workspaceId: "live", workspaceName: "Vida Pessoal", kind: "pessoal" as const };
+    const pf: ToolContext = { ...c, scope };
+    const system = buildSystemPrompt({ workspaceName: "Vida Pessoal", kind: "pessoal" });
+
+    const first = await runTurn({ llm, ctx: pf, system, history: [], userMessage: "Quanto vou pagar de imposto de renda este ano? Compare a declaração completa e a simplificada." });
+    expect(names(first)).toContain("get_ir_diagnosis");
+    expect(first.text).toMatch(/30[.,]?19|30[.,]?2/); // complete model tax (R$ 30.192,29)
+    expect(first.text).toMatch(/34[.,]?14|34[.,]?1/); // simplified model tax (R$ 34.140,56)
+    expect(first.text).toContain(DISCLAIMER);
+    expect(names(first).every((n) => !["get_tax_diagnosis", "run_simulation", "list_opportunities"].includes(n))).toBe(true);
+
+    const second = await runTurn({ llm, ctx: pf, system, history: first.history, userMessage: "Na verdade eu tenho 3 dependentes, não 2. Refaça o cálculo." });
+    expect(names(second)).toContain("save_person_data");
+    expect(c.store.getPerson().dependents).toBe(3);
+    expect(names(second)).toContain("get_ir_diagnosis");
+    expect(second.text).toMatch(/29[.,]?56|1[.,]?93/); // new complete-model tax or refund
   });
 
   it("never removes a widget without the user's confirmation", async () => {

@@ -36,13 +36,13 @@ export async function handleChat(
   const result = await runTurn({
     llm,
     ctx: {
-      scope: { workspaceId: input.workspaceId, workspaceName: state.workspaceName, agentId: agent?.id, allowedTools: agent?.tools },
+      scope: { workspaceId: input.workspaceId, workspaceName: state.workspaceName, kind: state.kind, agentId: agent?.id, allowedTools: agent?.tools },
       store,
       engine: mockEngine,
       // Approvals come from the user's click on the client, never from the model.
       approvals: new Set(input.approve ?? []),
     },
-    system: buildSystemPrompt({ workspaceName: state.workspaceName, agent, agents: agent ? undefined : state.agents }),
+    system: buildSystemPrompt({ workspaceName: state.workspaceName, kind: state.kind, agent, agents: agent ? undefined : state.agents }),
     history: state.history,
     userMessage: input.message,
   });
@@ -52,6 +52,7 @@ export async function handleChat(
   const agents = await saveWorkspaceState(sb, input.workspaceId, {
     ...store.snapshot(),
     dashboardRowId: state.dashboardRowId,
+    kind: state.kind,
     agentId: agent?.id,
     history: result.history,
     messages,
@@ -62,7 +63,7 @@ export async function handleChat(
     events: result.events.map((e) => ({ name: e.name, status: e.outcome.status })),
     pendingConfirmations: result.pendingConfirmations,
     dashboard: store.getDashboard(),
-    alerts: alertStatuses(mockEngine, store.getCompany(), store.listAlerts()),
+    alerts: state.kind === "pessoal" ? [] : alertStatuses(mockEngine, store.getCompany(), store.listAlerts()),
     agents,
     messages,
   };
