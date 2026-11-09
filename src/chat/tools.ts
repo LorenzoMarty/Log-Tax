@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { DISCLAIMER } from "@/engine";
 import type { Widget } from "@/dashboard/types";
 import type { ToolContext, ToolOutcome, ToolSpec, Scope } from "./types";
 import { widgetSchema } from "./widget-schema";
@@ -14,6 +13,8 @@ interface Tool<S extends z.ZodType = z.ZodType> {
   destructive?: boolean;
   /** Uses the tax engine: the reply must carry the estimate disclaimer. */
   engine?: boolean;
+  /** Workspace kinds where the tool applies; undefined = all. */
+  kinds?: ("empresa" | "pessoal")[];
   run(ctx: ToolContext, args: z.infer<S>): unknown;
 }
 const defineTool = <S extends z.ZodType>(t: Tool<S>) => t as unknown as Tool;
@@ -27,6 +28,17 @@ const company = z.strictObject({
   uf: z.string().length(2),
   monthlyPurchases: z.number().min(0),
   profitMargin: z.number().min(0).max(1).describe("fração, 0.08 = 8%"),
+});
+
+const person = z.strictObject({
+  name: z.string().min(1),
+  annualGrossIncome: z.number().min(0),
+  inssPaid: z.number().min(0),
+  dependents: z.int().min(0),
+  healthExpenses: z.number().min(0),
+  educationExpenses: z.number().min(0),
+  privatePension: z.number().min(0),
+  taxWithheld: z.number().min(0),
 });
 
 const none = z.strictObject({});
@@ -44,6 +56,7 @@ const need = <T>(value: T | undefined, message: string): T => {
 const TOOLS: Tool[] = [
   defineTool({
     name: "get_tax_diagnosis",
+    kinds: ["empresa"],
     description: "Calcula quanto a empresa paga de imposto por mês e por ano, e para onde vai.",
     schema: none,
     engine: true,
@@ -51,6 +64,7 @@ const TOOLS: Tool[] = [
   }),
   defineTool({
     name: "run_simulation",
+    kinds: ["empresa"],
     description: "Simula um novo faturamento mensal e compara com o cenário atual.",
     schema: z.strictObject({ monthlyRevenue: z.number().min(0) }),
     engine: true,
@@ -58,6 +72,7 @@ const TOOLS: Tool[] = [
   }),
   defineTool({
     name: "list_opportunities",
+    kinds: ["empresa"],
     description: "Lista oportunidades legais de economia tributária, com premissas e dados que faltam.",
     schema: none,
     engine: true,
@@ -66,10 +81,14 @@ const TOOLS: Tool[] = [
   defineTool({
     name: "explain_result",
     description: "Explica de onde veio um resultado: regras usadas, fontes, premissas e se precisa de validação.",
-    schema: z.strictObject({ subject: z.enum(["diagnosis", "opportunity"]), opportunityId: z.string().optional() }),
+    schema: z.strictObject({ subject: z.enum(["diagnosis", "opportunity", "ir"]), opportunityId: z.string().optional() }),
     engine: true,
     run(ctx, a) {
       const rules = ctx.engine.rules();
+      if (a.subject === "ir") {
+        const d = ctx.engine.diagnosePerson(ctx.store.getPerson());
+        return { rules: rules.filter((r) => r.category === "person"), assumptions: d.status === "ok" ? d.value.assumptions : [] };
+      }
       if (a.subject === "diagnosis") {
         const d = ctx.engine.diagnose(ctx.store.getCompany());
         return { rules: rules.filter((r) => r.category === "tax"), assumptions: d.status === "ok" ? d.value.assumptions : [] };
@@ -80,24 +99,34 @@ const TOOLS: Tool[] = [
   }),
   defineTool({
     name: "generate_report",
-    description: "Reúne diagnóstico, oportunidades e premissas num relatório.",
+    description: "Gera o relatório imprimível do espaço (resumo, impostos, oportunidades, economia potencial, premissas e itens a validar) e devolve o caminho para abri-lo.",
     schema: none,
-    engine: true,
-    run(ctx) {
-      const c = ctx.store.getCompany();
-      return {
-        title: `Relatório tributário — ${c.name}`,
-        diagnosis: ctx.engine.diagnose(c),
-        opportunities: ctx.engine.opportunities(c),
-        disclaimer: DISCLAIMER,
-      };
-    },
+    run: (ctx) => ({
+      title: ctx.scope.kind === "pessoal" ? "Relatório de Imposto de Renda" : "Relatório tributário",
+      url: `/workspace/${ctx.scope.workspaceId}/relatorio`,
+    }),
   }),
   defineTool({
     name: "save_company_data",
+    kinds: ["empresa"],
     description: "Salva dados informados pelo usuário sobre a empresa. Use só o que o usuário disse.",
     schema: company.partial().refine((v) => Object.keys(v).length > 0, "informe ao menos um campo"),
     run: (ctx, a) => ctx.store.saveCompany(a),
+  }),
+  defineTool({
+    name: "get_ir_diagnosis",
+    kinds: ["pessoal"],
+    description: "Calcula o Imposto de Renda anual da pessoa física nos modelos simplificado e completo, qual compensa mais e a restituição ou o imposto a pagar.",
+    schema: none,
+    engine: true,
+    run: (ctx) => ctx.engine.diagnosePerson(ctx.store.getPerson()),
+  }),
+  defineTool({
+    name: "save_person_data",
+    kinds: ["pessoal"],
+    description: "Salva dados informados pelo usuário para o Imposto de Renda (renda anual, INSS, dependentes, despesas, imposto retido). Use só o que o usuário disse.",
+    schema: person.partial().refine((v) => Object.keys(v).length > 0, "informe ao menos um campo"),
+    run: (ctx, a) => ctx.store.savePerson(a),
   }),
   defineTool({
     name: "dashboard_add_widget",
@@ -145,6 +174,7 @@ const TOOLS: Tool[] = [
   }),
   defineTool({
     name: "create_alert",
+    kinds: ["empresa"],
     description: "Cria um alerta: avisa quando a métrica ficar acima (gt) ou abaixo (lt) do limite. effectiveRate é fração (0.15 = 15%).",
     schema: alertRule,
     run: (ctx, a) => ctx.store.addAlert(a),
@@ -185,7 +215,9 @@ function checkAgentTools(scope: Scope, requested: string[]) {
   if (extra.length) throw new Refusal(`Esta IA não pode conceder ferramentas que não possui: ${extra.join(", ")}.`);
 }
 
-const allowed = (scope: Scope, name: string) => !scope.allowedTools || scope.allowedTools.includes(name);
+const inKind = (scope: Scope, t: Tool) => !t.kinds || !scope.kind || t.kinds.includes(scope.kind);
+const allowed = (scope: Scope, name: string) =>
+  (!scope.allowedTools || scope.allowedTools.includes(name)) && inKind(scope, byName.get(name)!);
 
 export function toolSpecs(scope: Scope): ToolSpec[] {
   return TOOLS.filter((t) => allowed(scope, t.name)).map((t) => {
@@ -208,7 +240,10 @@ export const approvalKey = (name: string, args: unknown) => `${name}:${stable(ar
 export async function invokeTool(ctx: ToolContext, name: string, rawArgs: string): Promise<ToolOutcome> {
   const tool = byName.get(name);
   if (!tool) return { status: "error", message: `Ferramenta desconhecida: ${name}.` };
-  if (!allowed(ctx.scope, name)) return { status: "refused", reason: `Esta IA não tem acesso à ferramenta ${name}.` };
+  if (!allowed(ctx.scope, name)) {
+    const wrongKind = !inKind(ctx.scope, tool);
+    return { status: "refused", reason: wrongKind ? "Esta ferramenta não se aplica a este tipo de espaço." : `Esta IA não tem acesso à ferramenta ${name}.` };
+  }
 
   let json: unknown;
   try {

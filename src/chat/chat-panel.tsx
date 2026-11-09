@@ -1,15 +1,36 @@
 "use client";
 
 import { useState } from "react";
+import { AgentList } from "@/agents/agent-list";
+import { AlertBar } from "@/alerts/alert-bar";
+import type { AlertStatus } from "@/alerts/evaluate";
 import { DashboardView } from "@/dashboard/dashboard-view";
 import type { Dashboard } from "@/dashboard/types";
 import { Button, Input, Panel } from "@/ui/log";
 import type { PendingConfirmation } from "./orchestrator";
+import type { Agent } from "./types";
 import type { DisplayMessage } from "./workspace-state";
 
-export function ChatPanel(props: { workspaceId: string; initialMessages: DisplayMessage[]; initialDashboard: Dashboard }) {
+const REPORT_PATH = /(?<![\w.:/-])(\/workspace\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/relatorio)(?![\w/-])/g;
+
+/** The AI answers in plain text; a report path becomes a link to the printable page. Nothing else is linkified. */
+function withReportLinks(text: string): React.ReactNode[] {
+  return text.split(REPORT_PATH).map((part, i) =>
+    i % 2 === 1 ? (
+      <a key={i} href={part} className="underline">
+        abrir o relatório
+      </a>
+    ) : (
+      part
+    ),
+  );
+}
+
+export function ChatPanel(props: { workspaceId: string; initialMessages: DisplayMessage[]; initialDashboard: Dashboard; initialAlerts?: AlertStatus[]; agentId?: string; initialAgents?: Agent[] }) {
   const [messages, setMessages] = useState(props.initialMessages);
   const [dashboard, setDashboard] = useState(props.initialDashboard);
+  const [alerts, setAlerts] = useState(props.initialAlerts ?? []);
+  const [agents, setAgents] = useState(props.initialAgents ?? []);
   const [pending, setPending] = useState<PendingConfirmation[]>([]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -24,12 +45,14 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workspaceId: props.workspaceId, message, approve }),
+        body: JSON.stringify({ workspaceId: props.workspaceId, agentId: props.agentId, message, approve }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Algo deu errado.");
       setMessages((m) => [...m, { role: "assistant", text: data.text }]);
       setDashboard(data.dashboard);
+      setAlerts(data.alerts ?? []);
+      setAgents(data.agents ?? agents);
       setPending(data.pendingConfirmations ?? []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Algo deu errado.");
@@ -48,13 +71,17 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
 
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[1fr_380px]">
-      <DashboardView dashboard={dashboard} />
+      <div className="flex flex-col gap-4">
+        <AgentList workspaceId={props.workspaceId} agents={agents} currentAgentId={props.agentId} />
+        <AlertBar alerts={alerts} />
+        <DashboardView dashboard={dashboard} />
+      </div>
       <Panel label="Conversa com a IA" className="lg:sticky lg:top-6">
         <div aria-live="polite" className="flex max-h-[28rem] flex-col gap-3 overflow-y-auto p-1">
           {messages.length === 0 && <p className="text-sm text-ink-muted">O que você precisa resolver?</p>}
           {messages.map((m, i) => (
-            <p key={i} data-role={m.role} className={`lg-msg lg-msg-${m.role === "user" ? "user" : "assistant"}`}>
-              {m.text}
+            <p key={i} data-role={m.role} className={`lg-msg lg-msg-${m.role === "user" ? "user" : "assistant"} whitespace-pre-line`}>
+              {m.role === "assistant" ? withReportLinks(m.text) : m.text}
             </p>
           ))}
           {busy && <p className="text-sm text-ink-subtle">Pensando…</p>}

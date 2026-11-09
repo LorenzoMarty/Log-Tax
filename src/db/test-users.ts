@@ -11,6 +11,7 @@ const password = "test-password-123";
 
 export interface TestUser {
   id: string;
+  email: string;
   client: SupabaseClient;
 }
 
@@ -21,7 +22,7 @@ export async function createTestUser(tag: string): Promise<TestUser> {
   const client = createClient(url, anon, opts);
   const { error: signInError } = await client.auth.signInWithPassword({ email, password });
   if (signInError) throw signInError;
-  return { id: data.user.id, client };
+  return { id: data.user.id, email, client };
 }
 
 export async function createWorkspace(user: TestUser, kind: "empresa" | "pessoal" = "empresa") {

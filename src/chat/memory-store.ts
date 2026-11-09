@@ -1,11 +1,12 @@
 import { initHistory, reduce, type Action } from "@/dashboard/reducer";
 import { sampleDashboard } from "@/dashboard/fixtures";
 import type { Dashboard } from "@/dashboard/types";
-import { seedCompany, type CompanyProfile } from "@/engine";
+import { seedCompany, seedPerson, type CompanyProfile, type PersonProfile } from "@/engine";
 import type { Agent, Alert, ChatStore } from "./types";
 
 export interface StoreState {
   company: CompanyProfile;
+  person: PersonProfile;
   dashboard: Dashboard;
   alerts: Alert[];
   agents: Agent[];
@@ -19,6 +20,7 @@ export type MemoryStore = ChatStore & { snapshot(): StoreState };
  */
 export function createMemoryStore(init: Partial<StoreState> = {}): MemoryStore {
   let company = { ...(init.company ?? seedCompany) };
+  let person = { ...(init.person ?? seedPerson) };
   let history = initHistory(init.dashboard ?? sampleDashboard);
   const alerts = [...(init.alerts ?? [])];
   const agents = [...(init.agents ?? [])];
@@ -30,6 +32,11 @@ export function createMemoryStore(init: Partial<StoreState> = {}): MemoryStore {
     saveCompany(patch) {
       company = { ...company, ...patch };
       return company;
+    },
+    getPerson: () => person,
+    savePerson(patch) {
+      person = { ...person, ...patch };
+      return person;
     },
     getDashboard: () => history.present,
     dispatch(action: Action) {
@@ -52,6 +59,6 @@ export function createMemoryStore(init: Partial<StoreState> = {}): MemoryStore {
       return agent && Object.assign(agent, patch);
     },
     listAgents: () => agents,
-    snapshot: () => ({ company, dashboard: history.present, alerts, agents }),
+    snapshot: () => ({ company, person, dashboard: history.present, alerts, agents }),
   };
 }

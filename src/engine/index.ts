@@ -1,3 +1,3 @@
 export { DISCLAIMER, mockEngine } from "./mock-engine";
-export { seedCompany } from "./seed";
+export { seedCompany, seedPerson } from "./seed";
 export type * from "./types";

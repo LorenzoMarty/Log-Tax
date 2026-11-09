@@ -13,10 +13,10 @@ beforeEach(() => {
 });
 
 describe("registry", () => {
-  it("exposes the 13 tools with JSON-schema parameters", () => {
-    expect(TOOL_NAMES).toHaveLength(13);
+  it("exposes the 15 tools with JSON-schema parameters", () => {
+    expect(TOOL_NAMES).toHaveLength(15);
     const specs = toolSpecs(ctx.scope);
-    expect(specs).toHaveLength(13);
+    expect(specs).toHaveLength(15);
     for (const s of specs) expect(s.parameters).toMatchObject({ type: "object" });
   });
 
@@ -56,10 +56,10 @@ describe("engine tools", () => {
     expect((await call("save_company_data", { profitMargin: 7 })).status).toBe("error");
   });
 
-  it("generates a report with diagnosis, opportunities and the disclaimer", async () => {
-    const r = await call("generate_report");
-    expect(r).toMatchObject({ status: "ok", data: { diagnosis: { status: "ok" }, opportunities: { status: "ok" } } });
-    expect(JSON.stringify(r)).toMatch(/ilustrativa/i);
+  it("generates the printable report and returns where to open it, in either kind of workspace", async () => {
+    expect(await call("generate_report")).toMatchObject({ status: "ok", data: { url: "/workspace/ws1/relatorio", title: "Relatório tributário" } });
+    const pf: ToolContext = { ...ctx, scope: { workspaceId: "ws1", kind: "pessoal" } };
+    expect(await call("generate_report", {}, pf)).toMatchObject({ status: "ok", data: { url: "/workspace/ws1/relatorio", title: "Relatório de Imposto de Renda" } });
   });
 });
 
@@ -144,5 +144,56 @@ describe("scope", () => {
     expect(await call("create_agent", { name: "x", objective: "y", tools: ["get_tax_diagnosis", "run_simulation"] }, c)).toMatchObject({ status: "refused" });
     expect(ctx.store.listAgents()).toHaveLength(0);
     expect((await call("create_agent", { name: "x", objective: "y", tools: ["get_tax_diagnosis"] }, c)).status).toBe("ok");
+  });
+});
+
+
+describe("personal workspace (IR) tools", () => {
+  const pf = (): ToolContext => ({ ...ctx, scope: { workspaceId: "ws1", kind: "pessoal" } });
+  const names = (kind: "empresa" | "pessoal") => toolSpecs({ workspaceId: "ws1", kind }).map((s) => s.name);
+
+  it("diagnoses IR with both models, the best one and the balance", async () => {
+    const r = await call("get_ir_diagnosis", {}, pf());
+    expect(r).toMatchObject({
+      status: "ok",
+      data: { status: "ok", value: { best: "completa", annualSavings: expect.closeTo(3948, 0), complete: { balance: expect.closeTo(1308, 0) } } },
+    });
+  });
+
+  it("saves personal data, recalculates, and validates the input", async () => {
+    const c = pf();
+    expect((await call("save_person_data", { dependents: 3 }, c)).status).toBe("ok");
+    expect(c.store.getPerson().dependents).toBe(3);
+    expect(await call("get_ir_diagnosis", {}, c)).toMatchObject({ data: { value: { complete: { balance: expect.closeTo(1933, 0) } } } });
+    expect((await call("save_person_data", { dependents: -1 }, c)).status).toBe("error");
+    expect((await call("save_person_data", { dependents: 1.5 }, c)).status).toBe("error");
+    expect((await call("save_person_data", {}, c)).status).toBe("error");
+    expect((await call("save_person_data", { kind: "empresa" }, c)).status).toBe("error");
+  });
+
+  it("asks for the income instead of inventing it", async () => {
+    const c = pf();
+    c.store.savePerson({ annualGrossIncome: undefined });
+    expect(await call("get_ir_diagnosis", {}, c)).toMatchObject({ status: "ok", data: { status: "insufficient_data", missing: ["annualGrossIncome"] } });
+  });
+
+  it("offers company tools only in company workspaces and IR tools only in personal ones", async () => {
+    expect(names("pessoal")).toEqual(expect.arrayContaining(["get_ir_diagnosis", "save_person_data", "explain_result", "dashboard_add_widget"]));
+    expect(names("pessoal")).not.toEqual(expect.arrayContaining(["get_tax_diagnosis"]));
+    expect(names("pessoal")).not.toContain("run_simulation");
+    expect(names("empresa")).toContain("get_tax_diagnosis");
+    expect(names("empresa")).not.toContain("get_ir_diagnosis");
+    expect(names("empresa")).not.toContain("save_person_data");
+  });
+
+  it("refuses at runtime a tool that does not belong to the workspace kind", async () => {
+    expect(await call("get_tax_diagnosis", {}, pf())).toMatchObject({ status: "refused", reason: expect.stringMatching(/tipo de espaço/i) });
+    const company: ToolContext = { ...ctx, scope: { workspaceId: "ws1", kind: "empresa" } };
+    expect(await call("get_ir_diagnosis", {}, company)).toMatchObject({ status: "refused" });
+  });
+
+  it("explains the IR rules with their sources", async () => {
+    const r = await call("explain_result", { subject: "ir" }, pf());
+    expect(r).toMatchObject({ status: "ok", data: { rules: expect.arrayContaining([expect.objectContaining({ id: "ir-tabela", requiresValidation: true })]) } });
   });
 });

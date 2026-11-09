@@ -1,10 +1,11 @@
 import { z } from "zod";
-import { handleChat } from "@/chat/handle-chat";
+import { handleChat, ReadOnlyError } from "@/chat/handle-chat";
 import { getLlm } from "@/chat/llm-factory";
 import { createClient } from "@/lib/supabase/server";
 
 const body = z.object({
   workspaceId: z.uuid(),
+  agentId: z.uuid().optional(),
   message: z.string().trim().min(1).max(4000),
   approve: z.array(z.string().max(2000)).max(10).optional(),
 });
@@ -31,6 +32,7 @@ export async function POST(request: Request) {
     if (!reply) return Response.json({ error: "Espaço não encontrado." }, { status: 404 });
     return Response.json(reply);
   } catch (e) {
+    if (e instanceof ReadOnlyError) return Response.json({ error: e.message }, { status: 403 });
     console.error("chat failed:", e instanceof Error ? e.message : e);
     return Response.json({ error: "Não consegui falar com a IA agora. Tente de novo." }, { status: 502 });
   }

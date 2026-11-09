@@ -18,8 +18,8 @@ export async function magicLinkFor(email: string): Promise<string> {
 }
 
 /** Signs in through the real magic-link flow and lands on /workspace. */
-export async function login(page: Page, prefix = "e2e") {
-  const email = `${prefix}-${Date.now()}@example.com`;
+export async function login(page: Page, prefix = "e2e", fixedEmail?: string) {
+  const email = fixedEmail ?? `${prefix}-${Date.now()}@example.com`;
   await page.goto("/login");
   await page.getByLabel("Email").fill(email);
   await page.getByRole("button", { name: "Enviar link de acesso" }).click();

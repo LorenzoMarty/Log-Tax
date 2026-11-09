@@ -28,6 +28,32 @@ describe("system prompt", () => {
     expect(prompt).toMatch(/simulacao/);
   });
 
+  it("lists existing agents with their ids so the model can edit them, and how to create good ones", () => {
+    const p = buildSystemPrompt({
+      workspaceName: "Minha Empresa",
+      agents: [{ id: "ag-7", name: "IA da Empresa", objective: "Acompanhar impostos", tools: ["get_tax_diagnosis"] }],
+    });
+    expect(p).toContain("id=ag-7");
+    expect(p).toContain("IA da Empresa");
+    expect(p).toContain("get_tax_diagnosis");
+    expect(p).toMatch(/update_agent/);
+    expect(p).toMatch(/só as ferramentas necessárias/i);
+    expect(prompt).not.toMatch(/id=/);
+  });
+
+  it("points personal workspaces to the IR tools and company ones away from them", () => {
+    const pf = buildSystemPrompt({ workspaceName: "Vida Pessoal", kind: "pessoal" });
+    expect(pf).toMatch(/get_ir_diagnosis/);
+    expect(pf).toMatch(/pessoa física/i);
+    expect(buildSystemPrompt({ workspaceName: "Minha Empresa", kind: "empresa" })).not.toMatch(/get_ir_diagnosis/);
+    expect(prompt).not.toMatch(/get_ir_diagnosis/);
+  });
+
+  it("tells the model to hand the report link to the user", () => {
+    expect(prompt).toMatch(/generate_report/);
+    expect(prompt).toMatch(/relatório/i);
+  });
+
   it("asks for plain text because the chat does not render Markdown", () => {
     expect(prompt).toMatch(/não use markdown/i);
   });

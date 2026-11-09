@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { alertStatuses } from "@/alerts/evaluate";
 import { DISCLAIMER, mockEngine } from "@/engine";
 import { createMemoryStore } from "../memory-store";
 import { createOpenAiLlm } from "../openai-llm";
 import { runTurn } from "../orchestrator";
+import { buildSystemPrompt } from "../system-prompt";
 import type { ToolContext } from "../types";
 
 // Real model, real tools, in-memory store. Costs tokens: run on demand with `npm run test:live`.
@@ -30,6 +32,8 @@ describe("OpenAI end to end", () => {
     const r = await runTurn({ llm, ctx: c, history: [], userMessage: "Me avise se meus impostos mensais passarem de R$ 20 mil." });
     expect(names(r)).toContain("create_alert");
     expect(c.store.listAlerts()[0]?.rule).toMatchObject({ metric: "monthlyTotal", operator: "gt", threshold: 20000 });
+    // the demo company pays ~R$ 42.8k/month, so the alert the model created must fire
+    expect(alertStatuses(mockEngine, c.store.getCompany(), c.store.listAlerts())[0]?.triggered).toBe(true);
   });
 
   it("builds a dashboard widget on request and keeps the conversation across turns", async () => {
@@ -58,6 +62,60 @@ describe("OpenAI end to end", () => {
     expect(names(second)).toContain("run_simulation");
     expect(block()).toHaveLength(1);
     expect(JSON.stringify(block()[0])).toMatch(/600/);
+  });
+
+  it("creates a specialised agent from a plain request, without handing it destructive tools", async () => {
+    const c = ctx();
+    const r = await runTurn({
+      llm,
+      ctx: c,
+      history: [],
+      userMessage: "Crie uma IA chamada IA Financeira só para consultar impostos e fazer simulações. Ela não deve alterar o painel.",
+    });
+    expect(names(r)).toContain("create_agent");
+    const agent = c.store.listAgents()[0];
+    expect(agent?.name).toMatch(/financeira/i);
+    expect(agent.tools.length).toBeGreaterThan(0);
+    expect(agent.tools.some((t) => /get_tax_diagnosis|run_simulation/.test(t))).toBe(true);
+    expect(agent.tools).not.toContain("dashboard_remove_widget");
+  });
+
+  it("an agent limited to the diagnosis cannot change the dashboard, whatever the user asks", async () => {
+    const c = ctx();
+    c.store.dispatch({ type: "add", widget: { id: "kpi", kind: "kpi", title: "Carga", size: "md", value: "R$ 1" } });
+    const scoped: ToolContext = { ...c, scope: { workspaceId: "live", agentId: "ag1", allowedTools: ["get_tax_diagnosis"] } };
+    const r = await runTurn({ llm, ctx: scoped, history: [], userMessage: "Remova o bloco kpi do painel e crie um alerta de R$ 10 mil." });
+    expect(names(r).filter((n) => n !== "get_tax_diagnosis")).toEqual([]); // nothing else was even attempted
+    expect(c.store.getDashboard().widgets.some((w) => w.id === "kpi")).toBe(true);
+    expect(c.store.listAlerts()).toHaveLength(0);
+  });
+
+  it("personal workspace: calculates IR from the engine, compares both models and records new data", async () => {
+    const c = ctx();
+    const scope = { workspaceId: "live", workspaceName: "Vida Pessoal", kind: "pessoal" as const };
+    const pf: ToolContext = { ...c, scope };
+    const system = buildSystemPrompt({ workspaceName: "Vida Pessoal", kind: "pessoal" });
+
+    const first = await runTurn({ llm, ctx: pf, system, history: [], userMessage: "Quanto vou pagar de imposto de renda este ano? Compare a declaração completa e a simplificada." });
+    expect(names(first)).toContain("get_ir_diagnosis");
+    expect(first.text).toMatch(/30[.,]?19|30[.,]?2/); // complete model tax (R$ 30.192,29)
+    expect(first.text).toMatch(/34[.,]?14|34[.,]?1/); // simplified model tax (R$ 34.140,56)
+    expect(first.text).toContain(DISCLAIMER);
+    expect(names(first).every((n) => !["get_tax_diagnosis", "run_simulation", "list_opportunities"].includes(n))).toBe(true);
+
+    const second = await runTurn({ llm, ctx: pf, system, history: first.history, userMessage: "Na verdade eu tenho 3 dependentes, não 2. Refaça o cálculo." });
+    expect(names(second)).toContain("save_person_data");
+    expect(c.store.getPerson().dependents).toBe(3);
+    expect(names(second)).toContain("get_ir_diagnosis");
+    expect(second.text).toMatch(/29[.,]?56|1[.,]?93/); // new complete-model tax or refund
+  });
+
+  it("generates the report and hands the user the link to the printable page", async () => {
+    const c = ctx();
+    c.scope.workspaceId = "11111111-2222-4333-8444-555555555555";
+    const r = await runTurn({ llm, ctx: c, history: [], userMessage: "Gere um relatório da minha situação tributária." });
+    expect(names(r)).toContain("generate_report");
+    expect(r.text).toContain(`/workspace/${c.scope.workspaceId}/relatorio`);
   });
 
   it("never removes a widget without the user's confirmation", async () => {
