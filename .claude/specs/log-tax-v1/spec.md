@@ -1,7 +1,7 @@
 ---
 slug: log-tax-v1
 status: ready
-revision_count: 3
+revision_count: 4
 created: 2026-11-08
 issue: —
 ---
@@ -20,7 +20,7 @@ Demo pt-BR em que dono de empresa/pessoa física (e seu contador) conversa com u
 - [x] REQ-4: Dashboard = JSON de widgets (kpi, bar, line, breakdown, opportunities, deadlines, compare, checklist, text) com ordem/tamanho/tema/densidade, versionado com undo — verificado por testes do reducer + render dos widgets
 - [x] REQ-5: Auth Supabase (magic link + Google) e RLS: usuário A não lê dados do B — verificado por teste de RLS com 2 usuários
 - [x] REQ-6: Chat com OpenAI (Responses API, store:false) + tool calling; 13 ferramentas escopadas por workspace/agente; destrutivas pedem confirmação — verificado por testes das ferramentas com LLM mockado
-- [ ] REQ-7: Jornada completa no navegador (chat → diagnóstico → dashboard → oportunidades → simulador → alerta → criar IA) — verificado por e2e Playwright com LLM roteirizado
+- [~] REQ-7: Jornada completa no navegador (chat → diagnóstico → dashboard → oportunidades → simulador → alerta → criar IA) — verificado por e2e Playwright com LLM roteirizado
 - [ ] REQ-8: Alertas in-app com regra (métrica, operador, limite), avaliados ao mudar dado/abrir — verificado por teste unitário + e2e
 - [ ] REQ-9: Agente = config persistida (nome, objetivo, dados, ferramentas) + conversa própria; servidor recusa ferramenta/dado fora do escopo — verificado por teste
 - [ ] REQ-10: Perfil PF seed (assalariado, 2 dependentes) com oportunidade simplificada × completa — verificado por testes do motor
