@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { login } from "./helpers";
+import { createAndOpen, login } from "./helpers";
 
 test.setTimeout(120_000);
 
@@ -12,8 +12,7 @@ test("documents: consent, upload, identification, download, refusal and deletion
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
   await login(page, "docs");
-  await page.getByRole("button", { name: "Criar meus espaços" }).click();
-  await page.getByRole("link", { name: /Minha Empresa/ }).click();
+  await createAndOpen(page, /Minha Empresa/);
   await expect(page).toHaveURL(/\/workspace\/[0-9a-f-]{36}$/);
   await page.waitForLoadState("networkidle");
   const workspaceId = page.url().split("/").pop()!;

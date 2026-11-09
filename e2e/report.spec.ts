@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { login } from "./helpers";
+import { createAndOpen, login } from "./helpers";
 
 test.setTimeout(90_000);
 
@@ -13,8 +13,7 @@ test("company report: asked in the chat, opened as a printable page with every s
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
   await login(page, "rel");
-  await page.getByRole("button", { name: "Criar meus espaços" }).click();
-  await page.getByRole("link", { name: /Minha Empresa/ }).click();
+  await createAndOpen(page, /Minha Empresa/);
   await expect(page).toHaveURL(/\/workspace\/[0-9a-f-]{36}$/);
   await page.waitForLoadState("networkidle");
   const space = page.url();
@@ -59,8 +58,7 @@ test("company report: asked in the chat, opened as a printable page with every s
 
 test("personal report: IR comparison with the refund", async ({ page }) => {
   await login(page, "relpf");
-  await page.getByRole("button", { name: "Criar meus espaços" }).click();
-  await page.getByRole("link", { name: /Vida Pessoal/ }).click();
+  await createAndOpen(page, /Vida Pessoal/);
   await expect(page).toHaveURL(/\/workspace\/[0-9a-f-]{36}$/);
   await page.waitForLoadState("networkidle");
 

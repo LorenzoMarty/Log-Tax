@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { login } from "./helpers";
+import { createAndOpen, login } from "./helpers";
 
 // Runs the whole company journey in a real browser against local Supabase,
 // with the scripted LLM (LOG_TAX_LLM=scripted, set in playwright.config.ts).
@@ -11,8 +11,7 @@ const say = async (page: Page, text: string, reply: RegExp) => {
 
 test("company journey: context → diagnosis → dashboard → opportunities → why → remove with confirmation", async ({ page }) => {
   await login(page, "journey");
-  await page.getByRole("button", { name: "Criar meus espaços" }).click();
-  await page.getByRole("link", { name: /Minha Empresa/ }).click();
+  await createAndOpen(page, /Minha Empresa/);
   await expect(page).toHaveURL(/\/workspace\/[0-9a-f-]{36}/);
   await expect(page.getByText(/nenhum bloco/i)).toBeVisible();
 

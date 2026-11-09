@@ -28,3 +28,17 @@ export async function login(page: Page, prefix = "e2e", fixedEmail?: string) {
   await expect(page).toHaveURL(/\/workspace/);
   return email;
 }
+
+/**
+ * Creates the demo spaces and opens one. The dev server can load a page twice right after a redirect,
+ * which cancels a click made too early: wait for the page to settle before each step.
+ */
+export async function createAndOpen(page: Page, space: RegExp) {
+  await page.getByRole("button", { name: "Criar meus espaços" }).click();
+  const link = page.getByRole("link", { name: space });
+  await expect(link).toBeVisible();
+  await page.waitForLoadState("networkidle");
+  await link.click();
+  await expect(page).toHaveURL(/\/workspace\/[0-9a-f-]{36}$/);
+  await page.waitForLoadState("networkidle");
+}

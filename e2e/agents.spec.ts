@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { login } from "./helpers";
+import { createAndOpen, login } from "./helpers";
 
 // Specialised agents in a real browser (scripted LLM, local Supabase).
 const say = async (page: Page, text: string, reply: RegExp) => {
@@ -10,8 +10,7 @@ const say = async (page: Page, text: string, reply: RegExp) => {
 
 test("create an agent by chat, talk to it inside its scope, edit it by chat", async ({ page }) => {
   await login(page, "agents");
-  await page.getByRole("button", { name: "Criar meus espaços" }).click();
-  await page.getByRole("link", { name: /Minha Empresa/ }).click();
+  await createAndOpen(page, /Minha Empresa/);
   await expect(page.getByRole("navigation", { name: "Minhas IAs" })).toHaveCount(0);
 
   await say(page, "Crie uma IA para minha empresa", /Criei a "IA da Empresa"/);
@@ -46,8 +45,7 @@ test("create an agent by chat, talk to it inside its scope, edit it by chat", as
 
 test("an agent id that is not yours returns 404", async ({ page }) => {
   await login(page, "agents404");
-  await page.getByRole("button", { name: "Criar meus espaços" }).click();
-  await page.getByRole("link", { name: /Minha Empresa/ }).click();
+  await createAndOpen(page, /Minha Empresa/);
   await expect(page).toHaveURL(/\/workspace\/[0-9a-f-]{36}$/);
   const url = page.url();
   await page.goto(`${url}?ia=00000000-0000-0000-0000-000000000000`);

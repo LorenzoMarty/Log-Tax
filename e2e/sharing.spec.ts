@@ -1,5 +1,5 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
-import { login } from "./helpers";
+import { createAndOpen, login } from "./helpers";
 
 // Two isolated browsers: the owner and the accountant. Real magic links, real database.
 test.setTimeout(90_000);
@@ -7,8 +7,7 @@ async function ownerWithDashboard(browser: Browser) {
   const ctx = await browser.newContext();
   const page = await ctx.newPage();
   const email = await login(page, "dono");
-  await page.getByRole("button", { name: "Criar meus espaços" }).click();
-  await page.getByRole("link", { name: /Minha Empresa/ }).click();
+  await createAndOpen(page, /Minha Empresa/);
   await expect(page).toHaveURL(/\/workspace\/[0-9a-f-]{36}$/);
   await page.waitForLoadState("networkidle");
   await page.getByLabel("Mensagem").fill("Empresa");
