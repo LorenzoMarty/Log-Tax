@@ -8,6 +8,13 @@ import { buildSystemPrompt } from "./system-prompt";
 import type { Agent, LlmClient } from "./types";
 import { loadWorkspaceState, saveWorkspaceState, type DisplayMessage } from "./workspace-state";
 
+/** Thrown when a member who is not the owner tries to chat: the AI writes into the owner's workspace. */
+export class ReadOnlyError extends Error {
+  constructor() {
+    super("Somente o dono do espaço pode conversar com a IA.");
+  }
+}
+
 export interface ChatReply {
   text: string;
   events: { name: string; status: string }[];
@@ -30,6 +37,7 @@ export async function handleChat(
 ): Promise<ChatReply | null> {
   const state = await loadWorkspaceState(sb, input.workspaceId, input.agentId);
   if (!state) return null;
+  if (state.role !== "owner") throw new ReadOnlyError();
 
   const store = createMemoryStore(state);
   const { agent } = state;

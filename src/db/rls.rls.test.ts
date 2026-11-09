@@ -47,7 +47,7 @@ describe("RLS isolation between users", () => {
     expect((await a.client.from("workspaces").select()).data).toHaveLength(1);
     expect((await a.client.from("dashboards").select()).data).toHaveLength(1);
     const members = (await a.client.from("workspace_members").select()).data;
-    expect(members).toEqual([{ workspace_id: wsA, user_id: a.id, role: "owner" }]);
+    expect(members).toEqual([{ workspace_id: wsA, user_id: a.id, role: "owner", email: expect.stringContaining("@") }]);
   });
 
   it("user B cannot read anything from A", async () => {

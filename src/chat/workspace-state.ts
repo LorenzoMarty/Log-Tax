@@ -12,6 +12,8 @@ export interface DisplayMessage {
 export interface WorkspaceState extends StoreState {
   workspaceName: string;
   kind: "empresa" | "pessoal";
+  /** The caller's role here: only the owner may drive the chat. */
+  role: "owner" | "commenter" | "reader";
   dashboardRowId?: string;
   /** Set when the state was loaded for a conversation with one specialised agent. */
   agent?: Agent;
@@ -42,6 +44,7 @@ export async function loadWorkspaceState(sb: SupabaseClient, workspaceId: string
   const { data: ws } = await sb.from("workspaces").select("id, name, kind, profile").eq("id", workspaceId).maybeSingle();
   if (!ws) return null;
 
+  const { data: role } = await sb.rpc("my_role", { ws: workspaceId });
   const conversation = agentId
     ? sb.from("agent_conversations").select("history, messages").eq("agent_id", agentId).eq("workspace_id", workspaceId).maybeSingle()
     : sb.from("conversations").select("history, messages").eq("workspace_id", workspaceId).maybeSingle();
@@ -64,6 +67,7 @@ export async function loadWorkspaceState(sb: SupabaseClient, workspaceId: string
   return {
     workspaceName: ws.name,
     kind: ws.kind,
+    role: (role ?? "reader") as WorkspaceState["role"],
     company,
     person,
     dashboard: dash.data?.data ?? emptyDashboard(workspaceId),

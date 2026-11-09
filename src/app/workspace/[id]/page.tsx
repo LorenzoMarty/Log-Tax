@@ -1,10 +1,17 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { AlertBar } from "@/alerts/alert-bar";
 import { alertStatuses } from "@/alerts/evaluate";
 import { ChatPanel } from "@/chat/chat-panel";
 import { loadWorkspaceState } from "@/chat/workspace-state";
+import { DashboardView } from "@/dashboard/dashboard-view";
 import { mockEngine } from "@/engine";
 import { createClient } from "@/lib/supabase/server";
+import { leaveWorkspace } from "@/sharing/actions";
+import { Comments, type CommentRow } from "@/sharing/comments";
+import { MESSAGES } from "@/sharing/messages";
+import { ROLE_LABEL } from "@/sharing/schema";
+import { SharePanel, type InviteRow, type MemberRow } from "@/sharing/share-panel";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -13,10 +20,10 @@ export default async function WorkspaceChatPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ ia?: string }>;
+  searchParams: Promise<{ ia?: string; msg?: string }>;
 }) {
   const { id } = await params;
-  const { ia } = await searchParams;
+  const { ia, msg } = await searchParams;
   if (!UUID.test(id) || (ia && !UUID.test(ia))) notFound();
 
   const supabase = await createClient();
@@ -27,6 +34,34 @@ export default async function WorkspaceChatPage({
 
   const state = await loadWorkspaceState(supabase, id, ia);
   if (!state) notFound();
+  const isOwner = state.role === "owner";
+  if (!isOwner && ia) notFound(); // specialised agents are conversations: owner only
+
+  const { data: comments } = await supabase
+    .from("comments")
+    .select("id, author_id, author_email, widget_id, body, created_at")
+    .eq("workspace_id", id)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  const [{ data: members }, { data: invites }] = isOwner
+    ? await Promise.all([
+        supabase.from("workspace_members").select("user_id, email, role").eq("workspace_id", id).order("role", { ascending: false }),
+        supabase.from("workspace_invites").select("id, email, role").eq("workspace_id", id).order("created_at"),
+      ])
+    : [{ data: [] }, { data: [] }];
+
+  const alerts = state.kind === "pessoal" ? [] : alertStatuses(mockEngine, state.company, state.alerts);
+  const notice = msg ? MESSAGES[msg] : undefined;
+  const commentsPanel = (
+    <Comments
+      workspaceId={id}
+      comments={(comments ?? []) as CommentRow[]}
+      canComment={state.role !== "reader"}
+      isOwner={isOwner}
+      userId={user.id}
+      widgets={state.dashboard.widgets.map((w) => ({ id: w.id, title: w.title }))}
+    />
+  );
 
   return (
     <main className="mx-auto max-w-6xl space-y-4 px-4 py-6">
@@ -39,15 +74,44 @@ export default async function WorkspaceChatPage({
           Todos os espaços
         </Link>
       </header>
-      <ChatPanel
-        key={ia ?? "geral"}
-        workspaceId={id}
-        agentId={state.agent?.id}
-        initialAgents={state.agents}
-        initialMessages={state.messages}
-        initialDashboard={state.dashboard}
-        initialAlerts={state.kind === "pessoal" ? [] : alertStatuses(mockEngine, state.company, state.alerts)}
-      />
+
+      {notice && (
+        <p role="status" className={`rounded-xl px-4 py-3 text-sm ${notice.ok ? "bg-green-50 text-green-900" : "bg-red-50 text-red-800"}`}>
+          {notice.text}
+        </p>
+      )}
+
+      {isOwner ? (
+        <>
+          <ChatPanel
+            key={ia ?? "geral"}
+            workspaceId={id}
+            agentId={state.agent?.id}
+            initialAgents={state.agents}
+            initialMessages={state.messages}
+            initialDashboard={state.dashboard}
+            initialAlerts={alerts}
+          />
+          <SharePanel workspaceId={id} defaultOpen={Boolean(notice)} members={(members ?? []) as MemberRow[]} invites={(invites ?? []) as InviteRow[]} />
+          {commentsPanel}
+        </>
+      ) : (
+        <>
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-neutral-200 px-4 py-3 text-sm">
+            <p data-testid="shared-banner">
+              Compartilhado com você · <strong>{ROLE_LABEL[state.role]}</strong>. Você vê o painel, os alertas e os comentários; só o dono conversa com a IA.
+            </p>
+            <form action={leaveWorkspace.bind(null, id)}>
+              <button type="submit" className="rounded-lg border border-neutral-300 px-3 py-1.5">
+                Sair deste espaço
+              </button>
+            </form>
+          </div>
+          <AlertBar alerts={alerts} />
+          <DashboardView dashboard={state.dashboard} />
+          {commentsPanel}
+        </>
+      )}
     </main>
   );
 }
