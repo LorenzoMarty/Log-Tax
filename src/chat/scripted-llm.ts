@@ -1,15 +1,15 @@
-import type { Diagnosis, OpportunitySet } from "@/engine";
+import type { Diagnosis, OpportunitySet, Simulation } from "@/engine";
 import type { LlmClient, LlmTurn, Msg, ToolOutcome } from "./types";
 
 /**
  * Deterministic stand-in for the model: keyword → fixed tool plan. Lets the full journey run
  * (e2e, demos, no API key). It still goes through the real tools, store and database.
  */
-type Step = (prev: ToolOutcome[]) => { name: string; args: unknown };
+type Step = (prev: ToolOutcome[], text: string) => { name: string; args: unknown } | undefined;
 interface Plan {
   match: RegExp;
   steps: Step[];
-  reply: (prev: ToolOutcome[]) => string;
+  reply: (prev: ToolOutcome[], text: string) => string;
 }
 
 const money = (n: number) => `R$ ${Math.round(n).toLocaleString("pt-BR")}`;
@@ -19,6 +19,25 @@ const dataOf = <T,>(o: ToolOutcome | undefined) => {
 };
 // In the company plan the diagnosis is always the first tool result.
 const diagnosis = (prev: ToolOutcome[]) => dataOf<Diagnosis>(prev[0])!;
+
+const pct = (r: number) => `${(r * 100).toFixed(1).replace(".", ",")}%`;
+
+/** "R$ 500 mil" → 500000, "600000" / "R$ 500.000" → as written. */
+function revenueFrom(text: string): number | undefined {
+  const m = /(\d[\d.,]*)\s*(mil|k)?\b/i.exec(text.replace(/R\$\s*/gi, ""));
+  if (!m) return undefined;
+  return m[2] ? parseFloat(m[1].replace(",", ".")) * 1000 : Number(m[1].replace(/\D/g, ""));
+}
+
+const simulationBlock = ({ current: c, scenario: s }: Simulation) => ({
+  labels: ["Atual", "Cenário"],
+  rows: [
+    { label: "Faturamento/mês", today: money(c.monthlyRevenue), potential: money(s.monthlyRevenue) },
+    { label: "Tributos/mês", today: money(c.monthlyTotal), potential: money(s.monthlyTotal) },
+    { label: "Carga efetiva", today: pct(c.effectiveRate), potential: pct(s.effectiveRate) },
+  ],
+  summary: `Carga de ${pct(c.effectiveRate)} para ${pct(s.effectiveRate)}`,
+});
 
 const PLANS: Plan[] = [
   {
@@ -30,6 +49,29 @@ const PLANS: Plan[] = [
         : r?.status === "ok"
           ? "Pronto, removi o bloco."
           : "Não encontrei esse bloco no painel.",
+  },
+  {
+    match: /\be se\b|simul|cen\u00e1rio|cenario/i,
+    steps: [
+      (_p, text) => ({ name: "run_simulation", args: { monthlyRevenue: revenueFrom(text) ?? 0 } }),
+      (p) => {
+        const sim = dataOf<Simulation>(p[0]);
+        return sim && { name: "dashboard_update_widget", args: { id: "simulacao", patch: simulationBlock(sim) } };
+      },
+      // The block does not exist on the first ask: create it. Later asks just rewrite it.
+      (p) => {
+        const sim = dataOf<Simulation>(p[0])!;
+        return p[1].status === "ok"
+          ? undefined
+          : { name: "dashboard_add_widget", args: { widget: { id: "simulacao", kind: "compare", title: "Simulação de faturamento", size: "lg", ...simulationBlock(sim) } } };
+      },
+    ],
+    reply: (p) => {
+      const sim = dataOf<Simulation>(p[0]);
+      if (!sim) return "Para simular, preciso saber o faturamento atual e o novo valor. Pode me informar?";
+      const { current: c, scenario: s } = sim;
+      return `Com faturamento de ${money(s.monthlyRevenue)} por mês, os tributos estimados vão de ${money(c.monthlyTotal)} para ${money(s.monthlyTotal)} (${pct(c.effectiveRate)} → ${pct(s.effectiveRate)}). Atualizei o bloco de simulação do painel.`;
+    },
   },
   {
     match: /^empresa/i,
@@ -130,13 +172,14 @@ export const scriptedLlm: LlmClient = {
       .map((m) => JSON.parse(m.output) as ToolOutcome);
     const plan = PLANS.find((p) => p.match.test(userMsg.content.trim())) ?? FALLBACK;
 
-    if (prev.length < plan.steps.length) {
-      const { name, args } = plan.steps[prev.length](prev);
+    const step = plan.steps[prev.length]?.(prev, userMsg.content);
+    if (step) {
+      const { name, args } = step;
       const id = `scripted-${lastUser}-${prev.length}`;
       const json = JSON.stringify(args);
       return { text: "", calls: [{ id, name, args: json }], items: [{ type: "function_call", id: `fc_${id}`, call_id: id, name, arguments: json, status: "completed" }] };
     }
-    const text = plan.reply(prev);
+    const text = plan.reply(prev, userMsg.content);
     return { text, calls: [], items: [message(text)] };
   },
 };

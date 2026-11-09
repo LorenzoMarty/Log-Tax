@@ -55,6 +55,25 @@ describe("company journey through the chat (scripted LLM, real database)", () =>
     expect(r.text).toMatch(/ilustrativas/i);
   });
 
+  it("simulates a revenue scenario into an Atual × Cenário block and updates it instead of duplicating", async () => {
+    const r = (await chat("E se meu faturamento subir para R$ 500 mil?"))!;
+    expect(r.events.map((e) => e.name)).toContain("run_simulation");
+    expect(r.text).toContain("65.500");
+    expect(r.text).toContain("13,1%");
+    expect(r.text.endsWith(DISCLAIMER)).toBe(true);
+    const sim = () => loadWorkspaceState(a.client, ws).then((s) => s!.dashboard.widgets.filter((w) => w.id === "simulacao"));
+    expect(await sim()).toHaveLength(1);
+    expect(JSON.stringify((await sim())[0])).toContain("Cenário");
+
+    // adjusting the parameter rewrites the same block
+    const again = (await chat("E se for 600 mil?"))!;
+    expect(again.text).toContain("600.000");
+    const blocks = await sim();
+    expect(blocks).toHaveLength(1);
+    expect(JSON.stringify(blocks[0])).toContain("R$ 600.000");
+    expect(JSON.stringify(blocks[0])).not.toContain("R$ 500.000");
+  });
+
   it("asks for confirmation before removing a widget and removes only after approval", async () => {
     const r = (await chat("Tira o painel de carga tributária"))!;
     expect(r.pendingConfirmations).toHaveLength(1);
