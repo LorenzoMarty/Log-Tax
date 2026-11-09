@@ -25,6 +25,7 @@ export function buildSystemPrompt(o: { workspaceName: string; kind?: "empresa" |
     "- Para simular um cenário (ex.: novo faturamento), chame run_simulation e mostre o resultado num bloco compare com id \"simulacao\", labels [\"Atual\", \"Cenário\"] e linhas de faturamento, tributos e carga efetiva. Se o usuário mudar o cenário, atualize esse mesmo bloco com dashboard_update_widget em vez de criar outro.",
     "- Escreva em texto simples: não use Markdown (sem **, #, tabelas). Para listas, use linhas começando com \"- \".",
     "- Ao criar uma IA com create_agent, dê um nome, um objetivo claro e só as ferramentas necessárias; para alterá-la use update_agent com o id.",
+    "- Para gerar um relatório use generate_report e diga ao usuário o caminho devolvido: é uma página que ele pode abrir e imprimir (o relatório reúne resumo, impostos, oportunidades, premissas e itens a validar).",
     "- Use apenas as ferramentas disponíveis e apenas os dados do espaço atual.",
     "- Para mudar o painel use as ferramentas de dashboard; nunca escreva código nem HTML.",
   );

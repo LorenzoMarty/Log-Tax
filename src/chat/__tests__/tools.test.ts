@@ -56,10 +56,10 @@ describe("engine tools", () => {
     expect((await call("save_company_data", { profitMargin: 7 })).status).toBe("error");
   });
 
-  it("generates a report with diagnosis, opportunities and the disclaimer", async () => {
-    const r = await call("generate_report");
-    expect(r).toMatchObject({ status: "ok", data: { diagnosis: { status: "ok" }, opportunities: { status: "ok" } } });
-    expect(JSON.stringify(r)).toMatch(/ilustrativa/i);
+  it("generates the printable report and returns where to open it, in either kind of workspace", async () => {
+    expect(await call("generate_report")).toMatchObject({ status: "ok", data: { url: "/workspace/ws1/relatorio", title: "Relatório tributário" } });
+    const pf: ToolContext = { ...ctx, scope: { workspaceId: "ws1", kind: "pessoal" } };
+    expect(await call("generate_report", {}, pf)).toMatchObject({ status: "ok", data: { url: "/workspace/ws1/relatorio", title: "Relatório de Imposto de Renda" } });
   });
 });
 

@@ -55,6 +55,25 @@ describe("ChatPanel", () => {
     expect(JSON.parse(fetchMock.mock.calls[1][1].body).approve).toBeUndefined();
   });
 
+  it("turns a report path in the AI's reply into a link", async () => {
+    const path = "/workspace/0a1b2c3d-0000-4000-8000-123456789abc/relatorio";
+    vi.stubGlobal("fetch", reply({ text: `Gerei o relatório: ${path}. Abra para imprimir.`, pendingConfirmations: [], dashboard: sampleDashboard }));
+    setup();
+    send("gere o relatório");
+    const link = await screen.findByRole("link", { name: "abrir o relatório" });
+    expect(link).toHaveAttribute("href", path);
+    expect(screen.queryByText(path)).not.toBeInTheDocument();
+    expect(screen.getByText(/Abra para imprimir/)).toBeInTheDocument();
+  });
+
+  it("does not linkify arbitrary paths or other sites", async () => {
+    vi.stubGlobal("fetch", reply({ text: "Veja /workspace/x/relatorio e https://example.com/workspace/0a1b2c3d-0000-4000-8000-123456789abc/relatorio", pendingConfirmations: [], dashboard: sampleDashboard }));
+    setup();
+    send("oi");
+    expect(await screen.findByText(/Veja \/workspace\/x\/relatorio/)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "abrir o relatório" })).not.toBeInTheDocument();
+  });
+
   it("shows a friendly error when the AI is unavailable", async () => {
     vi.stubGlobal("fetch", reply({ error: "IA indisponível: configure OPENAI_API_KEY" }, false));
     setup();

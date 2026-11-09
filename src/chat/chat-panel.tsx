@@ -10,6 +10,21 @@ import type { PendingConfirmation } from "./orchestrator";
 import type { Agent } from "./types";
 import type { DisplayMessage } from "./workspace-state";
 
+const REPORT_PATH = /(?<![\w.:/-])(\/workspace\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/relatorio)(?![\w/-])/g;
+
+/** The AI answers in plain text; a report path becomes a link to the printable page. Nothing else is linkified. */
+function withReportLinks(text: string): React.ReactNode[] {
+  return text.split(REPORT_PATH).map((part, i) =>
+    i % 2 === 1 ? (
+      <a key={i} href={part} className="underline">
+        abrir o relatório
+      </a>
+    ) : (
+      part
+    ),
+  );
+}
+
 export function ChatPanel(props: { workspaceId: string; initialMessages: DisplayMessage[]; initialDashboard: Dashboard; initialAlerts?: AlertStatus[]; agentId?: string; initialAgents?: Agent[] }) {
   const [messages, setMessages] = useState(props.initialMessages);
   const [dashboard, setDashboard] = useState(props.initialDashboard);
@@ -69,7 +84,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
               data-role={m.role}
               className={`whitespace-pre-line rounded-2xl px-3 py-2 text-sm ${m.role === "user" ? "self-end bg-neutral-900 text-white" : "self-start bg-neutral-100"}`}
             >
-              {m.text}
+              {m.role === "assistant" ? withReportLinks(m.text) : m.text}
             </p>
           ))}
           {busy && <p className="text-sm text-neutral-500">Pensando…</p>}

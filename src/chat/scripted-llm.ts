@@ -74,6 +74,14 @@ const NEED_INCOME = "Preciso da sua renda anual para calcular. Qual foi a sua re
 
 const PLANS: Plan[] = [
   {
+    match: /relat[óo]rio/i,
+    steps: [() => ({ name: "generate_report", args: {} })],
+    reply: ([r]) => {
+      const d = r?.status === "ok" ? (r.data as { url: string }) : undefined;
+      return d ? `Gerei o relatório do espaço: ${d.url} . Abra o link para ver e imprimir.` : "Não consegui gerar o relatório agora.";
+    },
+  },
+  {
     match: /(crie|criar|nova) uma ia/i,
     steps: [
       () => ({
