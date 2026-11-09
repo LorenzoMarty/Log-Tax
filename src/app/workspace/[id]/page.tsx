@@ -5,6 +5,7 @@ import { alertStatuses } from "@/alerts/evaluate";
 import { ChatPanel } from "@/chat/chat-panel";
 import { loadWorkspaceState } from "@/chat/workspace-state";
 import { DashboardView } from "@/dashboard/dashboard-view";
+import { DocumentsPanel, type DocumentRow } from "@/documents/documents-panel";
 import { mockEngine } from "@/engine";
 import { createClient } from "@/lib/supabase/server";
 import { leaveWorkspace } from "@/sharing/actions";
@@ -37,6 +38,11 @@ export default async function WorkspaceChatPage({
   const isOwner = state.role === "owner";
   if (!isOwner && ia) notFound(); // specialised agents are conversations: owner only
 
+  const { data: documents } = await supabase
+    .from("documents")
+    .select("id, name, doc_type, extracted, size_bytes, created_at")
+    .eq("workspace_id", id)
+    .order("created_at", { ascending: false });
   const { data: comments } = await supabase
     .from("comments")
     .select("id, author_id, author_email, widget_id, body, created_at")
@@ -52,6 +58,7 @@ export default async function WorkspaceChatPage({
 
   const alerts = state.kind === "pessoal" ? [] : alertStatuses(mockEngine, state.company, state.alerts);
   const notice = msg ? MESSAGES[msg] : undefined;
+  const documentsPanel = <DocumentsPanel workspaceId={id} documents={(documents ?? []) as DocumentRow[]} canEdit={isOwner} />;
   const commentsPanel = (
     <Comments
       workspaceId={id}
@@ -93,6 +100,7 @@ export default async function WorkspaceChatPage({
             initialAlerts={alerts}
           />
           <SharePanel workspaceId={id} defaultOpen={Boolean(notice)} members={(members ?? []) as MemberRow[]} invites={(invites ?? []) as InviteRow[]} />
+          {documentsPanel}
           {commentsPanel}
         </>
       ) : (
@@ -109,6 +117,7 @@ export default async function WorkspaceChatPage({
           </div>
           <AlertBar alerts={alerts} />
           <DashboardView dashboard={state.dashboard} />
+          {documentsPanel}
           {commentsPanel}
         </>
       )}
