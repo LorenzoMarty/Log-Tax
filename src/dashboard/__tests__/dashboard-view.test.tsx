@@ -33,6 +33,18 @@ describe("DashboardView", () => {
     expect(root.dataset.theme).toBe("dark");
   });
 
+  it("labels the compare columns, defaulting to Hoje × Potencial", () => {
+    const compare = sampleDashboard.widgets.find((w) => w.kind === "compare")!;
+    const { rerender } = render(<DashboardView dashboard={{ ...sampleDashboard, widgets: [compare] }} />);
+    expect(screen.getByText("Hoje")).toBeInTheDocument();
+    expect(screen.getByText("Potencial")).toBeInTheDocument();
+
+    rerender(<DashboardView dashboard={{ ...sampleDashboard, widgets: [{ ...compare, labels: ["Atual", "Cenário"] }] }} />);
+    expect(screen.getByText("Atual")).toBeInTheDocument();
+    expect(screen.getByText("Cenário")).toBeInTheDocument();
+    expect(screen.queryByText("Hoje")).not.toBeInTheDocument();
+  });
+
   it("renders an empty state", () => {
     render(<DashboardView dashboard={{ ...sampleDashboard, widgets: [] }} />);
     expect(screen.getByText(/nenhum bloco/i)).toBeInTheDocument();

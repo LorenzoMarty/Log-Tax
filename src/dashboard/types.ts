@@ -11,7 +11,7 @@ export type Widget = Base &
     | { kind: "breakdown"; items: { label: string; amount: number }[] }
     | { kind: "opportunities"; items: { title: string; monthlySavings: number }[] }
     | { kind: "deadlines"; items: { label: string; date: string }[] }
-    | { kind: "compare"; rows: { label: string; today: string; potential: string }[]; summary?: string }
+    | { kind: "compare"; rows: { label: string; today: string; potential: string }[]; summary?: string; labels?: [string, string] }
     | { kind: "checklist"; items: { label: string; done: boolean }[] }
     | { kind: "text"; body: string }
   );

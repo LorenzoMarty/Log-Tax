@@ -88,8 +88,8 @@ function Body({ w }: { w: Widget }) {
         <div className="text-sm">
           <div className="grid grid-cols-3 gap-2 font-medium opacity-70">
             <span />
-            <span>Hoje</span>
-            <span>Potencial</span>
+            <span>{w.labels?.[0] ?? "Hoje"}</span>
+            <span>{w.labels?.[1] ?? "Potencial"}</span>
           </div>
           {w.rows.map((r) => (
             <div key={r.label} className="grid grid-cols-3 gap-2 py-1">
