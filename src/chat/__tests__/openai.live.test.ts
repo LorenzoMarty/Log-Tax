@@ -63,6 +63,32 @@ describe("OpenAI end to end", () => {
     expect(JSON.stringify(block()[0])).toMatch(/600/);
   });
 
+  it("creates a specialised agent from a plain request, without handing it destructive tools", async () => {
+    const c = ctx();
+    const r = await runTurn({
+      llm,
+      ctx: c,
+      history: [],
+      userMessage: "Crie uma IA chamada IA Financeira só para consultar impostos e fazer simulações. Ela não deve alterar o painel.",
+    });
+    expect(names(r)).toContain("create_agent");
+    const agent = c.store.listAgents()[0];
+    expect(agent?.name).toMatch(/financeira/i);
+    expect(agent.tools.length).toBeGreaterThan(0);
+    expect(agent.tools.some((t) => /get_tax_diagnosis|run_simulation/.test(t))).toBe(true);
+    expect(agent.tools).not.toContain("dashboard_remove_widget");
+  });
+
+  it("an agent limited to the diagnosis cannot change the dashboard, whatever the user asks", async () => {
+    const c = ctx();
+    c.store.dispatch({ type: "add", widget: { id: "kpi", kind: "kpi", title: "Carga", size: "md", value: "R$ 1" } });
+    const scoped: ToolContext = { ...c, scope: { workspaceId: "live", agentId: "ag1", allowedTools: ["get_tax_diagnosis"] } };
+    const r = await runTurn({ llm, ctx: scoped, history: [], userMessage: "Remova o bloco kpi do painel e crie um alerta de R$ 10 mil." });
+    expect(names(r).filter((n) => n !== "get_tax_diagnosis")).toEqual([]); // nothing else was even attempted
+    expect(c.store.getDashboard().widgets.some((w) => w.id === "kpi")).toBe(true);
+    expect(c.store.listAlerts()).toHaveLength(0);
+  });
+
   it("never removes a widget without the user's confirmation", async () => {
     const c = ctx();
     c.store.dispatch({ type: "add", widget: { id: "kpi", kind: "kpi", title: "Carga", size: "md", value: "R$ 1" } });
