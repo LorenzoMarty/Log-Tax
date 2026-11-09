@@ -1,7 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-
-const PROTECTED = ["/workspace"];
+import { authRedirectPath } from "@/lib/auth-redirect";
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -21,19 +20,12 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (user && request.nextUrl.pathname === "/") {
-    const url = request.nextUrl.clone();
-    url.pathname = "/workspace";
-    return NextResponse.redirect(url);
-  }
-
-  if (!user && PROTECTED.some((p) => request.nextUrl.pathname.startsWith(p))) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.search = "";
-    return NextResponse.redirect(url);
-  }
-  return response;
+  const target = authRedirectPath(request.nextUrl.pathname, user !== null);
+  if (!target) return response;
+  const url = request.nextUrl.clone();
+  url.pathname = target;
+  url.search = "";
+  return NextResponse.redirect(url);
 }
 
 export const config = {
