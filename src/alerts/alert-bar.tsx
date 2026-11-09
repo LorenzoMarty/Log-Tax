@@ -9,13 +9,13 @@ export function AlertBar({ alerts }: { alerts: AlertStatus[] }) {
   return (
     <section aria-label="Alertas" className="space-y-2">
       {fired.map((a) => (
-        <p key={a.id} data-testid="alert-banner" role="status" className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+        <p key={a.id} data-testid="alert-banner" role="status" className="rounded-2xl border border-transparent bg-warning-tint px-4 py-3 text-sm text-warning-ink">
           <strong>Alerta:</strong> {a.text} (agora {a.currentText})
         </p>
       ))}
       <details className="text-sm">
         <summary className="flex cursor-pointer items-center gap-2">
-          <span aria-label={bell} className={`rounded-full px-2 py-0.5 text-xs font-medium ${fired.length ? "bg-amber-600 text-white" : "bg-neutral-200"}`}>
+          <span aria-label={bell} className={`rounded-full px-2 py-0.5 text-xs font-medium ${fired.length ? "bg-warning-ink text-surface" : "bg-surface-sunken"}`}>
             <span aria-hidden>🔔 {fired.length}</span>
           </span>
           Meus alertas ({alerts.length})

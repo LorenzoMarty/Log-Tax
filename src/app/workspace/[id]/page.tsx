@@ -17,6 +17,8 @@ import { SharePanel, type InviteRow, type MemberRow } from "@/sharing/share-pane
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+export const metadata = { title: "Espaço" };
+
 export default async function WorkspaceChatPage({
   params,
   searchParams,
@@ -88,7 +90,7 @@ export default async function WorkspaceChatPage({
       </header>
 
       {notice && (
-        <p role="status" className={`rounded-xl px-4 py-3 text-sm ${notice.ok ? "bg-green-50 text-green-900" : "bg-red-50 text-red-800"}`}>
+        <p role="status" className={`rounded-xl px-4 py-3 text-sm ${notice.ok ? "bg-brand-tint text-brand-ink" : "bg-danger-tint text-danger-ink"}`}>
           {notice.text}
         </p>
       )}
@@ -110,12 +112,12 @@ export default async function WorkspaceChatPage({
         </>
       ) : (
         <>
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-neutral-200 px-4 py-3 text-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-line px-4 py-3 text-sm">
             <p data-testid="shared-banner">
               Compartilhado com você · <strong>{ROLE_LABEL[state.role]}</strong>. Você vê o painel, os alertas e os comentários; só o dono conversa com a IA.
             </p>
             <form action={leaveWorkspace.bind(null, id)}>
-              <button type="submit" className="rounded-lg border border-neutral-300 px-3 py-1.5">
+              <button type="submit" className="rounded-lg border border-line px-3 py-1.5">
                 Sair deste espaço
               </button>
             </form>
