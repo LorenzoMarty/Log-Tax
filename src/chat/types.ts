@@ -1,6 +1,6 @@
 import type { Action } from "@/dashboard/reducer";
 import type { Dashboard } from "@/dashboard/types";
-import type { CompanyProfile, TaxEngine } from "@/engine";
+import type { CompanyProfile, PersonProfile, TaxEngine } from "@/engine";
 
 // ---- LLM boundary (provider-agnostic) ----
 export interface ToolCall {
@@ -36,6 +36,7 @@ export interface LlmClient {
 export interface Scope {
   workspaceId: string;
   workspaceName?: string;
+  kind?: "empresa" | "pessoal";
   agentId?: string;
   /** Undefined = every tool. An agent only ever gets the tools it was created with. */
   allowedTools?: readonly string[];
@@ -62,6 +63,8 @@ export interface Agent {
 export interface ChatStore {
   getCompany(): CompanyProfile;
   saveCompany(patch: Partial<CompanyProfile>): CompanyProfile;
+  getPerson(): PersonProfile;
+  savePerson(patch: Partial<PersonProfile>): PersonProfile;
   getDashboard(): Dashboard;
   dispatch(action: Action): Dashboard;
   addAlert(rule: AlertRule): Alert;

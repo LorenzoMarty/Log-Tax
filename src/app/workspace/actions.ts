@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { seedCompany } from "@/engine";
+import { seedCompany, seedPerson } from "@/engine";
 
 export async function createDefaultWorkspaces() {
   const supabase = await createClient();
@@ -10,7 +10,7 @@ export async function createDefaultWorkspaces() {
   if (!count) {
     await supabase.from("workspaces").insert([
       { name: "Minha Empresa", kind: "empresa", profile: seedCompany },
-      { name: "Vida Pessoal", kind: "pessoal" },
+      { name: "Vida Pessoal", kind: "pessoal", profile: seedPerson },
     ]);
   }
   redirect("/workspace");

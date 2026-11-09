@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Dashboard } from "@/dashboard/types";
-import { seedCompany, type CompanyProfile } from "@/engine";
+import { seedCompany, seedPerson, type CompanyProfile, type PersonProfile } from "@/engine";
 import type { StoreState } from "./memory-store";
 import type { Agent, Alert, Msg } from "./types";
 
@@ -58,12 +58,14 @@ export async function loadWorkspaceState(sb: SupabaseClient, workspaceId: string
   if (agentId && !agent) return null;
 
   const company: CompanyProfile =
-    ws.profile ?? (ws.kind === "empresa" ? seedCompany : { id: ws.id, name: ws.name, regime: "presumido", activity: "comercio" });
+    ws.kind === "empresa" ? (ws.profile ?? seedCompany) : { id: ws.id, name: ws.name, regime: "presumido", activity: "comercio" };
+  const person: PersonProfile = ws.kind === "pessoal" ? (ws.profile ?? seedPerson) : seedPerson;
 
   return {
     workspaceName: ws.name,
     kind: ws.kind,
     company,
+    person,
     dashboard: dash.data?.data ?? emptyDashboard(workspaceId),
     dashboardRowId: dash.data?.id,
     alerts: (alerts.data ?? []) as Alert[],
@@ -78,9 +80,9 @@ export async function loadWorkspaceState(sb: SupabaseClient, workspaceId: string
 export async function saveWorkspaceState(
   sb: SupabaseClient,
   workspaceId: string,
-  s: StoreState & { dashboardRowId?: string; agentId?: string; history: Msg[]; messages: DisplayMessage[] },
+  s: StoreState & { kind: WorkspaceState["kind"]; dashboardRowId?: string; agentId?: string; history: Msg[]; messages: DisplayMessage[] },
 ): Promise<Agent[]> {
-  ok(await sb.from("workspaces").update({ profile: s.company }).eq("id", workspaceId), "workspaces");
+  ok(await sb.from("workspaces").update({ profile: s.kind === "pessoal" ? s.person : s.company }).eq("id", workspaceId), "workspaces");
 
   const dashRow = { workspace_id: workspaceId, name: s.dashboard.name, data: s.dashboard, version: s.dashboard.version, updated_at: new Date().toISOString() };
   ok(

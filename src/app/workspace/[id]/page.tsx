@@ -46,7 +46,7 @@ export default async function WorkspaceChatPage({
         initialAgents={state.agents}
         initialMessages={state.messages}
         initialDashboard={state.dashboard}
-        initialAlerts={alertStatuses(mockEngine, state.company, state.alerts)}
+        initialAlerts={state.kind === "pessoal" ? [] : alertStatuses(mockEngine, state.company, state.alerts)}
       />
     </main>
   );
