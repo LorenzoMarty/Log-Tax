@@ -22,6 +22,10 @@ describe("system prompt", () => {
     for (const s of sentences) expect(s).toMatch(/nunca|não/i);
   });
 
+  it("asks for plain text because the chat does not render Markdown", () => {
+    expect(prompt).toMatch(/não use markdown/i);
+  });
+
   it("tells the model destructive actions need user confirmation", () => {
     expect(prompt).toMatch(/confirmação/i);
   });
