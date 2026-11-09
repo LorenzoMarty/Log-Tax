@@ -23,7 +23,15 @@ async function noHorizontalScroll(page: Page, label: string) {
   expect(overflow, `${label} overflows horizontally by ${overflow}px`).toBeLessThanOrEqual(0);
 }
 
+/** REQ-14: values are illustrative, so no screen may promise a "garantido" result. */
+async function noGuaranteePromise(page: Page, label: string) {
+  const text = await page.locator("body").innerText();
+  const promise = /\S*\s*garantid\S*\s*\S*/i.exec(text)?.[0];
+  expect(promise, `${label} promises a guaranteed result: "${promise}"; expected no "garantid*" on screen`).toBeUndefined();
+}
+
 async function checkAll(page: Page, label: string) {
+  await noGuaranteePromise(page, label);
   for (const vp of VIEWPORTS) {
     await page.setViewportSize({ width: vp.width, height: vp.height });
     await audit(page, `${label} [${vp.name}]`);
