@@ -5,7 +5,7 @@ import type { LlmClient, LlmTurn, Msg, ToolOutcome } from "./types";
  * Deterministic stand-in for the model: keyword → fixed tool plan. Lets the full journey run
  * (e2e, demos, no API key). It still goes through the real tools, store and database.
  */
-type Step = (prev: ToolOutcome[], text: string) => { name: string; args: unknown } | undefined;
+type Step = (prev: ToolOutcome[], text: string, system: string) => { name: string; args: unknown } | undefined;
 interface Plan {
   match: RegExp;
   steps: Step[];
@@ -40,6 +40,33 @@ const simulationBlock = ({ current: c, scenario: s }: Simulation) => ({
 });
 
 const PLANS: Plan[] = [
+  {
+    match: /(crie|criar|nova) uma ia/i,
+    steps: [
+      () => ({
+        name: "create_agent",
+        args: {
+          name: "IA da Empresa",
+          objective: "Acompanhar os impostos e as oportunidades da empresa",
+          tools: ["get_tax_diagnosis", "run_simulation", "list_opportunities", "explain_result", "create_alert"],
+        },
+      }),
+    ],
+    reply: ([r]) =>
+      r?.status === "ok"
+        ? 'Criei a "IA da Empresa". Ela consulta impostos, simula cenários e cria alertas, mas não altera o seu painel. Abra "Minhas IAs" para conversar com ela.'
+        : "Não consegui criar a IA agora.",
+  },
+  {
+    match: /(mude|altere|troque) o objetivo/i,
+    steps: [
+      (_p, text, system) => {
+        const id = /id=(\S+)/.exec(system)?.[1];
+        return id ? { name: "update_agent", args: { id, patch: { objective: text.split(/ para /i).slice(1).join(" para ").trim() } } } : undefined;
+      },
+    ],
+    reply: ([r]) => (r?.status === "ok" ? "Pronto, atualizei o objetivo da IA." : "Não encontrei essa IA para alterar."),
+  },
   {
     match: /tira|remov|^sim\b/i,
     steps: [() => ({ name: "dashboard_remove_widget", args: { id: "kpi" } })],
@@ -181,7 +208,7 @@ const message = (text: string) => ({
 });
 
 export const scriptedLlm: LlmClient = {
-  async respond({ history }): Promise<LlmTurn> {
+  async respond({ history, system }): Promise<LlmTurn> {
     const lastUser = history.map((m: Msg) => m.role).lastIndexOf("user");
     const userMsg = history[lastUser] as { content: string };
     const prev = history
@@ -190,7 +217,7 @@ export const scriptedLlm: LlmClient = {
       .map((m) => JSON.parse(m.output) as ToolOutcome);
     const plan = PLANS.find((p) => p.match.test(userMsg.content.trim())) ?? FALLBACK;
 
-    const step = plan.steps[prev.length]?.(prev, userMsg.content);
+    const step = plan.steps[prev.length]?.(prev, userMsg.content, system);
     if (step) {
       const { name, args } = step;
       const id = `scripted-${lastUser}-${prev.length}`;
