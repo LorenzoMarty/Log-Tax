@@ -13,7 +13,8 @@
     "check": "npm run lint && npm run typecheck && npm test",
     "test:rls": "vitest run --config vitest.rls.config.mts",
     "db:start": "supabase start -x imgproxy,edge-runtime,vector,logflare,studio",
-    "db:reset": "supabase db reset"
+    "db:reset": "supabase db reset",
+    "test:live": "vitest run --config vitest.live.config.mts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
