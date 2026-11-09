@@ -1,105 +1,100 @@
-import { expect, test, type Page } from "@playwright/test";
-import { login } from "./helpers";
+import { expect, test, type Browser, type Page } from "@playwright/test";
+import { createAndOpen, login } from "./helpers";
+import { COMPANY_JOURNEY, gotoSettled, inviteToWorkspace, runChatScript, sendChatMessage } from "./workspace-actions";
 
 // A guided tour of the whole product in a real browser, saving the screenshots used in the README.
-// Opt-in (it rewrites docs/screenshots): `E2E_TOUR=1 npx playwright test tour`.
+// Opt-in (it rewrites docs/screenshots): `E2E_TOUR=1 npx playwright test tour --workers=1`.
 test.skip(!process.env.E2E_TOUR, "set E2E_TOUR=1 to regenerate docs/screenshots");
 test.setTimeout(240_000);
 
-const OUT = "docs/screenshots";
-const shot = (page: Page, name: string, full = false) => page.screenshot({ path: `${OUT}/${name}.png`, fullPage: full, animations: "disabled" });
-// The Next dev server can fail once right after compiling a route ("clientReferenceManifest"); a reload fixes it.
-const open = async (page: Page, url: string) => {
-  for (let i = 0; i < 3; i++) {
-    await page.goto(url);
-    await page.waitForLoadState("networkidle");
-    if ((await page.locator("nextjs-portal").count()) === 0) return;
-  }
-};
-const say = async (page: Page, text: string, reply: RegExp) => {
-  await page.getByLabel("Mensagem").fill(text);
-  await page.getByRole("button", { name: "Enviar" }).click();
-  await expect(page.locator('[data-role="assistant"]').filter({ hasText: reply }).last()).toBeVisible();
-};
+const SCREENSHOTS_DIR = "docs/screenshots";
+const DESKTOP = { width: 1280, height: 800 };
+const NFE_XML =
+  "<nfeProc><NFe><infNFe><ide><nNF>1234</nNF><dhEmi>2026-10-05T10:30:00-03:00</dhEmi></ide><emit><CNPJ>12345678000190</CNPJ></emit><total><ICMSTot><vNF>1500.00</vNF></ICMSTot></total></infNFe></NFe></nfeProc>";
 
-test("tour", async ({ browser }) => {
-  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
-  const page = await ctx.newPage();
+async function saveScreenshot(page: Page, name: string, fullPage = false): Promise<void> {
+  await page.screenshot({ path: `${SCREENSHOTS_DIR}/${name}.png`, fullPage, animations: "disabled" });
+}
 
-  await page.goto("/");
-  await shot(page, "01-home");
-  await login(page, "tour");
-  await page.getByRole("button", { name: "Criar meus espaços" }).click();
-  await shot(page, "02-espacos");
-
-  // company
-  await page.getByRole("link", { name: /Minha Empresa/ }).click();
-  await expect(page).toHaveURL(/\/workspace\/[0-9a-f-]{36}$/);
-  await page.waitForLoadState("networkidle");
-  const space = page.url();
-  await say(page, "Quero organizar meus impostos", /Empresa ou Pessoal/);
-  await say(page, "Empresa", /42\.800/);
-  await say(page, "Como posso pagar menos?", /87\.600/);
-  await say(page, "E se meu faturamento subir para R$ 500 mil?", /65\.500/);
-  await say(page, "Me avise se meus impostos passarem de R$ 20 mil", /20\.000/);
-  await say(page, "Crie uma IA para minha empresa", /Criei a/);
-  await page.getByLabel(/Documento \(PDF/).setInputFiles({
-    name: "nota-fiscal.xml",
-    mimeType: "application/xml",
-    buffer: Buffer.from("<nfeProc><NFe><infNFe><ide><nNF>1234</nNF><dhEmi>2026-10-05T10:30:00-03:00</dhEmi></ide><emit><CNPJ>12345678000190</CNPJ></emit><total><ICMSTot><vNF>1500.00</vNF></ICMSTot></total></infNFe></NFe></nfeProc>"),
-  });
+async function uploadInvoice(page: Page): Promise<void> {
+  await page.getByLabel(/Documento \(PDF/).setInputFiles({ name: "nota-fiscal.xml", mimeType: "application/xml", buffer: Buffer.from(NFE_XML) });
   await page.getByLabel(/Autorizo o Log Tax/).check();
   await page.getByRole("button", { name: "Anexar documento" }).click();
   await expect(page.getByTestId("document")).toHaveCount(1);
   await page.waitForLoadState("networkidle");
+}
+
+/** Screenshots 03–05: the company workspace at the top, in full, and on a phone. */
+async function captureCompanySpace(page: Page): Promise<void> {
   await page.evaluate(() => window.scrollTo(0, 0));
-  await shot(page, "03-empresa");
-  await shot(page, "04-empresa-completa", true);
+  await saveScreenshot(page, "03-empresa");
+  await saveScreenshot(page, "04-empresa-completa", true);
   await page.setViewportSize({ width: 375, height: 800 });
   await page.evaluate(() => window.scrollTo(0, 0));
-  await shot(page, "05-empresa-celular");
-  await page.setViewportSize({ width: 1280, height: 800 });
+  await saveScreenshot(page, "05-empresa-celular");
+  await page.setViewportSize(DESKTOP);
+}
 
-  // report
-  await open(page, `${space}/relatorio`);
-  await shot(page, "06-relatorio", true);
-
-  // agent conversation
-  await open(page, space);
+async function captureReportAndAgent(page: Page, space: string): Promise<void> {
+  await gotoSettled(page, `${space}/relatorio`);
+  await saveScreenshot(page, "06-relatorio", true);
+  await gotoSettled(page, space);
   await page.getByRole("link", { name: /IA da Empresa/ }).click();
   await page.waitForLoadState("networkidle");
-  await say(page, "Empresa", /42\.800/);
-  await shot(page, "07-agente");
+  await sendChatMessage(page, "Empresa", /42\.800/);
+  await saveScreenshot(page, "07-agente");
+}
 
-  // personal
-  await open(page, "/workspace");
+async function capturePersonalSpace(page: Page): Promise<void> {
+  await gotoSettled(page, "/workspace");
   await page.getByRole("link", { name: /Vida Pessoal/ }).click();
   await page.waitForLoadState("networkidle");
-  await say(page, "Quero entender meu imposto de renda", /1\.308/);
-  await say(page, "Tenho 3 dependentes", /1\.933/);
-  await shot(page, "08-pessoal");
+  await sendChatMessage(page, "Quero entender meu imposto de renda", /1\.308/);
+  await sendChatMessage(page, "Tenho 3 dependentes", /1\.933/);
+  await saveScreenshot(page, "08-pessoal");
+}
 
-  // the accountant
-  await open(page, space);
-  const share = page.locator("details", { hasText: "Compartilhar este espaço" });
-  if ((await share.getAttribute("open")) === null) await share.locator("summary").click();
-  const guestEmail = `contadora-tour-${Date.now()}@example.com`;
-  await page.getByLabel(/Email de quem vai receber/).fill(guestEmail);
-  await page.getByLabel("Papel").selectOption({ label: "Comentário" });
-  await page.getByRole("button", { name: "Convidar" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Convite criado" })).toBeVisible();
-  const guestCtx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
-  const guest = await guestCtx.newPage();
-  await login(guest, "x", guestEmail);
-  await shot(guest, "09-convite");
-  await guest.getByRole("button", { name: "Aceitar" }).click();
-  await expect(guest).toHaveURL(space);
-  await guest.waitForLoadState("networkidle");
+async function commentAsAccountant(guest: Page): Promise<void> {
   await guest.getByLabel("Comentário", { exact: true }).fill("Conferir o ICMS deste mês antes de fechar.");
   await guest.getByLabel("Sobre").selectOption({ label: "Carga tributária" });
   await guest.getByRole("button", { name: "Comentar" }).click();
   await expect(guest.getByTestId("comment")).toHaveCount(1);
-  await shot(guest, "10-contadora", true);
-  await guestCtx.close();
+}
+
+/** Screenshots 09–10: the accountant receives the invitation, accepts it and comments. */
+async function captureAccountant(browser: Browser, owner: Page, space: string): Promise<void> {
+  const guestEmail = `contadora-tour-${Date.now()}@example.com`;
+  await gotoSettled(owner, space);
+  await inviteToWorkspace(owner, guestEmail, "Comentário");
+  const ctx = await browser.newContext({ viewport: DESKTOP });
+  const guest = await ctx.newPage();
+  await login(guest, "x", guestEmail);
+  await saveScreenshot(guest, "09-convite");
+  await guest.getByRole("button", { name: "Aceitar" }).click();
+  await expect(guest).toHaveURL(space);
+  await guest.waitForLoadState("networkidle");
+  await commentAsAccountant(guest);
+  await saveScreenshot(guest, "10-contadora", true);
+  await ctx.close();
+}
+
+test("tour", async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: DESKTOP });
+  const page = await ctx.newPage();
+  await page.goto("/");
+  await saveScreenshot(page, "01-home");
+  await login(page, "tour");
+  await createAndOpen(page, /Minha Empresa/);
+  const space = page.url();
+  await gotoSettled(page, "/workspace");
+  await saveScreenshot(page, "02-espacos");
+  await gotoSettled(page, space);
+  await sendChatMessage(page, "Quero organizar meus impostos", /Empresa ou Pessoal/);
+  await runChatScript(page, COMPANY_JOURNEY);
+  await uploadInvoice(page);
+  await captureCompanySpace(page);
+  await captureReportAndAgent(page, space);
+  await capturePersonalSpace(page);
+  await captureAccountant(browser, page, space);
   await ctx.close();
 });
