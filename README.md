@@ -37,3 +37,12 @@ LOG_TAX_LLM=scripted      # opcional, só em desenvolvimento: IA roteirizada por
 ```
 
 O e2e (`npm run e2e`) roda a jornada da empresa com `LOG_TAX_LLM=scripted` contra o Supabase local.
+
+### Testes com a OpenAI real (sob demanda, custam tokens)
+
+```sh
+npm run test:live                                  # loop de ferramentas com o modelo real
+E2E_REAL_LLM=1 npx playwright test real-llm        # navegador → /api/chat → OpenAI → Supabase
+```
+
+Atenção: uma variável de ambiente `OPENAI_API_KEY` já definida no sistema tem prioridade sobre o `.env.local`.
