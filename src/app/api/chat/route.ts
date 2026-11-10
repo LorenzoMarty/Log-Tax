@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { handleChat, ReadOnlyError } from "@/chat/handle-chat";
 import { getLlm } from "@/chat/llm-factory";
+import { checkRate, clientIp, tooMany } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
 const body = z.object({
@@ -16,6 +17,9 @@ export async function POST(request: Request) {
     data: { user },
   } = await sb.auth.getUser();
   if (!user) return Response.json({ error: "Faça login para continuar." }, { status: 401 });
+
+  const wait = await checkRate(sb, user.id, "chat", clientIp(request.headers));
+  if (wait) return tooMany(wait);
 
   const parsed = body.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Mensagem inválida." }, { status: 400 });

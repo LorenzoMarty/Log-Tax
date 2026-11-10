@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { checkRate, clientIp } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 import { commentInput, inviteInput } from "./schema";
 
@@ -26,6 +28,7 @@ export async function inviteMember(workspaceId: string, formData: FormData) {
   const parsed = inviteInput.safeParse({ email: formData.get("email"), role: formData.get("role") });
   if (!parsed.success) return back(workspaceId, "convite-invalido");
   if (parsed.data.email === user.email?.toLowerCase()) return back(workspaceId, "convite-proprio");
+  if (await checkRate(supabase, user.id, "invite", clientIp(await headers()))) return back(workspaceId, "muitas-tentativas");
 
   const { data: ws } = await supabase.from("workspaces").select("name").eq("id", workspaceId).maybeSingle();
   if (!ws) return back(workspaceId, "sem-permissao");
