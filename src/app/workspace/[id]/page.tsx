@@ -6,6 +6,7 @@ import { ChatPanel } from "@/chat/chat-panel";
 import { loadWorkspaceState } from "@/chat/workspace-state";
 import { DashboardView } from "@/dashboard/dashboard-view";
 import { DocumentsPanel, type DocumentRow } from "@/documents/documents-panel";
+import { openStored } from "@/documents/storage";
 import { mockEngine } from "@/engine";
 import { createClient } from "@/lib/supabase/server";
 import { Icon, Logo } from "@/ui/log";
@@ -63,7 +64,7 @@ export default async function WorkspaceChatPage({
 
   const alerts = state.kind === "pessoal" ? [] : alertStatuses(mockEngine, state.company, state.alerts);
   const notice = msg ? MESSAGES[msg] : undefined;
-  const documentsPanel = <DocumentsPanel workspaceId={id} documents={(documents ?? []) as DocumentRow[]} canEdit={isOwner} />;
+  const documentsPanel = <DocumentsPanel workspaceId={id} documents={((documents ?? []) as DocumentRow[]).map((d) => ({ ...d, extracted: openStored(d.extracted) }))} canEdit={isOwner} />;
   const commentsPanel = (
     <Comments
       workspaceId={id}

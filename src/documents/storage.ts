@@ -1,3 +1,4 @@
+import { openIdentifiers, sealIdentifiers } from "@/lib/crypto";
 import type { Classification } from "./classify";
 
 export const BUCKET = "documents";
@@ -40,7 +41,9 @@ export interface StoredExtraction {
   confidence: Classification["confidence"];
 }
 
-export const toStored = (c: Classification): StoredExtraction => ({ fields: c.extracted, missing: c.missing, notes: c.notes, confidence: c.confidence });
+/** CNPJ/CPF fields are encrypted before they reach the database; read them back with `openStored`. */
+export const toStored = (c: Classification): StoredExtraction => ({ fields: sealIdentifiers(c.extracted), missing: c.missing, notes: c.notes, confidence: c.confidence });
+export const openStored = (s: StoredExtraction | null): StoredExtraction | null => (s ? { ...s, fields: openIdentifiers(s.fields ?? {}) } : s);
 
 export const MISSING_LABEL: Record<string, string> = {
   numero: "número",
