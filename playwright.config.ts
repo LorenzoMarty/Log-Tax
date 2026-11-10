@@ -15,7 +15,7 @@ export default defineConfig({
     // Always start our own server: the journey needs LOG_TAX_LLM=scripted.
     reuseExistingServer: false,
     // E2E_REAL_LLM=1 switches to the real OpenAI model (needs OPENAI_API_KEY).
-    env: { LOG_TAX_LLM: process.env.E2E_REAL_LLM ? "" : "scripted", DOCUMENT_QUOTA_BYTES: "1048576" },
+    env: { LOG_TAX_LLM: process.env.E2E_REAL_LLM ? "" : "scripted", DOCUMENT_QUOTA_BYTES: "1048576", CRON_SECRET: "e2e-cron-secret" },
   },
   use: { baseURL: `http://localhost:${port}` },
 });
