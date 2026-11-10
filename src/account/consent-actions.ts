@@ -29,6 +29,15 @@ export async function grantDocumentsConsent() {
   redirect("/workspace/privacidade?ok=concedido");
 }
 
+/** Product measurement (funnel events without values or messages) is opt-in and can be switched off at any time. */
+export async function setAnalyticsConsent(formData: FormData) {
+  const { sb } = await session();
+  const action = formData.get("decision") === "granted" ? "granted" : "revoked";
+  await sb.rpc("record_consent", { p_purpose: "analytics", p_version: CONSENT_VERSION, p_action: action });
+  revalidatePath("/workspace/privacidade");
+  redirect(`/workspace/privacidade?ok=medicao-${action === "granted" ? "ligada" : "desligada"}`);
+}
+
 /** Deletes every stored document the person owns: the files first, then the records. */
 export async function deleteAllMyDocuments() {
   const { sb, user } = await session();
