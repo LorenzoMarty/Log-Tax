@@ -23,6 +23,8 @@ export interface ToolSpec {
 }
 
 export interface LlmTurn {
+  /** Tokens the provider billed for this call, when it reports them. */
+  usage?: { input: number; output: number };
   text: string;
   calls: ToolCall[];
   items: unknown[];

@@ -38,6 +38,7 @@ export function openAiLlm(client: Pick<OpenAI, "responses">, model: string): Llm
       const res = await client.responses.create(req);
       const items = res.output as unknown as OutItem[];
       return {
+        usage: res.usage ? { input: res.usage.input_tokens, output: res.usage.output_tokens } : undefined,
         text: res.output_text ?? "",
         items,
         calls: items

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { handleChat, ReadOnlyError } from "@/chat/handle-chat";
 import { getLlm } from "@/chat/llm-factory";
+import { errorFields, log, requestIdOf } from "@/lib/log";
 import { checkRate, clientIp, tooMany } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
@@ -12,6 +13,8 @@ const body = z.object({
 });
 
 export async function POST(request: Request) {
+  const started = Date.now();
+  const requestId = requestIdOf(request.headers);
   const sb = await createClient();
   const {
     data: { user },
@@ -34,10 +37,22 @@ export async function POST(request: Request) {
   try {
     const reply = await handleChat(sb, llm, parsed.data);
     if (!reply) return Response.json({ error: "Espaço não encontrado." }, { status: 404 });
-    return Response.json(reply);
+    const { usage, ...body } = reply;
+    // Metrics only: who (opaque id), where, which tools, how long, how many tokens. Never the message or the answer.
+    log("info", "chat", {
+      requestId,
+      userId: user.id,
+      workspaceId: parsed.data.workspaceId,
+      agentId: parsed.data.agentId,
+      tools: body.events.map((e) => `${e.name}:${e.status}`),
+      latencyMs: Date.now() - started,
+      tokensIn: usage.input,
+      tokensOut: usage.output,
+    });
+    return Response.json(body);
   } catch (e) {
     if (e instanceof ReadOnlyError) return Response.json({ error: e.message }, { status: 403 });
-    console.error("chat failed:", e instanceof Error ? e.message : e);
+    log("error", "chat_failed", { requestId, userId: user.id, workspaceId: parsed.data.workspaceId, latencyMs: Date.now() - started, error: errorFields(e) });
     return Response.json({ error: "Não consegui falar com a IA agora. Tente de novo." }, { status: 502 });
   }
 }

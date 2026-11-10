@@ -21,6 +21,8 @@ export interface TurnResult {
   history: Msg[];
   events: ToolEvent[];
   pendingConfirmations: PendingConfirmation[];
+  /** Tokens used by the whole turn (all model calls). */
+  usage: { input: number; output: number };
 }
 
 export async function runTurn(o: {
@@ -34,17 +36,20 @@ export async function runTurn(o: {
   const system = o.system ?? buildSystemPrompt({ workspaceName: ctx.scope.workspaceName ?? "seu espaço" });
   const history: Msg[] = [...o.history, { role: "user", content: o.userMessage }];
   const events: ToolEvent[] = [];
+  const usage = { input: 0, output: 0 };
   let untrusted = hasUntrusted(JSON.stringify(history));
   const pendingConfirmations: PendingConfirmation[] = [];
 
   for (let step = 0; step < MAX_STEPS; step++) {
     const turn = await llm.respond({ system, history, tools: toolSpecs(ctx.scope) });
+    usage.input += turn.usage?.input ?? 0;
+    usage.output += turn.usage?.output ?? 0;
     history.push({ role: "llm", items: turn.items });
 
     if (turn.calls.length === 0) {
       const usedEngine = events.some((e) => ENGINE_TOOLS.has(e.name) && e.outcome.status === "ok");
       const text = usedEngine && !turn.text.includes(DISCLAIMER) ? `${turn.text}\n\n${DISCLAIMER}` : turn.text;
-      return { text, history, events, pendingConfirmations };
+      return { text, history, events, pendingConfirmations, usage };
     }
 
     for (const call of turn.calls) {
@@ -58,5 +63,5 @@ export async function runTurn(o: {
       history.push({ role: "tool_result", callId: call.id, output });
     }
   }
-  return { text: "Não consegui concluir esta solicitação. Tente reformular o pedido.", history, events, pendingConfirmations };
+  return { text: "Não consegui concluir esta solicitação. Tente reformular o pedido.", history, events, pendingConfirmations, usage };
 }

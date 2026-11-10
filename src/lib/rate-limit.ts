@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { log } from "./log";
 
 /** Per-scope budgets: `limit` calls every `windowSeconds` per user; an IP gets IP_FACTOR times that (offices and carriers share one). */
 export const LIMITS = {
@@ -27,7 +28,7 @@ export async function checkRate(sb: SupabaseClient, userId: string, scope: RateS
   for (const [key, max] of [[`${userId}:${scope}`, limit], [`ip:${ip}:${scope}`, limit * IP_FACTOR]] as const) {
     const { data, error } = await sb.rpc("rate_limit_hit", { p_key: key, p_limit: max, p_window_seconds: windowSeconds });
     // ponytail: fails open when the counter is unreachable (an outage there must not take the product down).
-    if (error) console.error("rate limit unavailable:", error.message);
+    if (error) log("warn", "rate_limit_unavailable", { scope, error: { message: error.message } });
     else waits.push(Number(data));
   }
   return Math.max(0, ...waits);

@@ -25,6 +25,8 @@ export interface ChatReply {
   alerts: AlertStatus[];
   agents: Agent[];
   messages: DisplayMessage[];
+  /** Model tokens spent on this turn. */
+  usage: { input: number; output: number };
 }
 
 /**
@@ -79,5 +81,6 @@ export async function handleChat(
     alerts: state.kind === "pessoal" ? [] : alertStatuses(mockEngine, store.getCompany(), store.listAlerts()),
     agents,
     messages,
+    usage: result.usage,
   };
 }
