@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --coverage",
     "e2e": "playwright test",
     "check": "npm run lint && npm run typecheck && npm test",
     "test:rls": "vitest run --config vitest.rls.config.mts",
