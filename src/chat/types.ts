@@ -80,6 +80,8 @@ export interface ToolContext {
   engine: TaxEngine;
   /** Approval keys the *user* granted out-of-band (see approvalKey). The model cannot add to this. */
   approvals: ReadonlySet<string>;
+  /** External content (see untrusted.ts) is in the conversation: writing tools need approval. Set by the orchestrator. */
+  untrustedInContext?: boolean;
 }
 
 export type ToolOutcome =

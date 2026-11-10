@@ -11,6 +11,8 @@ interface Tool<S extends z.ZodType = z.ZodType> {
   description: string;
   schema: S;
   destructive?: boolean;
+  /** Changes nothing. Every other tool writes, and writes need the user's approval once external content is in the conversation. */
+  readOnly?: boolean;
   /** Uses the tax engine: the reply must carry the estimate disclaimer. */
   engine?: boolean;
   /** Workspace kinds where the tool applies; undefined = all. */
@@ -56,6 +58,7 @@ const need = <T>(value: T | undefined, message: string): T => {
 const TOOLS: Tool[] = [
   defineTool({
     name: "get_tax_diagnosis",
+    readOnly: true,
     kinds: ["empresa"],
     description: "Calcula quanto a empresa paga de imposto por mês e por ano, e para onde vai.",
     schema: none,
@@ -64,6 +67,7 @@ const TOOLS: Tool[] = [
   }),
   defineTool({
     name: "run_simulation",
+    readOnly: true,
     kinds: ["empresa"],
     description: "Simula um novo faturamento mensal e compara com o cenário atual.",
     schema: z.strictObject({ monthlyRevenue: z.number().min(0) }),
@@ -72,6 +76,7 @@ const TOOLS: Tool[] = [
   }),
   defineTool({
     name: "list_opportunities",
+    readOnly: true,
     kinds: ["empresa"],
     description: "Lista oportunidades legais de economia tributária, com premissas e dados que faltam.",
     schema: none,
@@ -80,6 +85,7 @@ const TOOLS: Tool[] = [
   }),
   defineTool({
     name: "explain_result",
+    readOnly: true,
     description: "Explica de onde veio um resultado: regras usadas, fontes, premissas e se precisa de validação.",
     schema: z.strictObject({ subject: z.enum(["diagnosis", "opportunity", "ir"]), opportunityId: z.string().optional() }),
     engine: true,
@@ -99,6 +105,7 @@ const TOOLS: Tool[] = [
   }),
   defineTool({
     name: "generate_report",
+    readOnly: true,
     description: "Gera o relatório imprimível do espaço (resumo, impostos, oportunidades, economia potencial, premissas e itens a validar) e devolve o caminho para abri-lo.",
     schema: none,
     run: (ctx) => ({
@@ -115,6 +122,7 @@ const TOOLS: Tool[] = [
   }),
   defineTool({
     name: "get_ir_diagnosis",
+    readOnly: true,
     kinds: ["pessoal"],
     description: "Calcula o Imposto de Renda anual da pessoa física nos modelos simplificado e completo, qual compensa mais e a restituição ou o imposto a pagar.",
     schema: none,
@@ -257,7 +265,8 @@ export async function invokeTool(ctx: ToolContext, name: string, rawArgs: string
     return { status: "error", message: `Argumentos inválidos: ${parsed.error.issues.map((i) => `${i.path.join(".") || "args"}: ${i.message}`).join("; ")}` };
   }
 
-  if (tool.destructive) {
+  // External content (a document, a comment) may carry instructions: after it appears, nothing is written without the user's click.
+  if (tool.destructive || (ctx.untrustedInContext && !tool.readOnly)) {
     const key = approvalKey(name, parsed.data);
     if (!ctx.approvals.has(key)) {
       return { status: "confirmation_required", key, summary: `${tool.description} Argumentos: ${stable(parsed.data)}` };
