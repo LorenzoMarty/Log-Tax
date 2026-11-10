@@ -56,6 +56,10 @@ test("company journey: context → diagnosis → dashboard → opportunities →
   await expect(page.getByTestId("widget-kpi")).toHaveCount(0);
   await expect(page.getByText("Quero organizar meus impostos")).toBeVisible();
   await expect(page.getByTestId("alert-banner")).toContainText("Impostos por mês acima de R$ 20.000"); // evaluated on open
+
+  // the confirmed destructive action is in the activity trail
+  await page.getByText(/Atividade do espaço/).click();
+  await expect(page.getByTestId("activity")).toContainText("Confirmou uma ação destrutiva na conversa");
 });
 
 test("chat is unusable without a session", async ({ request }) => {

@@ -2,9 +2,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { alertStatuses, type AlertStatus } from "@/alerts/evaluate";
 import type { Dashboard } from "@/dashboard/types";
 import { mockEngine } from "@/engine";
+import { audit } from "@/lib/audit";
 import { createMemoryStore } from "./memory-store";
 import { runTurn, type PendingConfirmation } from "./orchestrator";
 import { buildSystemPrompt } from "./system-prompt";
+import { isDestructive } from "./tools";
 import type { Agent, LlmClient } from "./types";
 import { loadWorkspaceState, saveWorkspaceState, type DisplayMessage } from "./workspace-state";
 
@@ -54,6 +56,9 @@ export async function handleChat(
     history: state.history,
     userMessage: input.message,
   });
+
+  // A destructive tool that actually ran was confirmed by the user: leave a trace of it.
+  for (const e of result.events) if (e.outcome.status === "ok" && isDestructive(e.name)) await audit(sb, input.workspaceId, "destructive_action", e.name);
 
   // ponytail: the full transcript is replayed on every call; summarise or trim once conversations get long.
   const messages: DisplayMessage[] = [...state.messages, { role: "user", text: input.message }, { role: "assistant", text: result.text }];

@@ -13,6 +13,7 @@ import { leaveWorkspace } from "@/sharing/actions";
 import { Comments, type CommentRow } from "@/sharing/comments";
 import { MESSAGES } from "@/sharing/messages";
 import { ROLE_LABEL } from "@/sharing/schema";
+import { ActivityPanel, type ActivityRow } from "@/sharing/activity-panel";
 import { SharePanel, type InviteRow, type MemberRow } from "@/sharing/share-panel";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -52,12 +53,13 @@ export default async function WorkspaceChatPage({
     .eq("workspace_id", id)
     .order("created_at", { ascending: false })
     .limit(50);
-  const [{ data: members }, { data: invites }] = isOwner
+  const [{ data: members }, { data: invites }, { data: activity }] = isOwner
     ? await Promise.all([
         supabase.from("workspace_members").select("user_id, email, role").eq("workspace_id", id).order("role", { ascending: false }),
         supabase.from("workspace_invites").select("id, email, role").eq("workspace_id", id).order("created_at"),
+        supabase.from("audit_log").select("id, actor_email, action, target, created_at").eq("workspace_id", id).order("created_at", { ascending: false }).limit(30),
       ])
-    : [{ data: [] }, { data: [] }];
+    : [{ data: [] }, { data: [] }, { data: [] }];
 
   const alerts = state.kind === "pessoal" ? [] : alertStatuses(mockEngine, state.company, state.alerts);
   const notice = msg ? MESSAGES[msg] : undefined;
@@ -109,6 +111,7 @@ export default async function WorkspaceChatPage({
           <SharePanel workspaceId={id} defaultOpen={Boolean(notice)} members={(members ?? []) as MemberRow[]} invites={(invites ?? []) as InviteRow[]} />
           {documentsPanel}
           {commentsPanel}
+          <ActivityPanel events={(activity ?? []) as ActivityRow[]} />
         </>
       ) : (
         <>

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { checkRate, clientIp } from "@/lib/rate-limit";
+import { audit } from "@/lib/audit";
 import { createClient } from "@/lib/supabase/server";
 import { commentInput, inviteInput } from "./schema";
 
@@ -35,18 +36,21 @@ export async function inviteMember(workspaceId: string, formData: FormData) {
   // One invite per email: replace a pending one (e.g. to change the role).
   await supabase.from("workspace_invites").delete().eq("workspace_id", workspaceId).eq("email", parsed.data.email);
   const { error } = await supabase.from("workspace_invites").insert({ workspace_id: workspaceId, workspace_name: ws.name, ...parsed.data });
+  if (!error) await audit(supabase, workspaceId, "invite_sent", `${parsed.data.email} (${parsed.data.role})`);
   return back(workspaceId, error ? "sem-permissao" : "convite-enviado");
 }
 
 export async function revokeInvite(workspaceId: string, inviteId: string) {
   const { supabase } = await session();
-  await supabase.from("workspace_invites").delete().eq("id", inviteId).eq("workspace_id", workspaceId);
+  const { data: gone } = await supabase.from("workspace_invites").delete().eq("id", inviteId).eq("workspace_id", workspaceId).select("email");
+  if (gone?.length) await audit(supabase, workspaceId, "invite_revoked", gone[0].email);
   return back(workspaceId, "convite-cancelado");
 }
 
 export async function removeMember(workspaceId: string, userId: string) {
   const { supabase } = await session();
-  await supabase.from("workspace_members").delete().eq("workspace_id", workspaceId).eq("user_id", userId);
+  const { data: gone } = await supabase.from("workspace_members").delete().eq("workspace_id", workspaceId).eq("user_id", userId).select("email");
+  if (gone?.length) await audit(supabase, workspaceId, "member_removed", gone[0].email ?? userId);
   return back(workspaceId, "membro-removido");
 }
 
@@ -54,6 +58,7 @@ export async function acceptInvite(inviteId: string) {
   const { supabase } = await session();
   const { data, error } = await supabase.rpc("accept_invite", { invite_id: inviteId });
   if (error || !data) redirect("/workspace?msg=convite-invalido");
+  await audit(supabase, data as string, "invite_accepted");
   redirect(`/workspace/${data}`);
 }
 
@@ -66,6 +71,7 @@ export async function declineInvite(inviteId: string) {
 
 export async function leaveWorkspace(workspaceId: string) {
   const { supabase, user } = await session();
+  await audit(supabase, workspaceId, "member_left"); // before leaving: only members can write to this workspace's trail
   await supabase.from("workspace_members").delete().eq("workspace_id", workspaceId).eq("user_id", user.id);
   redirect("/workspace");
 }
