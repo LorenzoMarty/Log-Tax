@@ -101,6 +101,7 @@ test("public pages", async ({ page }) => {
     { path: "/", label: "home", title: "Log Tax" },
     { path: "/login", label: "login", title: "Entrar · Log Tax" },
     { path: "/demo", label: "demo dashboard", title: "Demonstração · Log Tax" },
+    { path: "/rota-que-nao-existe", label: "product 404", title: "Página não encontrada · Log Tax" },
   ];
   for (const screen of screens) {
     await page.goto(screen.path);

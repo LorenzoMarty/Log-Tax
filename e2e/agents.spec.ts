@@ -44,7 +44,7 @@ test("an agent id that is not yours returns 404", async ({ page }) => {
   await expect(page).toHaveURL(/\/workspace\/[0-9a-f-]{36}$/);
   const url = page.url();
   await page.goto(`${url}?ia=00000000-0000-0000-0000-000000000000`);
-  await expect(page.getByText(/could not be found/i)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Não encontramos essa página" })).toBeVisible();
   await page.goto(`${url}?ia=not-a-uuid`);
-  await expect(page.getByText(/could not be found/i)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Não encontramos essa página" })).toBeVisible();
 });
