@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { quotaBytes, scanBytes, signatureMatches } from "@/documents/inspect";
 import { classifyDocument } from "@/documents/classify";
 import { BUCKET, MAX_BYTES, MAX_TEXT_BYTES, resolveMime, safeFileName, toStored } from "@/documents/storage";
 import { audit } from "@/lib/audit";
@@ -24,6 +25,15 @@ export async function POST(request: Request) {
   if (file.size > MAX_BYTES) return fail("O arquivo passa de 10 MB.", 413);
   const mime = resolveMime(file.name, file.type);
   if (!mime) return fail("Tipo de arquivo não aceito. Envie PDF, XML, PNG, JPG ou TXT.", 415);
+
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (!signatureMatches(bytes, mime)) return fail("O conteúdo do arquivo não corresponde ao tipo informado. Envie um PDF, XML, PNG, JPG ou TXT de verdade.", 415);
+  if ((await scanBytes(bytes)) === "infected") return fail("O arquivo foi recusado porque parece conter um vírus.", 422);
+
+  const { data: used } = await sb.from("documents").select("size_bytes").eq("workspace_id", workspaceId.data);
+  const usedBytes = (used ?? []).reduce((sum, d) => sum + Number(d.size_bytes ?? 0), 0);
+  const quota = quotaBytes();
+  if (usedBytes + file.size > quota) return fail(`Este espaço atingiu o limite de ${Math.round(quota / 1024 / 1024)} MB de documentos. Apague algum documento para enviar outro.`, 413);
 
   const id = crypto.randomUUID();
   const path = `${workspaceId.data}/${id}/${safeFileName(file.name)}`;
