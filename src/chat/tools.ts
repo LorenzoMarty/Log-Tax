@@ -155,7 +155,7 @@ const TOOLS: Tool[] = [
       const current = need(ctx.store.getDashboard().widgets.find((w) => w.id === a.id), `Bloco "${a.id}" não encontrado.`);
       const merged = widgetSchema.safeParse({ ...current, ...a.patch, id: current.id, kind: current.kind });
       if (!merged.success) throw new ToolError(`Alteração inválida: ${merged.error.issues[0]?.message}`);
-      ctx.store.dispatch({ type: "update", id: a.id, patch: merged.data as Widget });
+      ctx.store.dispatch({ type: "update", widget: merged.data as Widget });
       return { id: a.id };
     },
   }),

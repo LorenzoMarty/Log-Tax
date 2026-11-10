@@ -7,8 +7,8 @@ export interface History {
 
 export type Action =
   | { type: "add"; widget: Widget; index?: number }
-  // ponytail: loose patch, validated against the tool schema in the chat ticket (#5).
-  | { type: "update"; id: string; patch: Partial<Widget> }
+  // A whole widget, not a patch: the caller merges and validates it against widgetSchema first (#130).
+  | { type: "update"; widget: Widget }
   | { type: "remove"; id: string }
   | { type: "reorder"; id: string; toIndex: number }
   | { type: "setTheme"; theme: Dashboard["theme"] }
@@ -38,11 +38,10 @@ export function reduce(state: History, action: Action): History {
       return commit({ ...d, widgets });
     }
     case "update": {
-      if (!has(action.id)) return state;
-      const widgets = d.widgets.map((w) =>
-        w.id === action.id ? ({ ...w, ...action.patch, id: w.id, kind: w.kind } as Widget) : w,
-      );
-      return commit({ ...d, widgets });
+      const current = d.widgets.find((w) => w.id === action.widget.id);
+      // A block never changes kind: its data fields only make sense for the kind it was created with.
+      if (!current || current.kind !== action.widget.kind) return state;
+      return commit({ ...d, widgets: d.widgets.map((w) => (w.id === current.id ? action.widget : w)) });
     }
     case "remove":
       return has(action.id) ? commit({ ...d, widgets: d.widgets.filter((w) => w.id !== action.id) }) : state;

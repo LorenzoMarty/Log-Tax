@@ -16,11 +16,17 @@ describe("dashboard reducer", () => {
     expect(ids(s2)[0]).toBe("t1");
   });
 
-  it("updates a widget without changing its id or kind", () => {
-    const s = reduce(initHistory(sampleDashboard), { type: "update", id: "kpi", patch: { title: "Novo", id: "x", kind: "text" } });
-    const w = s.present.widgets.find((w) => w.id === "kpi")!;
-    expect(w.title).toBe("Novo");
-    expect(w.kind).toBe("kpi");
+  it("replaces a widget by id with the validated version", () => {
+    const kpi = sampleDashboard.widgets.find((w) => w.id === "kpi")!;
+    const s = reduce(initHistory(sampleDashboard), { type: "update", widget: { ...kpi, title: "Novo" } });
+    expect(s.present.widgets.find((w) => w.id === "kpi")?.title).toBe("Novo");
+    expect(s.past).toHaveLength(1);
+  });
+
+  it("refuses to change a widget's kind", () => {
+    const s0 = initHistory(sampleDashboard);
+    const text = sampleDashboard.widgets.find((w) => w.kind === "text")!;
+    expect(reduce(s0, { type: "update", widget: { ...text, id: "kpi" } })).toEqual(s0);
   });
 
   it("removes and reorders widgets", () => {
@@ -54,7 +60,7 @@ describe("dashboard reducer", () => {
     const s0 = initHistory(sampleDashboard);
     for (const a of [
       { type: "remove", id: "nope" },
-      { type: "update", id: "nope", patch: { title: "x" } },
+      { type: "update", widget: { ...sampleDashboard.widgets[0], id: "nope" } },
       { type: "reorder", id: "nope", toIndex: 0 },
     ] as const) {
       expect(reduce(s0, a)).toEqual(s0);
