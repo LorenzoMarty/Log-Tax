@@ -64,7 +64,7 @@ test("owner invites the accountant, who accepts, comments, and cannot chat; acce
   await owner.page.getByRole("button", { name: "Remover acesso" }).click();
   await expect(owner.page.getByRole("status")).toContainText("Acesso removido");
   await guest.reload();
-  await expect(guest.getByText(/could not be found/i)).toBeVisible();
+  await expect(guest.getByRole("heading", { name: "Não encontramos essa página" })).toBeVisible();
   await guest.goto("/workspace");
   await expect(guest.getByRole("link", { name: /Minha Empresa/ })).toHaveCount(0);
   await owner.ctx.close();

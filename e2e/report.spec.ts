@@ -41,7 +41,7 @@ test("company report: asked in the chat, opened as a printable page with every s
   const stranger = await other.newPage();
   await login(stranger, "intruso");
   await stranger.goto(`${space}/relatorio`);
-  await expect(stranger.getByText(/could not be found/i)).toBeVisible();
+  await expect(stranger.getByRole("heading", { name: "Não encontramos essa página" })).toBeVisible();
   const anon = await browser.newContext();
   const visitor = await anon.newPage();
   await visitor.goto(`${space}/relatorio`);
