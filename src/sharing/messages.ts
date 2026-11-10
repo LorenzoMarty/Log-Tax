@@ -8,5 +8,7 @@ export const MESSAGES: Record<string, { text: string; ok: boolean }> = {
   "convite-proprio": { text: "Você já é dono deste espaço.", ok: false },
   "comentario-invalido": { text: "Escreva um comentário de até 2.000 caracteres.", ok: false },
   "muitas-tentativas": { text: "Muitos convites em pouco tempo. Tente de novo daqui a alguns minutos.", ok: false },
+  "exclusao-nao-confirmada": { text: "Para excluir a conta, digite o seu email exatamente como aparece no topo da tela.", ok: false },
+  "exclusao-falhou": { text: "Não foi possível excluir a conta agora. Nada foi perdido: tente de novo.", ok: false },
   "sem-permissao": { text: "Você não tem permissão para isso.", ok: false },
 };
