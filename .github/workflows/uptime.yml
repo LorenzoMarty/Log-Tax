@@ -1,0 +1,19 @@
+name: Uptime
+# Probes the production health endpoint every 10 minutes. A failed run emails the repository watchers,
+# which is the alert. Set the repository variable HEALTH_URL (for example https://logtax.example/api/health).
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    if: ${{ vars.HEALTH_URL != '' }}
+    steps:
+      - name: Health check
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "${{ vars.HEALTH_URL }}" || echo 000)
+          echo "status: $code"
+          test "$code" = "200"
