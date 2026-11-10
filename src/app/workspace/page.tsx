@@ -98,6 +98,11 @@ export default async function WorkspacePage({ searchParams }: { searchParams: Pr
         </Link>
       </p>
       <p className="text-sm text-ink-muted">
+        <Link href="/workspace/privacidade" className="underline">
+          Privacidade e consentimentos
+        </Link>
+      </p>
+      <p className="text-sm text-ink-muted">
         Seus dados são seus.{" "}
         <a href="/api/account/export" download className="underline">
           Baixar uma cópia de todos os meus dados (JSON)
