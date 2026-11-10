@@ -3,6 +3,7 @@ import { alertStatuses, type AlertStatus } from "@/alerts/evaluate";
 import type { Dashboard } from "@/dashboard/types";
 import { mockEngine } from "@/engine";
 import { audit } from "@/lib/audit";
+import { EVENT_OF_TOOL, track } from "@/lib/track";
 import { createMemoryStore } from "./memory-store";
 import { runTurn, type PendingConfirmation } from "./orchestrator";
 import { buildSystemPrompt } from "./system-prompt";
@@ -61,6 +62,10 @@ export async function handleChat(
 
   // A destructive tool that actually ran was confirmed by the user: leave a trace of it.
   for (const e of result.events) if (e.outcome.status === "ok" && isDestructive(e.name)) await audit(sb, input.workspaceId, "destructive_action", e.name);
+
+  // Funnel steps (only for people who opted in; the event carries the step name, never the content).
+  const steps = new Set(result.events.filter((e) => e.outcome.status === "ok" && EVENT_OF_TOOL[e.name]).map((e) => EVENT_OF_TOOL[e.name]));
+  for (const step of steps) await track(sb, step);
 
   // ponytail: the full transcript is replayed on every call; summarise or trim once conversations get long.
   const messages: DisplayMessage[] = [...state.messages, { role: "user", text: input.message }, { role: "assistant", text: result.text }];

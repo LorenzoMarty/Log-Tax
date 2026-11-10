@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { deleteAllMyDocuments, grantDocumentsConsent, revokeDocumentsConsent } from "@/account/consent-actions";
+import { deleteAllMyDocuments, grantDocumentsConsent, revokeDocumentsConsent, setAnalyticsConsent } from "@/account/consent-actions";
 import { createClient } from "@/lib/supabase/server";
 import { Button, Icon, Logo } from "@/ui/log";
 
@@ -10,6 +10,8 @@ const NOTICE: Record<string, { text: string; ok: boolean }> = {
   revogado: { text: "Consentimento revogado. Novos envios de documentos estão bloqueados.", ok: true },
   concedido: { text: "Consentimento registrado.", ok: true },
   apagados: { text: "Todos os seus documentos foram apagados.", ok: true },
+  "medicao-ligada": { text: "Obrigado! A medição da jornada está ligada.", ok: true },
+  "medicao-desligada": { text: "Medição desligada. Nada mais será registrado.", ok: true },
   falhou: { text: "Não foi possível apagar os documentos agora. Nada foi alterado: tente de novo.", ok: false },
 };
 
@@ -23,10 +25,11 @@ export default async function PrivacyPage({ searchParams }: { searchParams: Prom
   } = await sb.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: history }, { data: active }, { count }] = await Promise.all([
+  const [{ data: history }, { data: active }, { count }, { data: analytics }] = await Promise.all([
     sb.from("consents").select("id, version, action, created_at").eq("purpose", "documents").order("created_at", { ascending: false }),
     sb.rpc("has_consent", { p_purpose: "documents" }),
     sb.from("documents").select("*", { count: "exact", head: true }),
+    sb.rpc("has_consent", { p_purpose: "analytics" }),
   ]);
   const notice = ok ? NOTICE[ok] : undefined;
 
@@ -93,6 +96,22 @@ export default async function PrivacyPage({ searchParams }: { searchParams: Prom
         ) : (
           <p className="text-sm text-ink-muted">Nenhuma decisão registrada ainda.</p>
         )}
+      </section>
+
+      <section aria-labelledby="medicao" className="flex flex-col gap-3">
+        <h2 id="medicao" className="lg-heading-1">
+          Ajudar a melhorar o Log Tax
+        </h2>
+        <p>
+          Se você permitir, registramos só as etapas que você percorre (por exemplo, &quot;criou um espaço&quot; ou &quot;viu um diagnóstico&quot;), para entender onde as pessoas travam. Nunca registramos valores, documentos nem mensagens. Situação atual:{" "}
+          <strong data-testid="analytics-state">{analytics === true ? "ligada" : "desligada"}</strong>.
+        </p>
+        <form action={setAnalyticsConsent}>
+          <input type="hidden" name="decision" value={analytics === true ? "revoked" : "granted"} />
+          <Button type="submit" variant={analytics === true ? "soft" : "primary"}>
+            {analytics === true ? "Desligar a medição" : "Permitir a medição"}
+          </Button>
+        </form>
       </section>
     </main>
   );

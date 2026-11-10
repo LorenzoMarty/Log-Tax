@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { seedCompany, seedPerson } from "@/engine";
+import { track } from "@/lib/track";
 
 export async function createDefaultWorkspaces() {
   const supabase = await createClient();
@@ -12,6 +13,7 @@ export async function createDefaultWorkspaces() {
       { name: "Minha Empresa", kind: "empresa", profile: seedCompany },
       { name: "Vida Pessoal", kind: "pessoal", profile: seedPerson },
     ]);
+    await track(supabase, "workspace_created");
   }
   redirect("/workspace");
 }
