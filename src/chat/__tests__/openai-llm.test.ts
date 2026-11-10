@@ -44,6 +44,19 @@ describe("openAiLlm", () => {
     expect(input[2]).toEqual({ type: "function_call_output", call_id: "c1", output: '{"ok":true}' });
   });
 
+  it("never sends a full CPF, CNPJ, NF-e key or account number (system, messages and tool results)", async () => {
+    const { client, create } = fakeClient(response([], "ok"));
+    const history: Msg[] = [
+      { role: "user", content: "Meu CPF é 529.982.247-25 e a conta corrente 98765-4" },
+      { role: "tool_result", callId: "c1", output: JSON.stringify({ cnpj: "11222333000181", chave: "35200114200166000187550010000000046000000047" }) },
+    ];
+    await openAiLlm(client, "m").respond({ system: "Empresa CNPJ 11.222.333/0001-81", history, tools });
+    const sent = JSON.stringify(create.mock.calls[0][0]);
+    for (const secret of ["529.982.247-25", "52998224725", "11222333000181", "11.222.333/0001-81", "35200114200166000187550010000000046000000047", "98765-4"]) expect(sent).not.toContain(secret);
+    expect(sent).toContain("***.***.***-25");
+    expect(sent).toContain("**.***.***/****-81");
+  });
+
   it("fails loudly without an API key", () => {
     expect(() => createOpenAiLlm({})).toThrow(/OPENAI_API_KEY/);
   });

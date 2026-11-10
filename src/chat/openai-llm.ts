@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { toResponseInputItems } from "openai/lib/responses/ResponseInputItems";
 import type { ResponseCreateParamsNonStreaming } from "openai/resources/responses/responses";
+import { redact } from "./redact";
 import type { LlmClient, Msg } from "./types";
 
 // Overridable with OPENAI_MODEL; confirm it exists for your account.
@@ -13,22 +14,23 @@ const toInput = (m: Msg) => {
     case "llm":
       return toResponseInputItems(m.items as Parameters<typeof toResponseInputItems>[0]);
     case "tool_result":
-      return [{ type: "function_call_output" as const, call_id: m.callId, output: m.output }];
+      return [{ type: "function_call_output" as const, call_id: m.callId, output: redact(m.output) }];
     default:
-      return [{ role: m.role, content: m.content }];
+      return [{ role: m.role, content: redact(m.content) }];
   }
 };
 
 /**
  * Responses API with store:false: tax data is not retained by the provider, so the transcript
  * (including reasoning/function_call items) is replayed from our side on every call.
+ * Everything outbound goes through redact(): CPF, CNPJ, NF-e keys and bank accounts never leave in full (#74).
  */
 export function openAiLlm(client: Pick<OpenAI, "responses">, model: string): LlmClient {
   return {
     async respond({ system, history, tools }) {
       const req = {
         model,
-        instructions: system,
+        instructions: redact(system),
         input: history.flatMap(toInput),
         tools: tools.map((t) => ({ type: "function" as const, name: t.name, description: t.description, parameters: t.parameters, strict: false })),
         store: false,
