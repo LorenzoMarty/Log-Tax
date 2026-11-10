@@ -1,17 +1,19 @@
 import { IRPF_ANNUAL, IRPF_MONTHLY, type IrpfAnnualRules, type IrpfMonthlyTable } from "./data/irpf";
 import { DISCLAIMER } from "./mock-engine";
+import { fromCents, mulRate, roundingFor, toCents } from "./money";
 import { competenceOf, refOf, RuleBook, type RuleVersion } from "./rulebook";
 import type { EngineResult, IrScenario, PersonDiagnosis, PersonProfile, TaxEngine } from "./types";
 
 /** Every rule the real engine knows. New tables are added to the data files, not to the calculations. */
 export const DEFAULT_RULEBOOK = new RuleBook([...IRPF_MONTHLY, ...IRPF_ANNUAL]);
 
-const round2 = (n: number) => Math.round(n * 100) / 100;
+const round2 = (n: number) => fromCents(toCents(n));
 
-function irTax(base: number, table: IrpfMonthlyTable): number {
-  if (base <= 0) return 0;
-  const b = table.brackets.map((x) => ({ ...x, upTo: x.upTo * 12, deduction: x.deduction * 12 })).find((x) => base <= x.upTo)!;
-  return round2(Math.max(0, base * b.rate - b.deduction));
+/** Annual IRPF in cents: base x rate - deduction, where the monthly table is multiplied by 12. Exact, rounded once. */
+function irTaxCents(baseCents: number, table: IrpfMonthlyTable): number {
+  if (baseCents <= 0) return 0;
+  const b = table.brackets.find((x) => x.upTo === Infinity || baseCents <= toCents(x.upTo * 12))!;
+  return Math.max(0, mulRate(baseCents, b.rate, roundingFor("IRPF")) - toCents(b.deduction * 12));
 }
 
 /**
@@ -34,8 +36,8 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
 
     const gross = p.annualGrossIncome;
     const scenario = (model: IrScenario["model"], deductions: number): IrScenario => {
-      const taxableBase = Math.max(0, gross - deductions);
-      const tax = irTax(taxableBase, monthly.data);
+      const taxableBase = fromCents(Math.max(0, toCents(gross) - toCents(deductions)));
+      const tax = fromCents(irTaxCents(toCents(taxableBase), monthly.data));
       return { model, deductions: round2(deductions), taxableBase: round2(taxableBase), tax, balance: p.taxWithheld === undefined ? undefined : round2(p.taxWithheld - tax) };
     };
     const dependentYear = monthly.data.dependentMonthly * 12;
