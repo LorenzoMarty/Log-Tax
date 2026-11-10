@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { admin } from "@/db/test-users";
-import { HANDLERS, periodKey } from "../handlers";
+import { HANDLERS } from "../handlers";
 import { enqueue, runDueJobs, type Handler } from "../runner";
 
 const unique = () => `t-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -88,7 +88,7 @@ describe("job queue", () => {
     const fresh = `ip:keep-${unique()}:chat`;
     await admin.from("rate_limits").insert({ key: fresh, window_start: new Date().toISOString(), hits: 1 });
 
-    await enqueue(admin, "housekeeping.purge_rate_limits", periodKey("housekeeping.purge_rate_limits", "hour", new Date(Date.now() + 99 * 3600_000)));
+    await enqueue(admin, "housekeeping.purge_rate_limits", unique());
     expect(await runDueJobs(admin, HANDLERS)).toMatchObject({ done: 1 });
     expect((await admin.from("rate_limits").select().eq("key", old)).data).toEqual([]);
     expect((await admin.from("rate_limits").select().eq("key", fresh)).data).toHaveLength(1);

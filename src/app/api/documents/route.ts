@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { quotaBytes, scanBytes, signatureMatches } from "@/documents/inspect";
 import { classifyDocument } from "@/documents/classify";
-import { BUCKET, MAX_BYTES, MAX_TEXT_BYTES, resolveMime, safeFileName, toStored } from "@/documents/storage";
+import { BUCKET, CONSENT_VERSION, MAX_BYTES, MAX_TEXT_BYTES, resolveMime, safeFileName, toStored } from "@/documents/storage";
 import { audit } from "@/lib/audit";
 import { checkRate, clientIp, tooMany } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
@@ -21,7 +21,11 @@ export async function POST(request: Request) {
   const workspaceId = z.uuid().safeParse(form?.get("workspaceId"));
   const file = form?.get("file");
   if (!form || !workspaceId.success || !(file instanceof File) || file.size === 0) return fail("Envie um arquivo.", 400);
-  if (form.get("consent") !== "on") return fail("É preciso autorizar o armazenamento e a leitura do documento (LGPD).", 400);
+  // Consent is a logged decision: ticking the box records a new acceptance; without it the latest decision must still be a grant.
+  const ticked = form.get("consent") === "on";
+  const { data: active } = await sb.rpc("has_consent", { p_purpose: "documents" });
+  if (!ticked && active !== true) return fail("É preciso autorizar o armazenamento e a leitura do documento (LGPD).", 400);
+  if (ticked && active !== true) await sb.rpc("record_consent", { p_purpose: "documents", p_version: CONSENT_VERSION, p_action: "granted" });
   if (file.size > MAX_BYTES) return fail("O arquivo passa de 10 MB.", 413);
   const mime = resolveMime(file.name, file.type);
   if (!mime) return fail("Tipo de arquivo não aceito. Envie PDF, XML, PNG, JPG ou TXT.", 415);

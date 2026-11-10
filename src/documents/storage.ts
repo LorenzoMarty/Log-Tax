@@ -1,6 +1,8 @@
 import type { Classification } from "./classify";
 
 export const BUCKET = "documents";
+/** Version of the consent text shown at upload; bump it when the wording changes so acceptances stay traceable. */
+export const CONSENT_VERSION = "2026-11";
 export const MAX_BYTES = 10 * 1024 * 1024;
 /** Only text-like files are read into memory for classification. */
 export const MAX_TEXT_BYTES = 1024 * 1024;

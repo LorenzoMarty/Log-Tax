@@ -82,6 +82,9 @@ async function auditPersonalSpace(page: Page): Promise<void> {
   await gotoSettled(page, "/workspace/seguranca");
   await expectPageOutline(page, "Segurança da conta · Log Tax");
   await auditScreen(page, "account security");
+  await gotoSettled(page, "/workspace/privacidade");
+  await expectPageOutline(page, "Privacidade e consentimentos · Log Tax");
+  await auditScreen(page, "privacy and consents");
   await gotoSettled(page, "/workspace");
   await openSpaceLink(page, /Vida Pessoal/);
   await sendChatMessage(page, "Quero entender meu imposto de renda", /1\.308/);
