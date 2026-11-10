@@ -105,7 +105,7 @@ export default async function WorkspacePage({ searchParams }: { searchParams: Pr
           <p>
             Isso apaga <strong>para sempre</strong> os seus espaços, painéis, conversas, alertas e documentos. Quem recebeu acesso aos seus espaços perde esse acesso. Não dá para desfazer; baixe uma cópia dos seus dados antes, se quiser.
           </p>
-          <Input id="confirm" name="confirm" label={`Para confirmar, digite o seu email (${user.email})`} autoComplete="off" required />
+          <Input id="confirm" name="confirm" label="Para confirmar, digite o seu email, como aparece no topo da tela" autoComplete="off" required />
           <div>
             <Button type="submit" variant="primary">
               Excluir a conta definitivamente
