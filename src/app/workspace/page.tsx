@@ -1,10 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
-import { Badge, Button, Icon, Logo } from "@/ui/log";
+import { Badge, Button, Icon, Input, Logo } from "@/ui/log";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { acceptInvite, declineInvite } from "@/sharing/actions";
 import { MESSAGES } from "@/sharing/messages";
 import { ROLE_LABEL, type Role } from "@/sharing/schema";
+import { deleteMyAccount } from "@/account/actions";
 import { createDefaultWorkspaces, signOut } from "./actions";
 
 export const metadata = { title: "Seus espaços" };
@@ -97,6 +98,21 @@ export default async function WorkspacePage({ searchParams }: { searchParams: Pr
           Baixar uma cópia de todos os meus dados (JSON)
         </a>
       </p>
+
+      <details className="rounded-[var(--radius-md)] border border-line p-4 text-sm">
+        <summary className="cursor-pointer font-medium">Excluir minha conta</summary>
+        <form action={deleteMyAccount} className="mt-3 flex flex-col gap-3">
+          <p>
+            Isso apaga <strong>para sempre</strong> os seus espaços, painéis, conversas, alertas e documentos. Quem recebeu acesso aos seus espaços perde esse acesso. Não dá para desfazer; baixe uma cópia dos seus dados antes, se quiser.
+          </p>
+          <Input id="confirm" name="confirm" label={`Para confirmar, digite o seu email (${user.email})`} autoComplete="off" required />
+          <div>
+            <Button type="submit" variant="primary">
+              Excluir a conta definitivamente
+            </Button>
+          </div>
+        </form>
+      </details>
 
       {owned.length === 0 && (
         <form action={createDefaultWorkspaces}>
