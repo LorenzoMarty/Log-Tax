@@ -13,6 +13,7 @@ test("security headers are present on public and private pages", async ({ reques
     expect(h["x-content-type-options"], path).toBe("nosniff");
     expect(h["referrer-policy"], path).toBe("strict-origin-when-cross-origin");
     expect(h["x-frame-options"], path).toBe("DENY");
+    expect(h["x-request-id"], path).toMatch(/^[0-9a-f-]{36}$/); // the trace id of the request (#55)
   }
 });
 

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { log } from "./log";
 
 /** Every event the trail records. Account events (login, export, deletion) have no workspace. */
 export type AuditAction =
@@ -41,5 +42,5 @@ export const AUDIT_LABEL: Record<AuditAction, string> = {
 export async function audit(sb: SupabaseClient, workspaceId: string | null, action: AuditAction, target?: string): Promise<void> {
   const { error } = await sb.rpc("audit_record", { p_workspace: workspaceId, p_action: action, p_target: target ?? null });
   // ponytail: a failed write is logged, not fatal, so an audit outage does not block the user's action.
-  if (error) console.error("audit failed:", action, error.message);
+  if (error) log("error", "audit_failed", { action, error: { message: error.message } });
 }
