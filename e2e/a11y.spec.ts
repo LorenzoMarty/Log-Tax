@@ -14,6 +14,8 @@ const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 async function axeViolations(page: Page, label: string): Promise<void> {
   await page.waitForLoadState("networkidle");
+  // The route loading screens (loading.tsx) mark themselves aria-busy: audit the real screen, not the skeleton.
+  await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
   const { violations } = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
   const summary = violations.map((v) => `${v.impact} ${v.id}: ${v.help} (${v.nodes.length}) e.g. ${v.nodes[0]?.target.join(" ")}`);
   expect(summary, `${label} (${page.viewportSize()?.width}px)`).toEqual([]);
@@ -101,6 +103,7 @@ test("public pages", async ({ page }) => {
     { path: "/", label: "home", title: "Log Tax" },
     { path: "/login", label: "login", title: "Entrar · Log Tax" },
     { path: "/demo", label: "demo dashboard", title: "Demonstração · Log Tax" },
+    { path: "/rota-que-nao-existe", label: "product 404", title: "Página não encontrada · Log Tax" },
   ];
   for (const screen of screens) {
     await page.goto(screen.path);
