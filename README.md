@@ -92,7 +92,7 @@ Cada camada prova uma coisa diferente. Todas passam no mesmo gate do CI e do pre
 | `E2E_REAL_LLM=1 npx playwright test real-llm` | navegador → `/api/chat` → OpenAI → banco | idem |
 | `E2E_TOUR=1 npx playwright test tour --workers=1` | rode **sozinho**; refaz as capturas de `docs/screenshots` percorrendo o produto inteiro | `db:start` |
 
-O CI roda `check` e `test:rls` (o Supabase sobe no próprio job). Commits passam pelo `pre-commit` (`pip install pre-commit && pre-commit install`).
+O CI roda `check`, `build`, `test:rls` e `e2e` em jobs paralelos (o Supabase sobe nos jobs que precisam; o e2e roda contra `next dev` com a IA roteirizada (ela é recusada em produção) e anexa o trace do Playwright quando falha). Tempo total: ver o último run verde em Actions. Commits passam pelo `pre-commit` (`pip install pre-commit && pre-commit install`).
 
 ## Como funciona
 
