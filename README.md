@@ -112,6 +112,8 @@ Motor tributário (TaxEngine, mock) ◄── a IA **não calcula**: chama o mot
 - **Painel = JSON de blocos** versionado; a IA só edita esse JSON por ferramentas, nunca gera código.
 - Estrutura: `src/engine` (motor), `src/chat` (IA, ferramentas, estado), `src/dashboard`, `src/alerts`, `src/documents`, `src/report`, `src/sharing`, `supabase/migrations` (schema e políticas), `e2e` (Playwright).
 
+Operação (publicar, reverter, restaurar backup, incidentes): `docs/runbook.md`. Retenção e cifra de dados: `docs/retencao-de-dados.md`. O que vai ao modelo de IA: `docs/dados-enviados-ao-modelo.md`.
+
 ## Limites conhecidos
 
 - Motor tributário **mock**: só Lucro Presumido (empresa) e uma tabela de IRPF ilustrativa; sem integração com Receita, SEFAZ ou ERPs.
