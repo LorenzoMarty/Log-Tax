@@ -1,5 +1,5 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
-import { BUCKET } from "@/documents/storage";
+import { BUCKET, openStored, type StoredExtraction } from "@/documents/storage";
 
 /** How long a document download link in the export stays valid. */
 export const LINK_SECONDS = 3600;
@@ -45,7 +45,7 @@ export async function buildExport(sb: SupabaseClient, user: Pick<User, "id" | "e
     agents: rows(agents as { data: Row[] | null }),
     conversations: rows(conversations as { data: Row[] | null }),
     agent_conversations: rows(agentConversations as { data: Row[] | null }),
-    documents: docRows.map((d) => ({ ...d, download_url: urlOf.get(d.storage_path as string) ?? null })),
+    documents: docRows.map((d) => ({ ...d, extracted: openStored(d.extracted as StoredExtraction | null), download_url: urlOf.get(d.storage_path as string) ?? null })),
     members_of_my_workspaces: rows(members as { data: Row[] | null }),
     invites_sent: rows(invitesSent),
     comments_written: rows(comments),
