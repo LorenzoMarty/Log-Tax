@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Logo } from "@/ui/log";
 
+export const metadata = { alternates: { canonical: "/" } };
+
 export default function Home() {
   return (
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col justify-center gap-6 px-4 py-10">
@@ -17,6 +19,19 @@ export default function Home() {
           Entrar
         </Link>
       </div>
+      <section aria-labelledby="perguntas" className="flex flex-col gap-3">
+        <h2 id="perguntas" className="lg-heading-1">
+          Perguntas que você pode fazer
+        </h2>
+        <ul className="list-disc space-y-1 pl-5 text-ink">
+          <li>Quanto estou pagando de imposto, e por quê?</li>
+          <li>Existe alguma forma legal de pagar menos?</li>
+          <li>Se meu faturamento aumentar, o que acontece?</li>
+          <li>Tenho alguma obrigação ou prazo chegando?</li>
+          <li>Quanto vou pagar na declaração do Imposto de Renda?</li>
+        </ul>
+        <p className="text-ink-muted">Sem termos técnicos: quando aparecer um, a IA explica em palavras comuns.</p>
+      </section>
       <p className="text-sm text-ink-muted">Log Tax mostra estimativas ilustrativas. Valide qualquer decisão com um contador.</p>
     </main>
   );

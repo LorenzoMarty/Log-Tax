@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 // Self-hosted (Inter, latin, variable 400-700): the build must not depend on fetching Google Fonts.
@@ -11,8 +12,11 @@ const inter = localFont({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Log Tax", template: "%s · Log Tax" },
-  description: "Inteligência tributária conversacional",
+  metadataBase: new URL(SITE_URL),
+  title: { default: SITE_NAME, template: `%s · ${SITE_NAME}` },
+  description: SITE_DESCRIPTION,
+  openGraph: { type: "website", locale: "pt_BR", siteName: SITE_NAME, title: SITE_NAME, description: SITE_DESCRIPTION },
+  twitter: { card: "summary_large_image", title: SITE_NAME, description: SITE_DESCRIPTION },
 };
 
 export default function RootLayout({
