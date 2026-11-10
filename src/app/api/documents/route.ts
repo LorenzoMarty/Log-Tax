@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { classifyDocument } from "@/documents/classify";
 import { BUCKET, MAX_BYTES, MAX_TEXT_BYTES, resolveMime, safeFileName, toStored } from "@/documents/storage";
+import { audit } from "@/lib/audit";
 import { checkRate, clientIp, tooMany } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
@@ -49,5 +50,6 @@ export async function POST(request: Request) {
     await sb.storage.from(BUCKET).remove([path]); // never leave a file without its record
     return fail("Não consegui registrar o documento.", 500);
   }
+  await audit(sb, workspaceId.data, "document_uploaded", file.name);
   return Response.json({ id, type: classification.type }, { status: 201 });
 }

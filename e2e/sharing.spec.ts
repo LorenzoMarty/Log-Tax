@@ -67,6 +67,14 @@ test("owner invites the accountant, who accepts, comments, and cannot chat; acce
   await expect(guest.getByRole("heading", { name: "Não encontramos essa página" })).toBeVisible();
   await guest.goto("/workspace");
   await expect(guest.getByRole("link", { name: /Minha Empresa/ })).toHaveCount(0);
+  // every step above left a line in the owner's activity trail
+  await owner.page.reload();
+  await owner.page.getByText(/Atividade do espaço/).click();
+  const trail = owner.page.getByTestId("activity");
+  await expect(trail).toContainText("Convidou alguém");
+  await expect(trail).toContainText(guestEmail);
+  await expect(trail).toContainText("Aceitou um convite");
+  await expect(trail).toContainText("Removeu um acesso");
   await owner.ctx.close();
   await guestCtx.close();
 });

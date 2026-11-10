@@ -202,6 +202,7 @@ const TOOLS: Tool[] = [
   }),
 ];
 
+export const isDestructive = (name: string) => byName.get(name)?.destructive === true;
 export const TOOL_NAMES = TOOLS.map((t) => t.name);
 const byName = new Map(TOOLS.map((t) => [t.name, t]));
 export const ENGINE_TOOLS = new Set(TOOLS.filter((t) => t.engine).map((t) => t.name));

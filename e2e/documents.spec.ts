@@ -91,6 +91,9 @@ test("documents: consent, upload, identification, download, refusal and deletion
   const informeId = (await informe.getByRole("link", { name: "Baixar" }).getAttribute("href"))!.split("/").pop()!;
   await informe.getByRole("button", { name: "Apagar" }).click();
   await expect(page.getByRole("status")).toContainText("Documento apagado");
+  await page.getByText(/Atividade do espaço/).click();
+  await expect(page.getByTestId("activity")).toContainText("Enviou um documento");
+  await expect(page.getByTestId("activity")).toContainText("Apagou um documento");
   await expect(docs.getByTestId("document")).toHaveCount(1);
   expect((await page.request.get(`/api/documents/${informeId}`, { maxRedirects: 0 })).status()).toBe(404);
   await ctx.close();
