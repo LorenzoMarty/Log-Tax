@@ -60,6 +60,31 @@ test("documents: consent, upload, identification, download, refusal and deletion
   await expect(docs.getByRole("alert")).toContainText("Tipo de arquivo não aceito");
   await expect(docs.getByTestId("document")).toHaveCount(2);
 
+  // the content decides, not the name: an executable renamed to .pdf, and the antivirus test file, are refused (#75)
+  await pick("fatura.pdf", "application/pdf", "MZ\u0090\u0000\u0003 programa");
+  await docs.getByLabel(/Autorizo o Log Tax/).check();
+  await send();
+  await expect(docs.getByRole("alert")).toContainText("conteúdo do arquivo não corresponde");
+  await pick("teste.txt", "text/plain", "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*");
+  await docs.getByLabel(/Autorizo o Log Tax/).check();
+  await send();
+  await expect(docs.getByRole("alert")).toContainText("parece conter um vírus");
+  await expect(docs.getByTestId("document")).toHaveCount(2);
+
+  // storage quota (the test server allows 1 MB per workspace): the second big file is refused with a clear message
+  const big = (name: string) => docs.getByLabel(/Documento \(PDF/).setInputFiles({ name, mimeType: "application/pdf", buffer: Buffer.concat([Buffer.from("%PDF-1.4\n"), Buffer.alloc(600 * 1024, 0x20)]) });
+  await big("grande-1.pdf");
+  await docs.getByLabel(/Autorizo o Log Tax/).check();
+  await send();
+  await expect(docs.getByTestId("document")).toHaveCount(3);
+  await big("grande-2.pdf");
+  await docs.getByLabel(/Autorizo o Log Tax/).check();
+  await send();
+  await expect(docs.getByRole("alert")).toContainText("atingiu o limite de 1 MB");
+  await expect(docs.getByTestId("document")).toHaveCount(3);
+  await docs.getByTestId("document").filter({ hasText: "grande-1.pdf" }).getByRole("button", { name: "Apagar" }).click();
+  await expect(page.getByRole("status")).toContainText("Documento apagado");
+
   // download goes through a fresh signed URL and returns the real file
   const href = await nota.getByRole("link", { name: "Baixar" }).getAttribute("href");
   const download = await page.request.get(href!);
