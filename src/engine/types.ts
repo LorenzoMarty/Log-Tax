@@ -1,3 +1,5 @@
+import type { RuleRef } from "./rulebook";
+
 export type Regime = "presumido" | "real" | "simples";
 
 export interface CompanyProfile {
@@ -37,6 +39,8 @@ export interface Diagnosis {
   assumptions: string[];
   disclaimer: string;
   rulesVersion: string;
+  /** The rule versions behind this result (competence-specific), when the engine reports them. */
+  rulesUsed?: RuleRef[];
 }
 
 export interface Simulation {
@@ -122,4 +126,5 @@ export interface PersonDiagnosis {
   assumptions: string[];
   disclaimer: string;
   rulesVersion: string;
+  rulesUsed?: RuleRef[];
 }
