@@ -1,6 +1,17 @@
 repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: detect-private-key
   - repo: local
     hooks:
+      - id: no-secrets
+        name: block API keys and tokens
+        description: OpenAI, Supabase secret, AWS and GitHub tokens must live in .env.local, never in git.
+        language: pygrep
+        entry: '(sk-(proj-)?[A-Za-z0-9_-]{20,}|sb_secret_[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{30,})'
+        types: [text]
+        exclude: '^(package-lock\.json|\.env\.example)$'
       - id: npm-check
         name: npm run check (lint, typecheck, test)
         entry: npm run check
