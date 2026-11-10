@@ -22,7 +22,9 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const target = authRedirectPath(request.nextUrl.pathname, user !== null);
+  const aal = user ? (await supabase.auth.mfa.getAuthenticatorAssuranceLevel()).data : null;
+  const needsSecondFactor = aal?.nextLevel === "aal2" && aal.currentLevel !== "aal2";
+  const target = authRedirectPath(request.nextUrl.pathname, user !== null, needsSecondFactor);
   if (!target) return response;
   const url = request.nextUrl.clone();
   url.pathname = target;
