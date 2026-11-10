@@ -91,6 +91,13 @@ export default async function WorkspacePage({ searchParams }: { searchParams: Pr
         </ul>
       ) : null}
 
+      <p className="text-sm text-ink-muted">
+        Seus dados são seus.{" "}
+        <a href="/api/account/export" download className="underline">
+          Baixar uma cópia de todos os meus dados (JSON)
+        </a>
+      </p>
+
       {owned.length === 0 && (
         <form action={createDefaultWorkspaces}>
           <Button type="submit" variant="primary" icon="plus">

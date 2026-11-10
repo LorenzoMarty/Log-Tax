@@ -16,6 +16,8 @@ async function axeViolations(page: Page, label: string): Promise<void> {
   await page.waitForLoadState("networkidle");
   // The route loading screens (loading.tsx) mark themselves aria-busy: audit the real screen, not the skeleton.
   await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+  // Streamed pages move their <title> into the head a moment after the body: audit once it is there.
+  await expect(page).not.toHaveTitle("");
   const { violations } = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
   const summary = violations.map((v) => `${v.impact} ${v.id}: ${v.help} (${v.nodes.length}) e.g. ${v.nodes[0]?.target.join(" ")}`);
   expect(summary, `${label} (${page.viewportSize()?.width}px)`).toEqual([]);

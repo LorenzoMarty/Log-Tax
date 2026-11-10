@@ -5,6 +5,7 @@ export const LIMITS = {
   chat: { limit: 20, windowSeconds: 60 },
   documents: { limit: 10, windowSeconds: 60 },
   invite: { limit: 20, windowSeconds: 3600 },
+  export: { limit: 5, windowSeconds: 3600 },
 } as const;
 
 const IP_FACTOR = 5;
