@@ -17,4 +17,11 @@ describe("authRedirectPath", () => {
   it("lets visitors see the public pages", () => {
     for (const path of ["/", "/login", "/demo"]) expect(authRedirectPath(path, false)).toBeNull();
   });
+
+  it("holds private pages for the second factor, but not the public ones", () => {
+    expect(authRedirectPath("/workspace", true, true)).toBe("/login/verificar");
+    expect(authRedirectPath("/workspace/abc", true, true)).toBe("/login/verificar");
+    for (const path of ["/login/verificar", "/demo", "/login"]) expect(authRedirectPath(path, true, true)).toBeNull();
+    expect(authRedirectPath("/", true, true)).toBe("/workspace"); // then the line above applies on the next request
+  });
 });

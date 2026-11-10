@@ -12,7 +12,10 @@ export type AuditAction =
   | "document_deleted"
   | "destructive_action"
   | "data_exported"
-  | "account_deleted";
+  | "account_deleted"
+  | "mfa_enabled"
+  | "mfa_disabled"
+  | "mfa_recovery_used";
 
 export const AUDIT_LABEL: Record<AuditAction, string> = {
   login: "Entrou no Log Tax",
@@ -26,6 +29,9 @@ export const AUDIT_LABEL: Record<AuditAction, string> = {
   destructive_action: "Confirmou uma ação destrutiva na conversa",
   data_exported: "Exportou os dados",
   account_deleted: "Excluiu a conta",
+  mfa_enabled: "Ativou a verificação em duas etapas",
+  mfa_disabled: "Desativou a verificação em duas etapas",
+  mfa_recovery_used: "Usou um código de recuperação",
 };
 
 /**
