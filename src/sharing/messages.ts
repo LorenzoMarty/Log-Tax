@@ -7,5 +7,6 @@ export const MESSAGES: Record<string, { text: string; ok: boolean }> = {
   "convite-invalido": { text: "Convite inválido. Confira o email e o papel.", ok: false },
   "convite-proprio": { text: "Você já é dono deste espaço.", ok: false },
   "comentario-invalido": { text: "Escreva um comentário de até 2.000 caracteres.", ok: false },
+  "muitas-tentativas": { text: "Muitos convites em pouco tempo. Tente de novo daqui a alguns minutos.", ok: false },
   "sem-permissao": { text: "Você não tem permissão para isso.", ok: false },
 };

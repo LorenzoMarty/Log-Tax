@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { classifyDocument } from "@/documents/classify";
 import { BUCKET, MAX_BYTES, MAX_TEXT_BYTES, resolveMime, safeFileName, toStored } from "@/documents/storage";
+import { checkRate, clientIp, tooMany } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
 const fail = (error: string, status: number) => Response.json({ error }, { status });
@@ -11,6 +12,8 @@ export async function POST(request: Request) {
     data: { user },
   } = await sb.auth.getUser();
   if (!user) return fail("Faça login para continuar.", 401);
+  const wait = await checkRate(sb, user.id, "documents", clientIp(request.headers));
+  if (wait) return tooMany(wait);
 
   const form = await request.formData().catch(() => null);
   const workspaceId = z.uuid().safeParse(form?.get("workspaceId"));
