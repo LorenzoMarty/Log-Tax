@@ -1,4 +1,5 @@
 import { DISCLAIMER } from "@/engine";
+import { hasUntrusted } from "./untrusted";
 import { buildSystemPrompt } from "./system-prompt";
 import { ENGINE_TOOLS, invokeTool, toolSpecs } from "./tools";
 import type { LlmClient, Msg, ToolContext, ToolOutcome } from "./types";
@@ -33,6 +34,7 @@ export async function runTurn(o: {
   const system = o.system ?? buildSystemPrompt({ workspaceName: ctx.scope.workspaceName ?? "seu espaço" });
   const history: Msg[] = [...o.history, { role: "user", content: o.userMessage }];
   const events: ToolEvent[] = [];
+  let untrusted = hasUntrusted(JSON.stringify(history));
   const pendingConfirmations: PendingConfirmation[] = [];
 
   for (let step = 0; step < MAX_STEPS; step++) {
@@ -46,12 +48,14 @@ export async function runTurn(o: {
     }
 
     for (const call of turn.calls) {
-      const outcome = await invokeTool(ctx, call.name, call.args);
+      const outcome = await invokeTool({ ...ctx, untrustedInContext: untrusted }, call.name, call.args);
       events.push({ name: call.name, args: call.args, outcome });
       if (outcome.status === "confirmation_required") {
         pendingConfirmations.push({ tool: call.name, key: outcome.key, summary: outcome.summary });
       }
-      history.push({ role: "tool_result", callId: call.id, output: JSON.stringify(outcome) });
+      const output = JSON.stringify(outcome);
+      if (hasUntrusted(output)) untrusted = true; // a tool that returns document text taints the rest of the turn
+      history.push({ role: "tool_result", callId: call.id, output });
     }
   }
   return { text: "Não consegui concluir esta solicitação. Tente reformular o pedido.", history, events, pendingConfirmations };
