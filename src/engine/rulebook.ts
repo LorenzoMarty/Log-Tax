@@ -18,6 +18,14 @@ export interface RuleVersion<T> {
   data: T;
 }
 
+export interface RuleStatus {
+  id: string;
+  name: string;
+  validUntil: string;
+  /** Last day the version applies, YYYY-MM-DD. */
+  endsAt: string;
+}
+
 /** What a result says about each rule it used, so any number can be traced back to a law and a date. */
 export interface RuleRef {
   id: string;
@@ -69,6 +77,35 @@ export class RuleBook {
     const v = this.at<T>(id, competence);
     if (!v) throw new Error(`no version of rule "${id}" is in force at ${competence}`);
     return v;
+  }
+
+  /** Every version of every rule, newest start first (the rules changelog). */
+  changelog(): { id: string; name: string; validFrom: string; validUntil?: string; source: string; requiresValidation: boolean; confidence: RuleVersion<unknown>["confidence"] }[] {
+    return [...this.byId.values()]
+      .flat()
+      .map((v) => ({ id: v.id, name: v.name, validFrom: v.validFrom, validUntil: v.validUntil, source: v.source, requiresValidation: v.requiresValidation, confidence: v.confidence }))
+      .sort((a, b) => b.validFrom.localeCompare(a.validFrom) || a.id.localeCompare(b.id));
+  }
+
+  /**
+   * Rules whose current version ends within `days` of `today` with no successor, or has already ended with none:
+   * the calculation that depends on them is about to stop (or already stopped) and someone must add the new table.
+   */
+  lifecycle(today: Date, days = 60): { expiring: RuleStatus[]; lapsed: RuleStatus[] } {
+    const month = today.toISOString().slice(0, 7);
+    const limit = new Date(today.getTime() + days * 86_400_000);
+    const expiring: RuleStatus[] = [];
+    const lapsed: RuleStatus[] = [];
+    for (const [id, list] of this.byId) {
+      const last = list[list.length - 1];
+      if (!last.validUntil) continue; // open-ended: always in force
+      const [y, m] = last.validUntil.split("-").map(Number);
+      const endsAt = new Date(Date.UTC(y, m, 0)); // last day of the validUntil month
+      const status: RuleStatus = { id, name: last.name, validUntil: last.validUntil, endsAt: endsAt.toISOString().slice(0, 10) };
+      if (last.validUntil < month) lapsed.push(status);
+      else if (endsAt <= limit) expiring.push(status);
+    }
+    return { expiring, lapsed };
   }
 
   /** Every version, newest first, as the engine's public rule list. */
