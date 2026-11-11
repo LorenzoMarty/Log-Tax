@@ -31,6 +31,9 @@ export const companyFieldsSchema = z.strictObject({
   employees: z.int().min(0).max(1_000_000),
   monthlyPurchases: money,
   taxLossBalance: money,
+  ratGrade: z.union([z.literal(1), z.literal(2), z.literal(3)]).describe("grau de risco do RAT: 1, 2 ou 3"),
+  fap: z.number().min(0.5).max(2),
+  terceirosRate: z.number().min(0).max(0.15),
   profitMargin: z.number().min(-1).max(1).describe("fração, 0.08 = 8%"),
   series: z.array(monthlyEntrySchema).min(1).max(120),
 });
