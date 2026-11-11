@@ -14,6 +14,21 @@ const send = (text: string) => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("ChatPanel", () => {
+  it("on an empty conversation, a clicked example starts the conversation (#158)", async () => {
+    const fetchMock = reply({ text: "Você paga R$ 42.800.", pendingConfirmations: [], dashboard: sampleDashboard });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<ChatPanel workspaceId="ws1" initialMessages={[]} initialDashboard={{ ...sampleDashboard, widgets: [] }} />);
+    fireEvent.click(screen.getByRole("button", { name: "Mostre quanto estou pagando de imposto." }));
+    expect(await screen.findByText("Você paga R$ 42.800.")).toBeInTheDocument();
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).message).toBe("Mostre quanto estou pagando de imposto.");
+    expect(screen.queryByRole("heading", { name: "O que posso pedir?" })).not.toBeInTheDocument();
+  });
+
+  it("does not show the examples once the conversation has messages", () => {
+    setup();
+    expect(screen.queryByRole("heading", { name: "O que posso pedir?" })).not.toBeInTheDocument();
+  });
+
   it("shows the history, sends the message and renders the reply and the updated dashboard", async () => {
     const fetchMock = reply({ text: "Você paga R$ 42.800.", pendingConfirmations: [], dashboard: sampleDashboard });
     vi.stubGlobal("fetch", fetchMock);
