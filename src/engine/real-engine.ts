@@ -1,6 +1,8 @@
 import { IRPF_ANNUAL, IRPF_MONTHLY, type IrpfAnnualRules, type IrpfMonthlyTable } from "./data/irpf";
 import { SIMPLES_RULES, type SimplesRules } from "./data/simples";
 import { DISCLAIMER } from "./mock-engine";
+import { PRESUMIDO_RULES, type PresumidoRules } from "./data/presumido";
+import { presumidoQuarter, spreadOverMonths, type PresumidoRevenue } from "./presumido";
 import { MEI_RULES, type MeiRules } from "./data/mei";
 import { checkMeiLimit, meiDas } from "./mei";
 import { annexByFatorR, fatorR, rbt12Of, simplesDas } from "./simples";
@@ -9,7 +11,7 @@ import { competenceOf, refOf, RuleBook, type RuleVersion } from "./rulebook";
 import type { CompanyProfile, Diagnosis, EngineResult, IrScenario, PersonDiagnosis, PersonProfile, TaxCode, TaxEngine, TaxLine } from "./types";
 
 /** Every rule the real engine knows. New tables are added to the data files, not to the calculations. */
-export const DEFAULT_RULEBOOK = new RuleBook([...IRPF_MONTHLY, ...IRPF_ANNUAL, ...SIMPLES_RULES, ...MEI_RULES]);
+export const DEFAULT_RULEBOOK = new RuleBook([...IRPF_MONTHLY, ...IRPF_ANNUAL, ...SIMPLES_RULES, ...MEI_RULES, ...PRESUMIDO_RULES]);
 
 /** A fraction as a pt-BR percentage ("7,1900"). Formatted with Intl. */
 const pct = (fraction: number, digits: number) => (fraction * 100).toLocaleString("pt-BR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -163,8 +165,63 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
     };
   }
 
+  /**
+   * Lucro Presumido, federal taxes only (ICMS, ISS and payroll charges come with #87, #88 and #89). IRPJ and CSLL are
+   * quarterly: the quarter of the competence is computed and the competence month gets its third (months add up exactly).
+   */
+  function diagnosePresumido(p: CompanyProfile): EngineResult<Diagnosis> {
+    const rule = book.at<PresumidoRules>("lucro-presumido-federal", competence);
+    if (!rule) return { status: "not_applicable", reason: `Não há tabela do Lucro Presumido em vigor para a competência ${competence}.` };
+    const [y, m] = competence.split("-").map(Number);
+    const qStart = Math.floor((m - 1) / 3) * 3 + 1;
+    const quarterMonths = [0, 1, 2].map((i) => `${y}-${String(qStart + i).padStart(2, "0")}`);
+    const entries = (p.series ?? []).filter((e) => quarterMonths.includes(e.month));
+    const quarter: PresumidoRevenue = {};
+    if (entries.length) {
+      for (const e of entries) {
+        quarter.comercio = (quarter.comercio ?? 0) + (e.revenue?.comercio ?? 0) + (e.revenue?.exportacao ?? 0);
+        quarter.industria = (quarter.industria ?? 0) + (e.revenue?.industria ?? 0);
+        quarter.servico = (quarter.servico ?? 0) + (e.revenue?.servico ?? 0);
+      }
+    } else {
+      if (p.monthlyRevenue === undefined) return { status: "insufficient_data", missing: ["monthlyRevenue"] };
+      quarter[p.activity === "servico" ? "servico" : "comercio"] = p.monthlyRevenue * 3;
+    }
+    const q = presumidoQuarter(rule.data, quarter);
+    const idx = quarterMonths.indexOf(competence);
+    const month = (cents: number) => spreadOverMonths(cents)[idx];
+    const lines = [
+      { tax: "IRPJ" as const, label: "IRPJ", cents: month(q.irpjCents) },
+      { tax: "CSLL" as const, label: "CSLL", cents: month(q.csllCents) },
+      { tax: "PIS/COFINS" as const, label: "PIS/COFINS", cents: month(q.pisCents + q.cofinsCents) },
+    ];
+    const total = lines.reduce((s, l) => s + l.cents, 0);
+    const monthlyRevenue = fromCents(spreadOverMonths(q.revenueCents)[idx]);
+    return {
+      status: "ok",
+      value: {
+        monthlyRevenue,
+        monthlyTotal: fromCents(total),
+        annualTotal: fromCents(total * 12),
+        effectiveRate: q.revenueCents > 0 ? total / spreadOverMonths(q.revenueCents)[idx] : 0,
+        breakdown: lines.map((l) => ({ tax: l.tax, label: l.label, amount: fromCents(l.cents) })),
+        assumptions: [
+          `Lucro Presumido, apuração trimestral (${quarterMonths[0]} a ${quarterMonths[2]}); o mês mostra um terço do trimestre.`,
+          `Base presumida do IRPJ de R$ ${fromCents(q.irpjBaseCents).toLocaleString("pt-BR")}${q.irpjAdditionalCents > 0 ? `, com adicional de 10% (R$ ${fromCents(q.irpjAdditionalCents).toLocaleString("pt-BR")}) sobre o que passa de R$ 60.000 no trimestre` : ""}.`,
+          entries.length ? "Receita do trimestre lida da série mensal." : "Sem série mensal: o trimestre foi estimado como 3 vezes o faturamento mensal informado.",
+          "Só tributos federais sobre a receita (IRPJ, CSLL, PIS e COFINS cumulativos). ICMS, ISS e encargos da folha ainda não estão incluídos. Receitas de exportação e atividades com presunção especial não foram tratadas à parte.",
+          "Tabelas ainda aguardam validação de um profissional.",
+          `Regras versão ${version}.`,
+        ],
+        disclaimer: DISCLAIMER,
+        rulesVersion: version,
+        rulesUsed: [refOf(rule)],
+      },
+    };
+  }
+
   const diagnoseCompany = (p: CompanyProfile): EngineResult<Diagnosis> =>
-    p.regime === "simples" ? diagnoseSimples(p) : p.regime === "mei" ? diagnoseMei(p) : notCovered("esse regime (Presumido e Real chegam em #85 e #86)");
+    p.regime === "simples" ? diagnoseSimples(p) : p.regime === "mei" ? diagnoseMei(p) : p.regime === "presumido" ? diagnosePresumido(p) : notCovered("o Lucro Real (chega em #86)");
 
   return {
     version,

@@ -164,6 +164,6 @@ describe("real engine: Simples diagnosis", () => {
   });
 
   it("other regimes are still not claimed by the real engine", () => {
-    expect(engine.diagnose(company({ regime: "presumido" })).status).toBe("not_applicable");
+    expect(engine.diagnose(company({ regime: "real" })).status).toBe("not_applicable");
   });
 });

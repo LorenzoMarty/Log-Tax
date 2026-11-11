@@ -62,7 +62,7 @@ describe("real engine: rules chosen by competence", () => {
   it("keeps the TaxEngine contract: missing data is explicit and companies are not claimed", () => {
     const engine = createRealEngine({ competence: "2025-05" });
     expect(engine.diagnosePerson({ ...seedPerson, annualGrossIncome: undefined })).toEqual({ status: "insufficient_data", missing: ["annualGrossIncome"] });
-    expect(engine.diagnose({ id: "c", name: "x", regime: "presumido", activity: "comercio", monthlyRevenue: 1 }).status).toBe("not_applicable");
+    expect(engine.diagnose({ id: "c", name: "x", regime: "real", activity: "comercio", monthlyRevenue: 1 }).status).toBe("not_applicable");
     expect(engine.rules().filter((r) => r.id === "irpf-tabela-mensal")).toHaveLength(2);
   });
 });
