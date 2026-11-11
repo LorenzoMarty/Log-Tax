@@ -33,7 +33,7 @@ const money = (n: number) => `R$ ${Math.round(n).toLocaleString("pt-BR")}`;
 const pct = (r: number) => `${(r * 100).toFixed(1).replace(".", ",")}%`;
 const FIELD: Record<string, string> = { monthlyRevenue: "faturamento mensal", annualGrossIncome: "renda anual", profitMargin: "margem de lucro", monthlyPurchases: "compras mensais", uf: "UF" };
 const fields = (keys: string[]) => keys.map((k) => FIELD[k] ?? k).join(", ");
-const REGIME = { presumido: "Lucro Presumido", real: "Lucro Real", simples: "Simples Nacional" } as const;
+const REGIME = { presumido: "Lucro Presumido", real: "Lucro Real", simples: "Simples Nacional", mei: "MEI" } as const;
 const ACTIVITY = { comercio: "comércio", servico: "serviço" } as const;
 const ILLUSTRATIVE_RULES = "Todas as regras, alíquotas e tabelas deste relatório são ilustrativas e precisam ser conferidas por um contador.";
 
