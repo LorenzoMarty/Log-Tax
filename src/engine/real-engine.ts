@@ -1,13 +1,15 @@
 import { IRPF_ANNUAL, IRPF_MONTHLY, type IrpfAnnualRules, type IrpfMonthlyTable } from "./data/irpf";
 import { SIMPLES_RULES, type SimplesRules } from "./data/simples";
 import { DISCLAIMER } from "./mock-engine";
+import { MEI_RULES, type MeiRules } from "./data/mei";
+import { checkMeiLimit, meiDas } from "./mei";
 import { annexByFatorR, fatorR, rbt12Of, simplesDas } from "./simples";
 import { fromCents, mulRate, roundingFor, toCents } from "./money";
 import { competenceOf, refOf, RuleBook, type RuleVersion } from "./rulebook";
 import type { CompanyProfile, Diagnosis, EngineResult, IrScenario, PersonDiagnosis, PersonProfile, TaxCode, TaxEngine, TaxLine } from "./types";
 
 /** Every rule the real engine knows. New tables are added to the data files, not to the calculations. */
-export const DEFAULT_RULEBOOK = new RuleBook([...IRPF_MONTHLY, ...IRPF_ANNUAL, ...SIMPLES_RULES]);
+export const DEFAULT_RULEBOOK = new RuleBook([...IRPF_MONTHLY, ...IRPF_ANNUAL, ...SIMPLES_RULES, ...MEI_RULES]);
 
 /** A fraction as a pt-BR percentage ("7,1900"). Formatted with Intl. */
 const pct = (fraction: number, digits: number) => (fraction * 100).toLocaleString("pt-BR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -125,14 +127,53 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
     };
   }
 
+  /** MEI: the fixed DAS plus a warning about the annual limit. */
+  function diagnoseMei(p: CompanyProfile): EngineResult<Diagnosis> {
+    const rule = book.at<MeiRules>("mei-das", competence);
+    if (!rule) return { status: "not_applicable", reason: `Não há tabela do MEI em vigor para a competência ${competence}.` };
+    const year = Number(competence.slice(0, 4));
+    const entries = (p.series ?? []).filter((e) => e.month.startsWith(`${year}-`) && e.month <= competence);
+    if (!entries.length && p.monthlyRevenue === undefined) return { status: "insufficient_data", missing: ["series"] };
+    const ytd = entries.reduce((a, e) => a + Object.values(e.revenue ?? {}).reduce<number>((x, y) => x + (y ?? 0), 0), 0);
+    const monthEntry = entries.find((e) => e.month === competence);
+    const revenue = monthEntry ? Object.values(monthEntry.revenue ?? {}).reduce<number>((x, y) => x + (y ?? 0), 0) : (p.monthlyRevenue ?? 0);
+    const das = meiDas(rule.data, p.meiActivity ?? (p.activity === "servico" ? "servico" : "comercio"));
+    const limit = checkMeiLimit(rule.data, entries.length ? ytd : (p.monthlyRevenue ?? 0) * Number(competence.slice(5, 7)), p.openedAt, year);
+    const breakdown: TaxLine[] = [{ tax: "CPP", label: "INSS (previdência do MEI)", amount: fromCents(das.inssCents) }];
+    if (das.icmsCents) breakdown.push({ tax: "ICMS", label: "ICMS", amount: fromCents(das.icmsCents) });
+    if (das.issCents) breakdown.push({ tax: "ISS", label: "ISS", amount: fromCents(das.issCents) });
+    return {
+      status: "ok",
+      value: {
+        monthlyRevenue: revenue,
+        monthlyTotal: fromCents(das.totalCents),
+        annualTotal: fromCents(das.totalCents * 12),
+        effectiveRate: revenue > 0 ? das.totalCents / toCents(revenue) : 0,
+        breakdown,
+        assumptions: [
+          "MEI: o DAS é fixo por mês, não depende do faturamento.",
+          limit.message,
+          "Tabela ainda aguarda validação de um profissional.",
+          `Regras versão ${version}.`,
+        ],
+        disclaimer: DISCLAIMER,
+        rulesVersion: version,
+        rulesUsed: [refOf(rule)],
+      },
+    };
+  }
+
+  const diagnoseCompany = (p: CompanyProfile): EngineResult<Diagnosis> =>
+    p.regime === "simples" ? diagnoseSimples(p) : p.regime === "mei" ? diagnoseMei(p) : notCovered("esse regime (Presumido e Real chegam em #85 e #86)");
+
   return {
     version,
     rules: () => book.asTaxRules("person"),
-    diagnose: (p) => (p.regime === "simples" ? diagnoseSimples(p) : notCovered("esse regime (Presumido e Real chegam em #85 e #86)")),
+    diagnose: diagnoseCompany,
     simulate(p, overrides) {
-      const current = p.regime === "simples" ? diagnoseSimples(p) : notCovered("esse regime");
+      const current = diagnoseCompany(p);
       if (current.status !== "ok") return current;
-      const scenario = diagnoseSimples({ ...p, ...overrides });
+      const scenario = diagnoseCompany({ ...p, ...overrides });
       return scenario.status === "ok" ? { status: "ok", value: { current: current.value, scenario: scenario.value } } : scenario;
     },
     opportunities: () => notCovered("a busca de oportunidades de empresas"),

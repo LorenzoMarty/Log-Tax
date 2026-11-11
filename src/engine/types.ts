@@ -1,6 +1,6 @@
 import type { RuleRef } from "./rulebook";
 
-export type Regime = "presumido" | "real" | "simples";
+export type Regime = "presumido" | "real" | "simples" | "mei";
 
 export interface CompanyProfile {
   id: string;
@@ -22,6 +22,8 @@ export interface CompanyProfile {
   anexo?: "I" | "II" | "III" | "IV" | "V";
   /** Opening date, YYYY-MM-DD. */
   openedAt?: string;
+  /** MEI activity (decides ICMS/ISS in the DAS); defaults from `activity`. */
+  meiActivity?: "comercio" | "servico" | "comercio_servico" | "transporte_cargas";
   /** The activity is subject to Fator R (annex III when payroll is 28% or more of revenue, otherwise V). */
   fatorR?: boolean;
   /** Monthly history, oldest first. Simples needs the last 12 months of revenue. */

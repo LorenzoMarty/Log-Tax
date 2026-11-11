@@ -19,7 +19,8 @@ export const companyFieldsSchema = z.strictObject({
   name: z.string().min(1).max(200),
   cnpj: z.string().refine(cnpjValid, "CNPJ inválido (confira os dígitos)"), // stored as digits only (see the save tool)
   cnaes: z.array(z.string().regex(/^\d{7}$/, "CNAE tem 7 dígitos")).min(1).max(20),
-  regime: z.enum(["presumido", "real", "simples"]),
+  regime: z.enum(["presumido", "real", "simples", "mei"]),
+  meiActivity: z.enum(["comercio", "servico", "comercio_servico", "transporte_cargas"]),
   anexo: z.enum(["I", "II", "III", "IV", "V"]),
   fatorR: z.boolean().describe("atividade sujeita ao Fator R"),
   activity: z.enum(["comercio", "servico"]),
@@ -41,7 +42,7 @@ const today = () => new Date().toISOString().slice(0, 10);
  */
 export function inconsistencies(p: Partial<CompanyProfile>, now = today()): string[] {
   const out: string[] = [];
-  if (p.anexo && p.regime && p.regime !== "simples") out.push(`O anexo ${p.anexo} só existe no Simples Nacional, e o regime informado é ${p.regime}.`);
+  if (p.anexo && p.regime && p.regime !== "simples" && p.regime !== "mei") out.push(`O anexo ${p.anexo} só existe no Simples Nacional, e o regime informado é ${p.regime}.`);
   if (p.openedAt && p.openedAt > now) out.push("A data de abertura está no futuro.");
   const months = (p.series ?? []).map((s) => s.month);
   const dup = months.find((m, i) => months.indexOf(m) !== i);
