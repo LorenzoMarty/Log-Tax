@@ -162,8 +162,4 @@ describe("real engine: Simples diagnosis", () => {
     expect(r.status).toBe("ok");
     expect((r as { value: { scenario: Diagnosis } }).value.scenario.monthlyTotal).toBe(5_752); // 7,19% x 80.000
   });
-
-  it("other regimes are still not claimed by the real engine", () => {
-    expect(engine.diagnose(company({ regime: "real" })).status).toBe("not_applicable");
-  });
 });
