@@ -13,6 +13,27 @@ export interface CompanyProfile {
   monthlyPurchases?: number;
   /** Net margin as a fraction (0.08 = 8%). */
   profitMargin?: number;
+  /** CNPJ, digits only. Stored encrypted (see src/lib/crypto.ts). */
+  cnpj?: string;
+  /** CNAE codes (7 digits), main activity first. */
+  cnaes?: string[];
+  municipio?: { name: string; ibge?: string };
+  /** Simples Nacional annex; only meaningful when regime is "simples". */
+  anexo?: "I" | "II" | "III" | "IV" | "V";
+  /** Opening date, YYYY-MM-DD. */
+  openedAt?: string;
+  /** Monthly history, oldest first. Simples needs the last 12 months of revenue. */
+  series?: MonthlyEntry[];
+}
+
+export interface MonthlyEntry {
+  /** YYYY-MM. */
+  month: string;
+  /** Revenue by kind, in reais. */
+  revenue?: { comercio?: number; industria?: number; servico?: number; exportacao?: number };
+  purchases?: number;
+  payroll?: number;
+  proLabore?: number;
 }
 
 /** Never carries an invented number: missing data, N/A and "nothing found" are explicit states. */

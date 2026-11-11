@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Dashboard } from "@/dashboard/types";
 import { seedCompany, seedPerson, type CompanyProfile, type PersonProfile } from "@/engine";
+import { normalizeProfile } from "@/engine/company-schema";
+import { decryptField, encryptField } from "@/lib/crypto";
 import type { StoreState } from "./memory-store";
 import type { Agent, Alert, Msg } from "./types";
 
@@ -60,8 +62,10 @@ export async function loadWorkspaceState(sb: SupabaseClient, workspaceId: string
   const agent = agentId ? agentList.find((a) => a.id === agentId) : undefined;
   if (agentId && !agent) return null;
 
-  const company: CompanyProfile =
-    ws.kind === "empresa" ? (ws.profile ?? seedCompany) : { id: ws.id, name: ws.name, regime: "presumido", activity: "comercio" };
+  const blank: CompanyProfile = { id: ws.id, name: ws.name, regime: "presumido", activity: "comercio" };
+  // Old profiles only lack the newer optional fields; the CNPJ is stored encrypted and opened here.
+  const raw = ws.profile && typeof ws.profile === "object" && typeof ws.profile.cnpj === "string" ? { ...ws.profile, cnpj: decryptField(ws.profile.cnpj) } : ws.profile;
+  const company: CompanyProfile = ws.kind === "empresa" ? normalizeProfile(raw ?? seedCompany, seedCompany) : blank;
   const person: PersonProfile = ws.kind === "pessoal" ? (ws.profile ?? seedPerson) : seedPerson;
 
   return {
@@ -86,7 +90,7 @@ export async function saveWorkspaceState(
   workspaceId: string,
   s: StoreState & { kind: WorkspaceState["kind"]; dashboardRowId?: string; agentId?: string; history: Msg[]; messages: DisplayMessage[] },
 ): Promise<Agent[]> {
-  ok(await sb.from("workspaces").update({ profile: s.kind === "pessoal" ? s.person : s.company }).eq("id", workspaceId), "workspaces");
+  ok(await sb.from("workspaces").update({ profile: s.kind === "pessoal" ? s.person : s.company.cnpj ? { ...s.company, cnpj: encryptField(s.company.cnpj) } : s.company }).eq("id", workspaceId), "workspaces");
 
   const dashRow = { workspace_id: workspaceId, name: s.dashboard.name, data: s.dashboard, version: s.dashboard.version, updated_at: new Date().toISOString() };
   ok(
