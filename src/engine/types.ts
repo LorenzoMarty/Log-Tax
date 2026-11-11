@@ -24,6 +24,8 @@ export interface CompanyProfile {
   openedAt?: string;
   /** MEI activity (decides ICMS/ISS in the DAS); defaults from `activity`. */
   meiActivity?: "comercio" | "servico" | "comercio_servico" | "transporte_cargas";
+  /** Municipal ISS rate the company pays (fraction, 0.03 = 3%), from its invoices or the city hall. */
+  issRate?: number;
   /** Sells goods under ICMS substituição tributária: ICMS is not estimated. */
   substituicaoTributaria?: boolean;
   /** Employer charges inputs: RAT grade (1-3), FAP multiplier (0,5 to 2,0) and the "terceiros" rate as a fraction. */
