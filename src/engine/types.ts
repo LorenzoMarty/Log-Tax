@@ -24,6 +24,10 @@ export interface CompanyProfile {
   openedAt?: string;
   /** MEI activity (decides ICMS/ISS in the DAS); defaults from `activity`. */
   meiActivity?: "comercio" | "servico" | "comercio_servico" | "transporte_cargas";
+  /** Employer charges inputs: RAT grade (1-3), FAP multiplier (0,5 to 2,0) and the "terceiros" rate as a fraction. */
+  ratGrade?: 1 | 2 | 3;
+  fap?: number;
+  terceirosRate?: number;
   /** Tax loss from earlier periods still to be offset (Lucro Real), in reais. */
   taxLossBalance?: number;
   /** The activity is subject to Fator R (annex III when payroll is 28% or more of revenue, otherwise V). */
@@ -49,7 +53,7 @@ export type EngineResult<T> =
   | { status: "not_applicable"; reason: string }
   | { status: "none_found" };
 
-export type TaxCode = "ICMS" | "PIS/COFINS" | "IRPJ" | "CSLL" | "OUTROS" | "CPP" | "ISS" | "IPI";
+export type TaxCode = "ICMS" | "PIS/COFINS" | "IRPJ" | "CSLL" | "OUTROS" | "CPP" | "ISS" | "IPI" | "FOLHA";
 
 export interface TaxLine {
   tax: TaxCode;

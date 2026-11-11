@@ -1,6 +1,8 @@
 import { IRPF_ANNUAL, IRPF_MONTHLY, type IrpfAnnualRules, type IrpfMonthlyTable } from "./data/irpf";
 import { SIMPLES_RULES, type SimplesRules } from "./data/simples";
 import { DISCLAIMER } from "./mock-engine";
+import { INSS_CEILING, PAYROLL_RULES, type InssCeilingRules, type PayrollRules } from "./data/payroll";
+import { payrollCharges, proLaboreRetention } from "./payroll";
 import { LUCRO_REAL_RULES, type LucroRealRules } from "./data/lucro-real";
 import { lucroRealQuarter, pisCofinsMonth } from "./lucro-real";
 import { PRESUMIDO_RULES, type PresumidoRules } from "./data/presumido";
@@ -13,7 +15,7 @@ import { competenceOf, refOf, RuleBook, type RuleVersion } from "./rulebook";
 import type { CompanyProfile, Diagnosis, EngineResult, IrScenario, PersonDiagnosis, PersonProfile, TaxCode, TaxEngine, TaxLine } from "./types";
 
 /** Every rule the real engine knows. New tables are added to the data files, not to the calculations. */
-export const DEFAULT_RULEBOOK = new RuleBook([...IRPF_MONTHLY, ...IRPF_ANNUAL, ...SIMPLES_RULES, ...MEI_RULES, ...PRESUMIDO_RULES, ...LUCRO_REAL_RULES]);
+export const DEFAULT_RULEBOOK = new RuleBook([...IRPF_MONTHLY, ...IRPF_ANNUAL, ...SIMPLES_RULES, ...MEI_RULES, ...PRESUMIDO_RULES, ...LUCRO_REAL_RULES, ...PAYROLL_RULES, ...INSS_CEILING]);
 
 /** A fraction as a pt-BR percentage ("7,1900"). Formatted with Intl. */
 const pct = (fraction: number, digits: number) => (fraction * 100).toLocaleString("pt-BR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -280,7 +282,42 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
     };
   }
 
-  const diagnoseCompany = (p: CompanyProfile): EngineResult<Diagnosis> =>
+  /** Adds the "Folha" line (employer charges) when the competence month has payroll or pró-labore data. */
+  function withPayroll(p: CompanyProfile, result: EngineResult<Diagnosis>): EngineResult<Diagnosis> {
+    if (result.status !== "ok" || p.regime === "mei") return result;
+    const entry = p.series?.find((e) => e.month === competence);
+    if (!entry || (entry.payroll === undefined && entry.proLabore === undefined)) return result;
+    const rule = book.at<PayrollRules>("folha-encargos", competence);
+    if (!rule) return result;
+    const inDas = p.regime === "simples" && p.anexo !== "IV";
+    const c = payrollCharges(rule.data, { payroll: entry.payroll ?? 0, proLabore: entry.proLabore ?? 0, ratGrade: p.ratGrade, fap: p.fap, terceirosRate: p.terceirosRate, inssIn: inDas ? "das" : "guia" });
+    const ceiling = book.at<InssCeilingRules>("inss-teto", competence);
+    const retention = ceiling && entry.proLabore ? proLaboreRetention(ceiling.data, entry.proLabore) : undefined;
+    const d = result.value;
+    const total = toCents(d.monthlyTotal) + c.totalCents;
+    return {
+      status: "ok",
+      value: {
+        ...d,
+        monthlyTotal: fromCents(total),
+        annualTotal: fromCents(total * 12),
+        effectiveRate: d.monthlyRevenue > 0 ? total / toCents(d.monthlyRevenue) : 0,
+        breakdown: [...d.breakdown, { tax: "FOLHA", label: "Folha (INSS patronal, RAT, terceiros, FGTS)", amount: fromCents(c.totalCents) }],
+        assumptions: [
+          ...d.assumptions,
+          `Folha: INSS patronal R$ ${fromCents(c.inssPatronalCents).toLocaleString("pt-BR")}, RAT R$ ${fromCents(c.ratCents).toLocaleString("pt-BR")}, terceiros R$ ${fromCents(c.terceirosCents).toLocaleString("pt-BR")}, FGTS R$ ${fromCents(c.fgtsCents).toLocaleString("pt-BR")}.`,
+          ...c.notes,
+          ...(retention !== undefined ? [`Retenção de 11% do INSS sobre o pró-labore: R$ ${fromCents(retention).toLocaleString("pt-BR")} (descontada do sócio, não é custo da empresa).`] : []),
+          "A desoneração da folha de setores específicos não foi considerada.",
+        ],
+        rulesUsed: [...(d.rulesUsed ?? []), refOf(rule), ...(ceiling && retention !== undefined ? [refOf(ceiling)] : [])],
+      },
+    };
+  }
+
+  const diagnoseCompany = (p: CompanyProfile): EngineResult<Diagnosis> => withPayroll(p, diagnoseRegime(p));
+
+  const diagnoseRegime = (p: CompanyProfile): EngineResult<Diagnosis> =>
     p.regime === "simples" ? diagnoseSimples(p) : p.regime === "mei" ? diagnoseMei(p) : p.regime === "presumido" ? diagnosePresumido(p) : p.regime === "real" ? diagnoseReal(p) : notCovered("esse regime");
 
   return {
