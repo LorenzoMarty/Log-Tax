@@ -1,4 +1,4 @@
-import { IRPF_ANNUAL, IRPF_MONTHLY, type IrpfAnnualRules, type IrpfMonthlyTable } from "./data/irpf";
+import { IRPF_ANNUAL, IRPF_ANNUAL_TABLE, IRPF_MONTHLY, type IrpfAnnualRules, type IrpfAnnualTable } from "./data/irpf";
 import { SIMPLES_RULES, type SimplesRules } from "./data/simples";
 import { DISCLAIMER } from "./mock-engine";
 import { ISS_LIMITS } from "./data/iss";
@@ -20,18 +20,18 @@ import { competenceOf, refOf, RuleBook, type RuleVersion } from "./rulebook";
 import type { CompanyProfile, Diagnosis, EngineResult, IrScenario, PersonDiagnosis, PersonProfile, TaxCode, TaxEngine, TaxLine } from "./types";
 
 /** Every rule the real engine knows. New tables are added to the data files, not to the calculations. */
-export const DEFAULT_RULEBOOK = new RuleBook([...IRPF_MONTHLY, ...IRPF_ANNUAL, ...SIMPLES_RULES, ...MEI_RULES, ...PRESUMIDO_RULES, ...LUCRO_REAL_RULES, ...PAYROLL_RULES, ...INSS_CEILING, ...ICMS_RULES, ...ISS_LIMITS]);
+export const DEFAULT_RULEBOOK = new RuleBook([...IRPF_MONTHLY, ...IRPF_ANNUAL_TABLE, ...IRPF_ANNUAL, ...SIMPLES_RULES, ...MEI_RULES, ...PRESUMIDO_RULES, ...LUCRO_REAL_RULES, ...PAYROLL_RULES, ...INSS_CEILING, ...ICMS_RULES, ...ISS_LIMITS]);
 
 /** A fraction as a pt-BR percentage ("7,1900"). Formatted with Intl. */
 const pct = (fraction: number, digits: number) => (fraction * 100).toLocaleString("pt-BR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 
 const round2 = (n: number) => fromCents(toCents(n));
 
-/** Annual IRPF in cents: base x rate - deduction, where the monthly table is multiplied by 12. Exact, rounded once. */
-function irTaxCents(baseCents: number, table: IrpfMonthlyTable): number {
+/** Annual IRPF in cents: base x rate - deduction, straight from the published annual table. Exact, rounded once. */
+function irTaxCents(baseCents: number, table: IrpfAnnualTable): number {
   if (baseCents <= 0) return 0;
-  const b = table.brackets.find((x) => x.upTo === Infinity || baseCents <= toCents(x.upTo * 12))!;
-  return Math.max(0, mulRate(baseCents, b.rate, roundingFor("IRPF")) - toCents(b.deduction * 12));
+  const b = table.brackets.find((x) => x.upTo === Infinity || baseCents <= toCents(x.upTo))!;
+  return Math.max(0, mulRate(baseCents, b.rate, roundingFor("IRPF")) - toCents(b.deduction));
 }
 
 /**
@@ -48,9 +48,13 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
 
   function diagnosePerson(p: PersonProfile): EngineResult<PersonDiagnosis> {
     if (p.annualGrossIncome === undefined) return { status: "insufficient_data", missing: ["annualGrossIncome"] };
-    const monthly = book.at<IrpfMonthlyTable>("irpf-tabela-mensal", competence);
+    // The competence year is the calendar year of the income: its own annual table and deductions.
+    const monthly = book.at<IrpfAnnualTable>("irpf-tabela-anual", competence);
     const annual = book.at<IrpfAnnualRules>("irpf-anual-deducoes", competence);
-    if (!monthly || !annual) return { status: "not_applicable", reason: `Não há tabela do IRPF em vigor para a competência ${competence}.` };
+    if (!monthly || !annual) {
+      const year = competence.slice(0, 4);
+      return { status: "not_applicable", reason: `A tabela anual do IRPF do ano-calendário ${year} ainda não foi conferida${Number(year) >= 2026 ? " (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)" : ""}.` };
+    }
 
     const gross = p.annualGrossIncome;
     const scenario = (model: IrScenario["model"], deductions: number): IrScenario => {
@@ -58,7 +62,7 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
       const tax = fromCents(irTaxCents(toCents(taxableBase), monthly.data));
       return { model, deductions: round2(deductions), taxableBase: round2(taxableBase), tax, balance: p.taxWithheld === undefined ? undefined : round2(p.taxWithheld - tax) };
     };
-    const dependentYear = monthly.data.dependentMonthly * 12;
+    const dependentYear = annual.data.dependentYear;
     const complete = scenario("completa", (p.inssPaid ?? 0) + (p.dependents ?? 0) * dependentYear + (p.healthExpenses ?? 0) + Math.min(p.educationExpenses ?? 0, annual.data.educationCap) + (p.privatePension ?? 0));
     const simplified = scenario("simplificada", Math.min(gross * annual.data.simplifiedRate, annual.data.simplifiedCap));
     const used: RuleVersion<unknown>[] = [monthly, annual];
@@ -71,7 +75,7 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
         best: complete.tax < simplified.tax ? "completa" : "simplificada",
         annualSavings: round2(Math.max(0, simplified.tax - complete.tax)),
         assumptions: [
-          `Tabela mensal do IRPF em vigor em ${competence} (a partir de ${monthly.validFrom}), anualizada.`,
+          `Tabela anual do IRPF do ano-calendário ${competence.slice(0, 4)} (publicada pela Receita Federal).`,
           p.taxWithheld === undefined ? "Sem o imposto retido na fonte, não é possível calcular restituição nem imposto a pagar." : "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
           ...(used.some((u) => u.requiresValidation) ? ["Algumas regras ainda aguardam validação de um profissional."] : []),
           `Regras versão ${version}.`,
