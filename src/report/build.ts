@@ -1,10 +1,16 @@
 import type { AlertStatus } from "@/alerts/evaluate";
 import { DOC_LABEL, type DocType } from "@/documents/classify";
 import { MISSING_LABEL } from "@/documents/storage";
-import { DISCLAIMER, type CompanyProfile, type EngineResult, type PersonProfile, type TaxEngine } from "@/engine";
+import { DISCLAIMER, type CalcStep, type CompanyProfile, type EngineResult, type PersonProfile, type TaxEngine } from "@/engine";
+
+/** The calculation memory as a report section, or none when the engine does not provide steps (the mock engine). */
+export function memoriaSection(steps: CalcStep[] | undefined): ReportSection[] {
+  if (!steps?.length) return [];
+  return [{ id: "memoria", title: "Memória de cálculo", table: { head: ["Passo", "Como foi calculado", "Valor", "Fonte"], rows: steps.map((s) => [s.label, s.formula, `R$ ${s.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, s.source]) } }];
+}
 
 export interface ReportSection {
-  id: "resumo" | "impostos" | "oportunidades" | "economia" | "premissas" | "validar" | "documentos" | "alertas";
+  id: "resumo" | "impostos" | "oportunidades" | "economia" | "premissas" | "memoria" | "validar" | "documentos" | "alertas";
   title: string;
   paragraphs?: string[];
   table?: { head: string[]; rows: string[][] };
@@ -151,7 +157,7 @@ function companyReport(i: ReportInput): Report {
     title: "Relatório tributário",
     subtitle: `${i.workspaceName} · gerado em ${date(i.generatedAt)}`,
     disclaimer: DISCLAIMER,
-    sections: [resumo, impostos, oportunidades, economia, premissas, validar, documentsSection(i.documents), alertas],
+    sections: [resumo, impostos, oportunidades, economia, premissas, ...memoriaSection(diag.status === "ok" ? diag.value.steps : undefined), validar, documentsSection(i.documents), alertas],
   };
 }
 
@@ -230,7 +236,7 @@ function personReport(i: ReportInput): Report {
     title: "Relatório de Imposto de Renda",
     subtitle: `${i.workspaceName} · gerado em ${date(i.generatedAt)}`,
     disclaimer: DISCLAIMER,
-    sections: [resumo, impostos, economia, premissas, validar, documentsSection(i.documents)],
+    sections: [resumo, impostos, economia, premissas, ...memoriaSection(d.status === "ok" ? d.value.steps : undefined), validar, documentsSection(i.documents)],
   };
 }
 

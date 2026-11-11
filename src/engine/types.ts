@@ -76,6 +76,20 @@ export interface Diagnosis {
   rulesVersion: string;
   /** The rule versions behind this result (competence-specific), when the engine reports them. */
   rulesUsed?: RuleRef[];
+  /** The calculation memory: each amount traced to a rule with its source. */
+  steps?: CalcStep[];
+}
+
+/** One line of the calculation memory: what was computed, how, and which rule (with its source) says so. */
+export interface CalcStep {
+  /** The tax line this step feeds, when it does. */
+  tax?: TaxCode;
+  label: string;
+  /** The arithmetic in words and numbers, e.g. "R$ 100.000,00 x 8% = R$ 8.000,00". */
+  formula: string;
+  amount: number;
+  ruleId: string;
+  source: string;
 }
 
 export interface Simulation {
@@ -162,4 +176,6 @@ export interface PersonDiagnosis {
   disclaimer: string;
   rulesVersion: string;
   rulesUsed?: RuleRef[];
+  /** The calculation memory: each amount traced to a rule with its source. */
+  steps?: CalcStep[];
 }
