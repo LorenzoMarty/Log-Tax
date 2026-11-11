@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { mockEngine } from "../mock-engine";
 import { createRealEngine } from "../real-engine";
 import { competenceOf, RuleBook, type RuleVersion } from "../rulebook";
 import { seedPerson } from "../seed";
@@ -11,59 +10,62 @@ const diag = (competence: string, p: PersonProfile = seedPerson): PersonDiagnosi
   return (r as { value: PersonDiagnosis }).value;
 };
 
-describe("real engine: rules chosen by competence", () => {
-  it("the same input uses different tables in different competences", () => {
-    const before = diag("2025-03");
-    const after = diag("2025-05");
-    expect(before.rulesUsed!.find((r) => r.id === "irpf-tabela-mensal")!.validFrom).toBe("2024-02");
-    expect(after.rulesUsed!.find((r) => r.id === "irpf-tabela-mensal")!.validFrom).toBe("2025-05");
-    // the 2025 table taxes less: higher exempt band and smaller deductions net out in the taxpayer's favour
-    expect(after.complete.tax).not.toBe(before.complete.tax);
-    expect(after.complete.tax).toBeLessThan(before.complete.tax);
-    expect(before.rulesVersion).toBe("real-2025-03");
+describe("real engine: IRPF by calendar year (competence)", () => {
+  it("the same input uses a different annual table in a different year", () => {
+    const y2024 = diag("2024-12");
+    const y2025 = diag("2025-12");
+    expect(y2024.rulesUsed!.find((r) => r.id === "irpf-tabela-anual")!.validFrom).toBe("2024-01");
+    expect(y2025.rulesUsed!.find((r) => r.id === "irpf-tabela-anual")!.validFrom).toBe("2025-01");
+    expect(y2025.complete.tax).toBeLessThan(y2024.complete.tax); // the 2025 table taxes less
+    expect(y2024.rulesVersion).toBe("real-2024-12");
   });
 
-  it("the boundary months pick the right version (2025-04 old, 2025-05 new)", () => {
-    expect(diag("2025-04").rulesUsed![0].validFrom).toBe("2024-02");
-    expect(diag("2025-05").rulesUsed![0].validFrom).toBe("2025-05");
+  it("hand calculation with each year's published table (27,5% band, simplified discount)", () => {
+    // income 200.000 - simplified 16.754,34 = base 183.245,66; 27,5% = 50.392,56
+    const p = { ...seedPerson, annualGrossIncome: 200_000 };
+    expect(diag("2025-06", p).simplified.taxableBase).toBeCloseTo(183_245.66, 2);
+    expect(diag("2025-06", p).simplified.tax).toBeCloseTo(50_392.56 - 10_853.78, 2); // 39.538,78
+    expect(diag("2024-06", p).simplified.tax).toBeCloseTo(50_392.56 - 10_740.98, 2); // 39.651,58
   });
 
-  it("in the competence the prototype was calibrated on, it gives the prototype's numbers", () => {
-    const real = diag("2024-06");
-    const mock = (mockEngine.diagnosePerson(seedPerson) as { value: PersonDiagnosis }).value;
-    expect(real.complete.tax).toBeCloseTo(mock.complete.tax, 2);
-    expect(real.simplified.tax).toBeCloseTo(mock.simplified.tax, 2);
-    expect(real.best).toBe(mock.best);
+  it("the exempt band is each year's published limit", () => {
+    const low = (competence: string, income: number) => diag(competence, { ...seedPerson, annualGrossIncome: income, inssPaid: 0, dependents: 0, healthExpenses: 0, educationExpenses: 0, privatePension: 0 }).complete.tax;
+    expect(low("2025-06", 28_467.2)).toBe(0);
+    expect(low("2025-06", 28_500)).toBe(2.46); // 7,5% x 28.500 - 2.135,04
+    expect(low("2024-06", 26_963.2)).toBe(0);
+    expect(low("2024-06", 28_467.2)).toBeGreaterThan(0); // exempt in 2025, taxed in 2024
   });
 
-  it("matches a hand calculation with the 2025-05 table", () => {
-    // simplified: base 200000 - 16754.34 = 183245.66; 27.5% - 908.73*12 (10904.76)
-    const d = diag("2025-05", { ...seedPerson, annualGrossIncome: 200000 });
-    expect(d.simplified.taxableBase).toBeCloseTo(183245.66, 2);
-    expect(d.simplified.tax).toBeCloseTo(183245.66 * 0.275 - 10904.76, 1);
+  it("the published tables reconcile with the monthly ones they are made of", () => {
+    // 2025 = four months of the Feb/2024 monthly table + eight of the May/2025 one
+    expect(2259.2 * 4 + 2428.8 * 8).toBeCloseTo(28_467.2, 2);
+    expect(169.44 * 4 + 182.16 * 8).toBeCloseTo(2_135.04, 2);
+    expect(2112 + 2259.2 * 11).toBeCloseTo(26_963.2, 2); // 2024: January on the old table
   });
 
   it("every result says which rules it used, with source and validation state", () => {
-    const refs = diag("2025-05").rulesUsed!;
-    expect(refs.map((r) => r.id).sort()).toEqual(["irpf-anual-deducoes", "irpf-tabela-mensal"]);
+    const refs = diag("2025-06").rulesUsed!;
+    expect(refs.map((r) => r.id).sort()).toEqual(["irpf-anual-deducoes", "irpf-tabela-anual"]);
     for (const r of refs) {
       expect(r.source.length).toBeGreaterThan(10);
-      expect(typeof r.requiresValidation).toBe("boolean");
+      expect(r.requiresValidation).toBe(true);
     }
-    expect(refs.find((r) => r.id === "irpf-tabela-mensal")!.source).toContain("gov.br/receitafederal");
+    expect(refs.find((r) => r.id === "irpf-tabela-anual")!.source).toContain("gov.br/receitafederal");
   });
 
-  it("refuses to calculate when no table is in force for the competence", () => {
-    const r = createRealEngine({ competence: "2019-01" }).diagnosePerson(seedPerson);
-    expect(r).toMatchObject({ status: "not_applicable" });
-    expect((r as { reason: string }).reason).toContain("2019-01");
+  it("refuses to calculate years without a conferred table, 2026 included, and says why", () => {
+    const r2019 = createRealEngine({ competence: "2019-01" }).diagnosePerson(seedPerson);
+    expect(r2019).toMatchObject({ status: "not_applicable" });
+    const r2026 = createRealEngine({ competence: "2026-03" }).diagnosePerson(seedPerson);
+    expect(r2026.status).toBe("not_applicable");
+    expect((r2026 as { reason: string }).reason).toMatch(/ano-calendário 2026.*isenção até R\$ 5 mil/);
   });
 
-  it("keeps the TaxEngine contract: missing data is explicit and companies are not claimed", () => {
+  it("keeps the TaxEngine contract: missing data is explicit and no regime is silently claimed", () => {
     const engine = createRealEngine({ competence: "2025-05" });
     expect(engine.diagnosePerson({ ...seedPerson, annualGrossIncome: undefined })).toEqual({ status: "insufficient_data", missing: ["annualGrossIncome"] });
-    expect(engine.opportunities({ id: "c", name: "x", regime: "real", activity: "comercio" }).status).toBe("none_found"); // nothing to compare without data
-    expect(engine.rules().filter((r) => r.id === "irpf-tabela-mensal")).toHaveLength(2);
+    expect(engine.opportunities({ id: "c", name: "x", regime: "real", activity: "comercio" }).status).toBe("none_found");
+    expect(engine.rules().filter((r) => r.id === "irpf-tabela-anual")).toHaveLength(2);
   });
 });
 
