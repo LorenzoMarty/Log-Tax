@@ -79,18 +79,18 @@ const TOOLS: Tool[] = [
   defineTool({
     name: "explain_result",
     readOnly: true,
-    description: "Explica de onde veio um resultado: regras usadas, fontes, premissas e se precisa de validação.",
+    description: "Explica de onde veio um resultado: o passo a passo do cálculo (steps, cada um com a regra e a fonte), regras usadas, premissas e se precisa de validação. Ao citar lei ou fonte, use somente as que vierem aqui.",
     schema: z.strictObject({ subject: z.enum(["diagnosis", "opportunity", "ir"]), opportunityId: z.string().optional() }),
     engine: true,
     run(ctx, a) {
       const rules = ctx.engine.rules();
       if (a.subject === "ir") {
         const d = ctx.engine.diagnosePerson(ctx.store.getPerson());
-        return { rules: rules.filter((r) => r.category === "person"), assumptions: d.status === "ok" ? d.value.assumptions : [] };
+        return { rules: rules.filter((r) => r.category === "person"), assumptions: d.status === "ok" ? d.value.assumptions : [], steps: d.status === "ok" ? d.value.steps ?? [] : [] };
       }
       if (a.subject === "diagnosis") {
         const d = ctx.engine.diagnose(ctx.store.getCompany());
-        return { rules: rules.filter((r) => r.category === "tax"), assumptions: d.status === "ok" ? d.value.assumptions : [] };
+        return { rules: rules.filter((r) => r.category === "tax"), assumptions: d.status === "ok" ? d.value.assumptions : [], steps: d.status === "ok" ? d.value.steps ?? [] : [] };
       }
       const rule = need(rules.find((r) => r.id === a.opportunityId && r.category === "opportunity"), "Oportunidade não encontrada.");
       return { rule };

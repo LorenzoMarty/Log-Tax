@@ -17,13 +17,18 @@ import { checkMeiLimit, meiDas } from "./mei";
 import { annexByFatorR, fatorR, rbt12Of, simplesDas } from "./simples";
 import { fromCents, mulRate, roundingFor, toCents } from "./money";
 import { competenceOf, refOf, RuleBook, type RuleVersion } from "./rulebook";
-import type { CompanyProfile, Diagnosis, EngineResult, IrScenario, PersonDiagnosis, PersonProfile, TaxCode, TaxEngine, TaxLine } from "./types";
+import type { CalcStep, CompanyProfile, Diagnosis, EngineResult, IrScenario, PersonDiagnosis, PersonProfile, TaxCode, TaxEngine, TaxLine } from "./types";
 
 /** Every rule the real engine knows. New tables are added to the data files, not to the calculations. */
 export const DEFAULT_RULEBOOK = new RuleBook([...IRPF_MONTHLY, ...IRPF_ANNUAL_TABLE, ...IRPF_ANNUAL, ...SIMPLES_RULES, ...MEI_RULES, ...PRESUMIDO_RULES, ...LUCRO_REAL_RULES, ...PAYROLL_RULES, ...INSS_CEILING, ...ICMS_RULES, ...ISS_LIMITS]);
 
 /** A fraction as a pt-BR percentage ("7,1900"). Formatted with Intl. */
 const pct = (fraction: number, digits: number) => (fraction * 100).toLocaleString("pt-BR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+
+const brl = (cents: number) => `R$ ${fromCents(cents).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+/** Builds calculation steps bound to one rule (its id and source travel with every step). */
+const stepper = (rule: RuleVersion<unknown>) => (tax: TaxCode | undefined, label: string, formula: string, cents: number): CalcStep => ({ tax, label, formula, amount: fromCents(cents), ruleId: rule.id, source: rule.source });
 
 const round2 = (n: number) => fromCents(toCents(n));
 
@@ -83,6 +88,19 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
         disclaimer: DISCLAIMER,
         rulesVersion: version,
         rulesUsed: used.map(refOf),
+        steps: (() => {
+          const s = stepper(monthly);
+          const step = (sc: IrScenario) => {
+            const base = toCents(sc.taxableBase);
+            const b = monthly.data.brackets.find((x) => x.upTo === Infinity || base <= toCents(x.upTo))!;
+            return [
+              s(undefined, `Deduções (${sc.model})`, `deduções do modelo ${sc.model} = ${brl(toCents(sc.deductions))}`, toCents(sc.deductions)),
+              s(undefined, `Base de cálculo (${sc.model})`, `renda ${brl(toCents(gross))} − deduções ${brl(toCents(sc.deductions))} = ${brl(base)}`, base),
+              s(undefined, `Imposto (${sc.model})`, `base ${brl(base)} × ${pct(b.rate, 1)}% − dedução da tabela ${brl(toCents(b.deduction))} = ${brl(toCents(sc.tax))}`, toCents(sc.tax)),
+            ];
+          };
+          return [...step(simplified), ...step(complete)];
+        })(),
       },
     };
   }
@@ -138,6 +156,16 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
         disclaimer: DISCLAIMER,
         rulesVersion: version,
         rulesUsed: [refOf(rule)],
+        steps: (() => {
+          const s = stepper(rule);
+          const band = rule.data.annexes[calc.annex][calc.band - 1];
+          return [
+            s(undefined, "Receita dos últimos 12 meses (RBT12)", `soma da receita dos 12 meses anteriores a ${competence} = ${brl(toCents(rbt.value))}`, toCents(rbt.value)),
+            s(undefined, "Alíquota efetiva", `(RBT12 ${brl(toCents(rbt.value))} × alíquota nominal ${pct(calc.nominalRate, 2)}% − parcela a deduzir ${brl(toCents(band.deduction))}) ÷ RBT12 = ${pct(calc.effectiveRate, 4)}% (Anexo ${calc.annex}, ${calc.band}ª faixa)`, 0),
+            s(undefined, "DAS do mês", `receita do mês ${brl(toCents(revenue))} × ${pct(calc.effectiveRate, 4)}% = ${brl(calc.dasCents)}`, calc.dasCents),
+            ...[...byCode.entries()].map(([tax, cents]) => s(tax, `${tax} dentro do DAS`, `${brl(calc.dasCents)} do DAS × partilha do Anexo ${calc.annex}, ${calc.band}ª faixa = ${brl(cents)}`, cents)),
+          ];
+        })(),
       },
     };
   }
@@ -174,6 +202,15 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
         disclaimer: DISCLAIMER,
         rulesVersion: version,
         rulesUsed: [refOf(rule)],
+        steps: (() => {
+          const s = stepper(rule);
+          const wage = toCents(rule.data.minimumWage);
+          return [
+            s("CPP", "INSS do MEI", `${pct(p.meiActivity === "transporte_cargas" ? rule.data.inssRateCargo : rule.data.inssRate, 0)}% × salário mínimo ${brl(wage)} = ${brl(das.inssCents)}`, das.inssCents),
+            ...(das.icmsCents ? [s("ICMS" as TaxCode, "ICMS fixo", `valor fixo mensal = ${brl(das.icmsCents)}`, das.icmsCents)] : []),
+            ...(das.issCents ? [s("ISS" as TaxCode, "ISS fixo", `valor fixo mensal = ${brl(das.issCents)}`, das.issCents)] : []),
+          ];
+        })(),
       },
     };
   }
@@ -229,6 +266,14 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
         disclaimer: DISCLAIMER,
         rulesVersion: version,
         rulesUsed: [refOf(rule)],
+        steps: (() => {
+          const s = stepper(rule);
+          return [
+            s("IRPJ", "IRPJ do trimestre", `base presumida ${brl(q.irpjBaseCents)} × ${pct(rule.data.irpjRate, 0)}%${q.irpjAdditionalCents > 0 ? ` + adicional de ${pct(rule.data.additionalRate, 0)}% sobre o que passa de R$ 60.000,00 = ${brl(q.irpjAdditionalCents)}` : ""} = ${brl(q.irpjCents)}; um terço no mês`, lines[0].cents),
+            s("CSLL", "CSLL do trimestre", `base presumida ${brl(q.csllBaseCents)} × ${pct(rule.data.csllRate, 0)}% = ${brl(q.csllCents)}; um terço no mês`, lines[1].cents),
+            s("PIS/COFINS", "PIS e COFINS do trimestre", `receita ${brl(q.revenueCents)} × (${pct(rule.data.pisRate, 2)}% + ${pct(rule.data.cofinsRate, 0)}%) = ${brl(q.pisCents + q.cofinsCents)}; um terço no mês`, lines[2].cents),
+          ];
+        })(),
       },
     };
   }
@@ -287,6 +332,15 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
         disclaimer: DISCLAIMER,
         rulesVersion: version,
         rulesUsed: [refOf(rule)],
+        steps: (() => {
+          const s = stepper(rule);
+          return [
+            s(undefined, "Lucro estimado do trimestre", `receita ${brl(toCents(quarterRevenue))} × margem informada ${pct(p.profitMargin ?? 0, 2)}% = ${brl(q.profitCents)}${q.offsetCents > 0 ? `; compensação de prejuízo ${brl(q.offsetCents)} (no máximo ${pct(rule.data.lossOffsetLimit, 0)}% do lucro)` : ""}`, q.profitCents),
+            s("IRPJ", "IRPJ do trimestre", `base ${brl(q.baseCents)} × ${pct(rule.data.irpjRate, 0)}%${q.irpjAdditionalCents > 0 ? ` + adicional de ${pct(rule.data.additionalRate, 0)}% = ${brl(q.irpjAdditionalCents)}` : ""} = ${brl(q.irpjCents)}; um terço no mês`, lines[0].cents),
+            s("CSLL", "CSLL do trimestre", `base ${brl(q.baseCents)} × ${pct(rule.data.csllRate, 0)}% = ${brl(q.csllCents)}; um terço no mês`, lines[1].cents),
+            s("PIS/COFINS", "PIS e COFINS do mês", `(receita ${brl(revCents)} − compras com crédito ${brl(toCents(monthPurchases))}) × (${pct(rule.data.pisRate, 2)}% + ${pct(rule.data.cofinsRate, 1)}%) = ${brl(lines[2].cents)}`, lines[2].cents),
+          ];
+        })(),
       },
     };
   }
@@ -320,6 +374,10 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
           "A desoneração da folha de setores específicos não foi considerada.",
         ],
         rulesUsed: [...(d.rulesUsed ?? []), refOf(rule), ...(ceiling && retention !== undefined ? [refOf(ceiling)] : [])],
+        steps: [
+          ...(d.steps ?? []),
+          stepper(rule)("FOLHA", "Encargos sobre a folha", `INSS patronal ${brl(c.inssPatronalCents)} + RAT ${brl(c.ratCents)} + terceiros ${brl(c.terceirosCents)} + FGTS ${brl(c.fgtsCents)} (folha ${brl(toCents(entry.payroll ?? 0))}, pró-labore ${brl(toCents(entry.proLabore ?? 0))}) = ${brl(c.totalCents)}`, c.totalCents),
+        ],
       },
     };
   }
@@ -353,6 +411,10 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
           "Supõe vendas internas tributadas pela alíquota geral e compras no mesmo estado com crédito integral: produtos com alíquota ou base reduzida própria, vendas interestaduais e DIFAL não entram.",
         ],
         rulesUsed: [...(d.rulesUsed ?? []), refOf(rule as never as RuleVersion<unknown>)],
+        steps: [
+          ...(d.steps ?? []),
+          stepper(rule as never as RuleVersion<unknown>)("ICMS", `ICMS (${r.value.uf})`, `débito ${brl(r.value.debitCents)} (vendas ${brl(toCents(sales))} × ${pct(r.value.rate, 2)}%) − crédito ${brl(r.value.creditCents)} (compras ${brl(toCents(purchases))} × ${pct(r.value.rate, 2)}%) = ${brl(r.value.dueCents)}`, r.value.dueCents),
+        ],
       },
     };
   }
@@ -380,6 +442,10 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
         breakdown: [...d.breakdown, { tax: "ISS", label: "ISS", amount: fromCents(r.value.dueCents) }],
         assumptions: [...d.assumptions, `ISS de ${pct(r.value.rate, 2)}% sobre R$ ${fromCents(r.value.baseCents).toLocaleString("pt-BR")} de serviços (alíquota informada, dentro do limite legal de 2% a 5%).`, "ISS retido pelo tomador, deduções da base e regimes especiais do município não foram considerados."],
         rulesUsed: [...(d.rulesUsed ?? []), refOf(limits as never as RuleVersion<unknown>)],
+        steps: [
+          ...(d.steps ?? []),
+          stepper(limits as never as RuleVersion<unknown>)("ISS", "ISS", `serviços ${brl(r.value.baseCents)} × alíquota informada ${pct(r.value.rate, 2)}% (limites legais 2% a 5%) = ${brl(r.value.dueCents)}`, r.value.dueCents),
+        ],
       },
     };
   }
