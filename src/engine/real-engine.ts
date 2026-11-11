@@ -3,6 +3,7 @@ import { SIMPLES_RULES, type SimplesRules } from "./data/simples";
 import { DISCLAIMER } from "./mock-engine";
 import { ISS_LIMITS } from "./data/iss";
 import { issMonth } from "./iss";
+import { compareRegimes, regimeOpportunity } from "./compare";
 import { ICMS_RULES } from "./data/icms";
 import { icmsMonth } from "./icms";
 import { INSS_CEILING, PAYROLL_RULES, type InssCeilingRules, type PayrollRules } from "./data/payroll";
@@ -217,7 +218,7 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
           `Lucro Presumido, apuração trimestral (${quarterMonths[0]} a ${quarterMonths[2]}); o mês mostra um terço do trimestre.`,
           `Base presumida do IRPJ de R$ ${fromCents(q.irpjBaseCents).toLocaleString("pt-BR")}${q.irpjAdditionalCents > 0 ? `, com adicional de 10% (R$ ${fromCents(q.irpjAdditionalCents).toLocaleString("pt-BR")}) sobre o que passa de R$ 60.000 no trimestre` : ""}.`,
           entries.length ? "Receita do trimestre lida da série mensal." : "Sem série mensal: o trimestre foi estimado como 3 vezes o faturamento mensal informado.",
-          "Só tributos federais sobre a receita (IRPJ, CSLL, PIS e COFINS cumulativos). ICMS, ISS e encargos da folha ainda não estão incluídos. Receitas de exportação e atividades com presunção especial não foram tratadas à parte.",
+          "IRPJ, CSLL, PIS e COFINS cumulativos. ICMS, ISS e encargos da folha aparecem em linhas próprias quando há dados para eles. Exportação (isenção de PIS/COFINS) e atividades com presunção especial não foram tratadas à parte.",
           "Tabelas ainda aguardam validação de um profissional.",
           `Regras versão ${version}.`,
         ],
@@ -275,7 +276,7 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
             ? `O trimestre tem prejuízo estimado de R$ ${fromCents(-q.profitCents).toLocaleString("pt-BR")}: sem IRPJ e CSLL, e o prejuízo vira saldo a compensar (R$ ${fromCents(q.lossBalanceCents).toLocaleString("pt-BR")}).`
             : `Lucro estimado do trimestre: R$ ${fromCents(q.profitCents).toLocaleString("pt-BR")} (receita × margem informada)${q.offsetCents > 0 ? `; compensação de prejuízo de R$ ${fromCents(q.offsetCents).toLocaleString("pt-BR")}, limitada a 30% do lucro` : ""}.`,
           monthPurchases > 0 ? `Créditos de PIS/COFINS de R$ ${fromCents(pc.creditCents).toLocaleString("pt-BR")} supondo que todas as compras (R$ ${monthPurchases.toLocaleString("pt-BR")}) dão direito a crédito: confira com as notas.` : "Sem compras informadas no mês: nenhum crédito de PIS/COFINS foi considerado.",
-          "A margem informada foi tratada como lucro antes do IRPJ e da CSLL; o lucro real depende da escrituração, com adições e exclusões. ICMS, ISS e encargos da folha ainda não estão incluídos.",
+          "A margem informada foi tratada como lucro antes do IRPJ e da CSLL; o lucro real depende da escrituração, com adições e exclusões. ICMS, ISS e encargos da folha aparecem em linhas próprias quando há dados para eles.",
           "Tabelas ainda aguardam validação de um profissional.",
           `Regras versão ${version}.`,
         ],
@@ -384,7 +385,7 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
   const diagnoseRegime = (p: CompanyProfile): EngineResult<Diagnosis> =>
     p.regime === "simples" ? diagnoseSimples(p) : p.regime === "mei" ? diagnoseMei(p) : p.regime === "presumido" ? diagnosePresumido(p) : p.regime === "real" ? diagnoseReal(p) : notCovered("esse regime");
 
-  return {
+  const engine: TaxEngine = {
     version,
     rules: () => book.asTaxRules("person"),
     diagnose: diagnoseCompany,
@@ -394,7 +395,11 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
       const scenario = diagnoseCompany({ ...p, ...overrides });
       return scenario.status === "ok" ? { status: "ok", value: { current: current.value, scenario: scenario.value } } : scenario;
     },
-    opportunities: () => notCovered("a busca de oportunidades de empresas"),
+    opportunities(p) {
+      const found = regimeOpportunity(compareRegimes(engine, p), p.regime);
+      return found ? { status: "ok", value: found } : { status: "none_found" };
+    },
     diagnosePerson,
   };
+  return engine;
 }

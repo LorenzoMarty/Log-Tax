@@ -65,7 +65,7 @@ describe("real engine: Lucro Presumido", () => {
     expect(d.annualTotal).toBe(71_160);
     expect(d.breakdown.map((l) => [l.tax, l.amount])).toEqual([["IRPJ", 1_200], ["CSLL", 1_080], ["PIS/COFINS", 3_650]]);
     expect(d.assumptions.join(" ")).toMatch(/apuração trimestral \(2026-01 a 2026-03\)/);
-    expect(d.assumptions.join(" ")).toMatch(/ICMS, ISS e encargos da folha ainda não/);
+    expect(d.assumptions.join(" ")).toMatch(/linhas próprias quando há dados/);
     expect(d.rulesUsed![0].id).toBe("lucro-presumido-federal");
   });
 
