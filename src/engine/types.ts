@@ -24,6 +24,8 @@ export interface CompanyProfile {
   openedAt?: string;
   /** MEI activity (decides ICMS/ISS in the DAS); defaults from `activity`. */
   meiActivity?: "comercio" | "servico" | "comercio_servico" | "transporte_cargas";
+  /** Sells goods under ICMS substituição tributária: ICMS is not estimated. */
+  substituicaoTributaria?: boolean;
   /** Employer charges inputs: RAT grade (1-3), FAP multiplier (0,5 to 2,0) and the "terceiros" rate as a fraction. */
   ratGrade?: 1 | 2 | 3;
   fap?: number;

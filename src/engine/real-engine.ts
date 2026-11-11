@@ -1,6 +1,8 @@
 import { IRPF_ANNUAL, IRPF_MONTHLY, type IrpfAnnualRules, type IrpfMonthlyTable } from "./data/irpf";
 import { SIMPLES_RULES, type SimplesRules } from "./data/simples";
 import { DISCLAIMER } from "./mock-engine";
+import { ICMS_RULES } from "./data/icms";
+import { icmsMonth } from "./icms";
 import { INSS_CEILING, PAYROLL_RULES, type InssCeilingRules, type PayrollRules } from "./data/payroll";
 import { payrollCharges, proLaboreRetention } from "./payroll";
 import { LUCRO_REAL_RULES, type LucroRealRules } from "./data/lucro-real";
@@ -15,7 +17,7 @@ import { competenceOf, refOf, RuleBook, type RuleVersion } from "./rulebook";
 import type { CompanyProfile, Diagnosis, EngineResult, IrScenario, PersonDiagnosis, PersonProfile, TaxCode, TaxEngine, TaxLine } from "./types";
 
 /** Every rule the real engine knows. New tables are added to the data files, not to the calculations. */
-export const DEFAULT_RULEBOOK = new RuleBook([...IRPF_MONTHLY, ...IRPF_ANNUAL, ...SIMPLES_RULES, ...MEI_RULES, ...PRESUMIDO_RULES, ...LUCRO_REAL_RULES, ...PAYROLL_RULES, ...INSS_CEILING]);
+export const DEFAULT_RULEBOOK = new RuleBook([...IRPF_MONTHLY, ...IRPF_ANNUAL, ...SIMPLES_RULES, ...MEI_RULES, ...PRESUMIDO_RULES, ...LUCRO_REAL_RULES, ...PAYROLL_RULES, ...INSS_CEILING, ...ICMS_RULES]);
 
 /** A fraction as a pt-BR percentage ("7,1900"). Formatted with Intl. */
 const pct = (fraction: number, digits: number) => (fraction * 100).toLocaleString("pt-BR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -315,7 +317,39 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
     };
   }
 
-  const diagnoseCompany = (p: CompanyProfile): EngineResult<Diagnosis> => withPayroll(p, diagnoseRegime(p));
+  /** ICMS line for goods sellers outside the Simples: debit on sales less credit on purchases, only for UFs with a verified rate. */
+  function withIcms(p: CompanyProfile, result: EngineResult<Diagnosis>): EngineResult<Diagnosis> {
+    if (result.status !== "ok" || (p.regime !== "presumido" && p.regime !== "real")) return result;
+    const d = result.value;
+    const note = (text: string): EngineResult<Diagnosis> => ({ status: "ok", value: { ...d, assumptions: [...d.assumptions, text] } });
+    if (p.activity === "servico") return note("Serviços não pagam ICMS: o ISS entra no cálculo quando houver (#89).");
+    const entry = p.series?.find((e) => e.month === competence);
+    const sales = entry ? Object.values(entry.revenue ?? {}).reduce<number>((a, b) => a + (b ?? 0), 0) : (p.monthlyRevenue ?? d.monthlyRevenue);
+    const purchases = entry?.purchases ?? p.monthlyPurchases ?? 0;
+    const r = icmsMonth(book, competence, { uf: p.uf, sales, purchases, substitutionTax: p.substituicaoTributaria });
+    if (r.status === "insufficient_data") return note("UF não informada: o ICMS não foi incluído no cálculo.");
+    if (r.status !== "ok") return note(r.status === "not_applicable" ? `ICMS não incluído: ${r.reason}` : "ICMS não incluído.");
+    const rule = book.at<{ internal: number }>(`icms-interno-${r.value.uf}`, competence)!;
+    const total = toCents(d.monthlyTotal) + r.value.dueCents;
+    return {
+      status: "ok",
+      value: {
+        ...d,
+        monthlyTotal: fromCents(total),
+        annualTotal: fromCents(total * 12),
+        effectiveRate: d.monthlyRevenue > 0 ? total / toCents(d.monthlyRevenue) : 0,
+        breakdown: [{ tax: "ICMS", label: `ICMS (${r.value.uf})`, amount: fromCents(r.value.dueCents) }, ...d.breakdown],
+        assumptions: [
+          ...d.assumptions,
+          `ICMS de ${r.value.uf}: alíquota interna geral de ${pct(r.value.rate, 2)}%; débito de R$ ${fromCents(r.value.debitCents).toLocaleString("pt-BR")} menos crédito de R$ ${fromCents(r.value.creditCents).toLocaleString("pt-BR")} sobre as compras${r.value.carriedCreditCents > 0 ? ` (sobra de crédito de R$ ${fromCents(r.value.carriedCreditCents).toLocaleString("pt-BR")} para o mês seguinte)` : ""}.`,
+          "Supõe vendas internas tributadas pela alíquota geral e compras no mesmo estado com crédito integral: produtos com alíquota ou base reduzida própria, vendas interestaduais e DIFAL não entram.",
+        ],
+        rulesUsed: [...(d.rulesUsed ?? []), refOf(rule as never as RuleVersion<unknown>)],
+      },
+    };
+  }
+
+  const diagnoseCompany = (p: CompanyProfile): EngineResult<Diagnosis> => withPayroll(p, withIcms(p, diagnoseRegime(p)));
 
   const diagnoseRegime = (p: CompanyProfile): EngineResult<Diagnosis> =>
     p.regime === "simples" ? diagnoseSimples(p) : p.regime === "mei" ? diagnoseMei(p) : p.regime === "presumido" ? diagnosePresumido(p) : p.regime === "real" ? diagnoseReal(p) : notCovered("esse regime");
