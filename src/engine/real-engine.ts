@@ -1,6 +1,8 @@
 import { IRPF_ANNUAL, IRPF_MONTHLY, type IrpfAnnualRules, type IrpfMonthlyTable } from "./data/irpf";
 import { SIMPLES_RULES, type SimplesRules } from "./data/simples";
 import { DISCLAIMER } from "./mock-engine";
+import { ISS_LIMITS } from "./data/iss";
+import { issMonth } from "./iss";
 import { ICMS_RULES } from "./data/icms";
 import { icmsMonth } from "./icms";
 import { INSS_CEILING, PAYROLL_RULES, type InssCeilingRules, type PayrollRules } from "./data/payroll";
@@ -17,7 +19,7 @@ import { competenceOf, refOf, RuleBook, type RuleVersion } from "./rulebook";
 import type { CompanyProfile, Diagnosis, EngineResult, IrScenario, PersonDiagnosis, PersonProfile, TaxCode, TaxEngine, TaxLine } from "./types";
 
 /** Every rule the real engine knows. New tables are added to the data files, not to the calculations. */
-export const DEFAULT_RULEBOOK = new RuleBook([...IRPF_MONTHLY, ...IRPF_ANNUAL, ...SIMPLES_RULES, ...MEI_RULES, ...PRESUMIDO_RULES, ...LUCRO_REAL_RULES, ...PAYROLL_RULES, ...INSS_CEILING, ...ICMS_RULES]);
+export const DEFAULT_RULEBOOK = new RuleBook([...IRPF_MONTHLY, ...IRPF_ANNUAL, ...SIMPLES_RULES, ...MEI_RULES, ...PRESUMIDO_RULES, ...LUCRO_REAL_RULES, ...PAYROLL_RULES, ...INSS_CEILING, ...ICMS_RULES, ...ISS_LIMITS]);
 
 /** A fraction as a pt-BR percentage ("7,1900"). Formatted with Intl. */
 const pct = (fraction: number, digits: number) => (fraction * 100).toLocaleString("pt-BR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -322,9 +324,10 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
     if (result.status !== "ok" || (p.regime !== "presumido" && p.regime !== "real")) return result;
     const d = result.value;
     const note = (text: string): EngineResult<Diagnosis> => ({ status: "ok", value: { ...d, assumptions: [...d.assumptions, text] } });
-    if (p.activity === "servico") return note("Serviços não pagam ICMS: o ISS entra no cálculo quando houver (#89).");
     const entry = p.series?.find((e) => e.month === competence);
-    const sales = entry ? Object.values(entry.revenue ?? {}).reduce<number>((a, b) => a + (b ?? 0), 0) : (p.monthlyRevenue ?? d.monthlyRevenue);
+    // Only goods revenue carries ICMS; service revenue carries ISS.
+    const sales = entry ? (entry.revenue?.comercio ?? 0) + (entry.revenue?.industria ?? 0) + (entry.revenue?.exportacao ?? 0) : p.activity === "servico" ? 0 : (p.monthlyRevenue ?? d.monthlyRevenue);
+    if (sales <= 0) return note("Receita de serviços não paga ICMS: o ISS é calculado à parte.");
     const purchases = entry?.purchases ?? p.monthlyPurchases ?? 0;
     const r = icmsMonth(book, competence, { uf: p.uf, sales, purchases, substitutionTax: p.substituicaoTributaria });
     if (r.status === "insufficient_data") return note("UF não informada: o ICMS não foi incluído no cálculo.");
@@ -349,7 +352,34 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
     };
   }
 
-  const diagnoseCompany = (p: CompanyProfile): EngineResult<Diagnosis> => withPayroll(p, withIcms(p, diagnoseRegime(p)));
+  /** ISS line for service revenue outside the Simples (inside the DAS there). Needs the municipal rate from the company. */
+  function withIss(p: CompanyProfile, result: EngineResult<Diagnosis>): EngineResult<Diagnosis> {
+    if (result.status !== "ok" || (p.regime !== "presumido" && p.regime !== "real")) return result;
+    const d = result.value;
+    const entry = p.series?.find((e) => e.month === competence);
+    const serviceRevenue = entry ? (entry.revenue?.servico ?? 0) : p.activity === "servico" ? (p.monthlyRevenue ?? d.monthlyRevenue) : 0;
+    if (serviceRevenue <= 0) return result;
+    const note = (text: string): EngineResult<Diagnosis> => ({ status: "ok", value: { ...d, assumptions: [...d.assumptions, text] } });
+    const r = issMonth(book, competence, { serviceRevenue, rate: p.issRate });
+    if (r.status === "insufficient_data") return note(`ISS não incluído: informe a alíquota de ISS do seu município${p.municipio ? ` (${p.municipio.name})` : ""}, que está na sua nota fiscal ou na prefeitura.`);
+    if (r.status !== "ok") return note(`ISS não incluído: ${r.status === "not_applicable" ? r.reason : "dados insuficientes"}`);
+    const limits = book.at<{ min: number }>("iss-limites", competence)!;
+    const total = toCents(d.monthlyTotal) + r.value.dueCents;
+    return {
+      status: "ok",
+      value: {
+        ...d,
+        monthlyTotal: fromCents(total),
+        annualTotal: fromCents(total * 12),
+        effectiveRate: d.monthlyRevenue > 0 ? total / toCents(d.monthlyRevenue) : 0,
+        breakdown: [...d.breakdown, { tax: "ISS", label: "ISS", amount: fromCents(r.value.dueCents) }],
+        assumptions: [...d.assumptions, `ISS de ${pct(r.value.rate, 2)}% sobre R$ ${fromCents(r.value.baseCents).toLocaleString("pt-BR")} de serviços (alíquota informada, dentro do limite legal de 2% a 5%).`, "ISS retido pelo tomador, deduções da base e regimes especiais do município não foram considerados."],
+        rulesUsed: [...(d.rulesUsed ?? []), refOf(limits as never as RuleVersion<unknown>)],
+      },
+    };
+  }
+
+  const diagnoseCompany = (p: CompanyProfile): EngineResult<Diagnosis> => withPayroll(p, withIss(p, withIcms(p, diagnoseRegime(p))));
 
   const diagnoseRegime = (p: CompanyProfile): EngineResult<Diagnosis> =>
     p.regime === "simples" ? diagnoseSimples(p) : p.regime === "mei" ? diagnoseMei(p) : p.regime === "presumido" ? diagnosePresumido(p) : p.regime === "real" ? diagnoseReal(p) : notCovered("esse regime");

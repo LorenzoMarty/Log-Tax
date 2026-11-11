@@ -31,6 +31,7 @@ export const companyFieldsSchema = z.strictObject({
   employees: z.int().min(0).max(1_000_000),
   monthlyPurchases: money,
   taxLossBalance: money,
+  issRate: z.number().min(0.02, "o ISS municipal não pode ser menor que 2%").max(0.05, "o ISS municipal não pode passar de 5%").describe("alíquota de ISS do município, fração: 0.03 = 3%"),
   substituicaoTributaria: z.boolean().describe("vende mercadorias com substituição tributária de ICMS"),
   ratGrade: z.union([z.literal(1), z.literal(2), z.literal(3)]).describe("grau de risco do RAT: 1, 2 ou 3"),
   fap: z.number().min(0.5).max(2),
