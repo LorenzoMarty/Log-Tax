@@ -1,7 +1,9 @@
 import { z } from "zod";
 import type { Widget } from "@/dashboard/types";
 import type { ToolContext, ToolOutcome, ToolSpec, Scope } from "./types";
+import { onlyDigits } from "@/lib/br-ids";
 import { widgetSchema } from "./widget-schema";
+import { companyFieldsSchema, inconsistencies, mergeSeries } from "@/engine/company-schema";
 
 class ToolError extends Error {}
 class Refusal extends Error {}
@@ -21,16 +23,7 @@ interface Tool<S extends z.ZodType = z.ZodType> {
 }
 const defineTool = <S extends z.ZodType>(t: Tool<S>) => t as unknown as Tool;
 
-const company = z.strictObject({
-  name: z.string().min(1),
-  regime: z.enum(["presumido", "real", "simples"]),
-  activity: z.enum(["comercio", "servico"]),
-  monthlyRevenue: z.number().min(0),
-  employees: z.int().min(0),
-  uf: z.string().length(2),
-  monthlyPurchases: z.number().min(0),
-  profitMargin: z.number().min(0).max(1).describe("fração, 0.08 = 8%"),
-});
+const company = companyFieldsSchema;
 
 const person = z.strictObject({
   name: z.string().min(1),
@@ -118,7 +111,14 @@ const TOOLS: Tool[] = [
     kinds: ["empresa"],
     description: "Salva dados informados pelo usuário sobre a empresa. Use só o que o usuário disse.",
     schema: company.partial().refine((v) => Object.keys(v).length > 0, "informe ao menos um campo"),
-    run: (ctx, a) => ctx.store.saveCompany(a),
+    run(ctx, a) {
+      // Merge, then judge the whole profile: some mistakes only show when two fields meet (anexo with the wrong regime).
+      if (a.cnpj) a = { ...a, cnpj: onlyDigits(a.cnpj) };
+      const merged = { ...ctx.store.getCompany(), ...a, ...(a.series ? { series: mergeSeries(ctx.store.getCompany().series, a.series) } : {}) };
+      const problems = inconsistencies(merged);
+      if (problems.length) throw new ToolError(`Não salvei: ${problems.join(" ")}`);
+      return ctx.store.saveCompany({ ...a, ...(a.series ? { series: merged.series } : {}) });
+    },
   }),
   defineTool({
     name: "get_ir_diagnosis",
