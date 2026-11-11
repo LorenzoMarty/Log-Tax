@@ -1,11 +1,16 @@
 import { IRPF_ANNUAL, IRPF_MONTHLY, type IrpfAnnualRules, type IrpfMonthlyTable } from "./data/irpf";
+import { SIMPLES_RULES, type SimplesRules } from "./data/simples";
 import { DISCLAIMER } from "./mock-engine";
+import { annexByFatorR, fatorR, rbt12Of, simplesDas } from "./simples";
 import { fromCents, mulRate, roundingFor, toCents } from "./money";
 import { competenceOf, refOf, RuleBook, type RuleVersion } from "./rulebook";
-import type { EngineResult, IrScenario, PersonDiagnosis, PersonProfile, TaxEngine } from "./types";
+import type { CompanyProfile, Diagnosis, EngineResult, IrScenario, PersonDiagnosis, PersonProfile, TaxCode, TaxEngine, TaxLine } from "./types";
 
 /** Every rule the real engine knows. New tables are added to the data files, not to the calculations. */
-export const DEFAULT_RULEBOOK = new RuleBook([...IRPF_MONTHLY, ...IRPF_ANNUAL]);
+export const DEFAULT_RULEBOOK = new RuleBook([...IRPF_MONTHLY, ...IRPF_ANNUAL, ...SIMPLES_RULES]);
+
+/** A fraction as a pt-BR percentage ("7,1900"). Formatted with Intl. */
+const pct = (fraction: number, digits: number) => (fraction * 100).toLocaleString("pt-BR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 
 const round2 = (n: number) => fromCents(toCents(n));
 
@@ -65,11 +70,71 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
     };
   }
 
+  const TAX_CODE: Record<string, TaxCode> = { IRPJ: "IRPJ", CSLL: "CSLL", COFINS: "PIS/COFINS", PIS: "PIS/COFINS", CPP: "CPP", ICMS: "ICMS", ISS: "ISS", IPI: "IPI" };
+
+  /** Simples Nacional: DAS of the competence month from RBT12 (last 12 months of revenue). */
+  function diagnoseSimples(p: CompanyProfile): EngineResult<Diagnosis> {
+    const rule = book.at<SimplesRules>("simples-anexos", competence);
+    if (!rule) return { status: "not_applicable", reason: `Não há tabela do Simples Nacional em vigor para a competência ${competence}.` };
+    const rbt = rbt12Of(p.series, competence);
+    if (!rbt) return { status: "insufficient_data", missing: ["series"] };
+    const entry = p.series?.find((e) => e.month === competence);
+    const revenue = entry ? Object.values(entry.revenue ?? {}).reduce<number>((a, b) => a + (b ?? 0), 0) : p.monthlyRevenue;
+    if (revenue === undefined) return { status: "insufficient_data", missing: ["monthlyRevenue"] };
+
+    const ratio = fatorR(p.series, competence);
+    let annex = p.anexo;
+    const notes: string[] = [];
+    if (p.fatorR) {
+      if (ratio === undefined) return { status: "insufficient_data", missing: ["payroll"] };
+      annex = annexByFatorR(ratio, rule.data);
+      notes.push(`Fator R de ${pct(ratio, 2)}%: ${annex === "III" ? "Anexo III (28% ou mais)" : "Anexo V (abaixo de 28%)"}.`);
+    }
+    if (!annex) {
+      if (p.activity === "comercio") annex = "I";
+      else return { status: "insufficient_data", missing: ["anexo"] };
+    }
+    const calc = simplesDas(rule.data, annex, rbt.value, revenue);
+    if (!calc) return { status: "not_applicable", reason: `A receita dos últimos 12 meses (R$ ${rbt.value.toLocaleString("pt-BR")}) passa do limite de R$ ${rule.data.limit.toLocaleString("pt-BR")}: a empresa sai do Simples Nacional.` };
+
+    const byCode = new Map<TaxCode, number>();
+    for (const l of calc.lines) byCode.set(TAX_CODE[l.tax], (byCode.get(TAX_CODE[l.tax]) ?? 0) + l.cents);
+    const breakdown: TaxLine[] = [...byCode.entries()].map(([tax, cents]) => ({ tax, label: tax, amount: fromCents(cents) }));
+    const monthlyTotal = fromCents(calc.dasCents);
+    return {
+      status: "ok",
+      value: {
+        monthlyRevenue: revenue,
+        monthlyTotal,
+        annualTotal: round2(monthlyTotal * 12),
+        effectiveRate: revenue > 0 ? calc.dasCents / toCents(revenue) : 0,
+        breakdown,
+        assumptions: [
+          `Simples Nacional, Anexo ${calc.annex}, ${calc.band}ª faixa (alíquota nominal ${pct(calc.nominalRate, 2)}%).`,
+          `Receita dos últimos 12 meses: R$ ${rbt.value.toLocaleString("pt-BR")}${rbt.annualised ? ` (média de ${rbt.monthsUsed} mês(es) anualizada: empresa com menos de 12 meses)` : ""}.`,
+          `Alíquota efetiva de ${pct(calc.effectiveRate, 4)}%.`,
+          ...notes,
+          ...calc.notes,
+          "Tabelas ainda aguardam validação de um profissional.",
+          `Regras versão ${version}.`,
+        ],
+        disclaimer: DISCLAIMER,
+        rulesVersion: version,
+        rulesUsed: [refOf(rule)],
+      },
+    };
+  }
+
   return {
     version,
     rules: () => book.asTaxRules("person"),
-    diagnose: () => notCovered("empresas (Simples, Presumido e Real)"),
-    simulate: () => notCovered("empresas (Simples, Presumido e Real)"),
+    diagnose: (p) => (p.regime === "simples" ? diagnoseSimples(p) : notCovered("esse regime (Presumido e Real chegam em #85 e #86)")),
+    simulate(p, overrides) {
+      const current = p.regime === "simples" ? diagnoseSimples(p) : notCovered("esse regime");
+      if (current.status !== "ok") return current;
+      const scenario = diagnoseSimples({ ...p, ...overrides });
+      return scenario.status === "ok" ? { status: "ok", value: { current: current.value, scenario: scenario.value } } : scenario;
+    },
     opportunities: () => notCovered("a busca de oportunidades de empresas"),
     diagnosePerson,
   };

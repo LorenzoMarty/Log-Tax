@@ -21,6 +21,7 @@ export const companyFieldsSchema = z.strictObject({
   cnaes: z.array(z.string().regex(/^\d{7}$/, "CNAE tem 7 dígitos")).min(1).max(20),
   regime: z.enum(["presumido", "real", "simples"]),
   anexo: z.enum(["I", "II", "III", "IV", "V"]),
+  fatorR: z.boolean().describe("atividade sujeita ao Fator R"),
   activity: z.enum(["comercio", "servico"]),
   uf: z.enum(UFS),
   municipio: z.strictObject({ name: z.string().min(2).max(120), ibge: z.string().regex(/^\d{7}$/, "código IBGE tem 7 dígitos").optional() }),

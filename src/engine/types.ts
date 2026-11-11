@@ -22,6 +22,8 @@ export interface CompanyProfile {
   anexo?: "I" | "II" | "III" | "IV" | "V";
   /** Opening date, YYYY-MM-DD. */
   openedAt?: string;
+  /** The activity is subject to Fator R (annex III when payroll is 28% or more of revenue, otherwise V). */
+  fatorR?: boolean;
   /** Monthly history, oldest first. Simples needs the last 12 months of revenue. */
   series?: MonthlyEntry[];
 }
@@ -43,7 +45,7 @@ export type EngineResult<T> =
   | { status: "not_applicable"; reason: string }
   | { status: "none_found" };
 
-export type TaxCode = "ICMS" | "PIS/COFINS" | "IRPJ" | "CSLL" | "OUTROS";
+export type TaxCode = "ICMS" | "PIS/COFINS" | "IRPJ" | "CSLL" | "OUTROS" | "CPP" | "ISS" | "IPI";
 
 export interface TaxLine {
   tax: TaxCode;
