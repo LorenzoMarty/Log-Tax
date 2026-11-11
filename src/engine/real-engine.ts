@@ -1,6 +1,8 @@
 import { IRPF_ANNUAL, IRPF_MONTHLY, type IrpfAnnualRules, type IrpfMonthlyTable } from "./data/irpf";
 import { SIMPLES_RULES, type SimplesRules } from "./data/simples";
 import { DISCLAIMER } from "./mock-engine";
+import { LUCRO_REAL_RULES, type LucroRealRules } from "./data/lucro-real";
+import { lucroRealQuarter, pisCofinsMonth } from "./lucro-real";
 import { PRESUMIDO_RULES, type PresumidoRules } from "./data/presumido";
 import { presumidoQuarter, spreadOverMonths, type PresumidoRevenue } from "./presumido";
 import { MEI_RULES, type MeiRules } from "./data/mei";
@@ -11,7 +13,7 @@ import { competenceOf, refOf, RuleBook, type RuleVersion } from "./rulebook";
 import type { CompanyProfile, Diagnosis, EngineResult, IrScenario, PersonDiagnosis, PersonProfile, TaxCode, TaxEngine, TaxLine } from "./types";
 
 /** Every rule the real engine knows. New tables are added to the data files, not to the calculations. */
-export const DEFAULT_RULEBOOK = new RuleBook([...IRPF_MONTHLY, ...IRPF_ANNUAL, ...SIMPLES_RULES, ...MEI_RULES, ...PRESUMIDO_RULES]);
+export const DEFAULT_RULEBOOK = new RuleBook([...IRPF_MONTHLY, ...IRPF_ANNUAL, ...SIMPLES_RULES, ...MEI_RULES, ...PRESUMIDO_RULES, ...LUCRO_REAL_RULES]);
 
 /** A fraction as a pt-BR percentage ("7,1900"). Formatted with Intl. */
 const pct = (fraction: number, digits: number) => (fraction * 100).toLocaleString("pt-BR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -220,8 +222,66 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
     };
   }
 
+  /**
+   * Lucro Real, federal taxes: IRPJ and CSLL on the quarter's adjusted profit (estimated here as revenue x the informed
+   * pre-tax margin, since the books are not available), with tax-loss offset; PIS and COFINS non-cumulative with credits
+   * on purchases. Without the margin there is no profit to tax, so it asks for it.
+   */
+  function diagnoseReal(p: CompanyProfile): EngineResult<Diagnosis> {
+    const rule = book.at<LucroRealRules>("lucro-real-federal", competence);
+    if (!rule) return { status: "not_applicable", reason: `Não há tabela do Lucro Real em vigor para a competência ${competence}.` };
+    const [y, m] = competence.split("-").map(Number);
+    const qStart = Math.floor((m - 1) / 3) * 3 + 1;
+    const quarterMonths = [0, 1, 2].map((i) => `${y}-${String(qStart + i).padStart(2, "0")}`);
+    const entries = (p.series ?? []).filter((e) => quarterMonths.includes(e.month));
+    const revOf = (e: { revenue?: Record<string, number | undefined> }) => Object.values(e.revenue ?? {}).reduce<number>((a, b) => a + (b ?? 0), 0);
+    const missing: string[] = [];
+    if (!entries.length && p.monthlyRevenue === undefined) missing.push("monthlyRevenue");
+    if (p.profitMargin === undefined) missing.push("profitMargin");
+    if (missing.length) return { status: "insufficient_data", missing };
+
+    const quarterRevenue = entries.length ? entries.reduce((a, e) => a + revOf(e), 0) : (p.monthlyRevenue ?? 0) * 3;
+    const monthEntry = entries.find((e) => e.month === competence);
+    const monthRevenue = monthEntry ? revOf(monthEntry) : entries.length ? 0 : (p.monthlyRevenue ?? 0);
+    const monthPurchases = monthEntry?.purchases ?? (entries.length ? 0 : (p.monthlyPurchases ?? 0));
+    const profit = quarterRevenue * (p.profitMargin ?? 0);
+    const q = lucroRealQuarter(rule.data, profit, p.taxLossBalance ?? 0);
+    const pc = pisCofinsMonth(rule.data, monthRevenue, monthPurchases);
+    const idx = quarterMonths.indexOf(competence);
+    const lines = [
+      { tax: "IRPJ" as const, cents: spreadOverMonths(q.irpjCents)[idx] },
+      { tax: "CSLL" as const, cents: spreadOverMonths(q.csllCents)[idx] },
+      { tax: "PIS/COFINS" as const, cents: pc.pisCents + pc.cofinsCents },
+    ];
+    const total = lines.reduce((s, l) => s + l.cents, 0);
+    const revCents = toCents(monthRevenue);
+    return {
+      status: "ok",
+      value: {
+        monthlyRevenue: monthRevenue,
+        monthlyTotal: fromCents(total),
+        annualTotal: fromCents(total * 12),
+        effectiveRate: revCents > 0 ? total / revCents : 0,
+        breakdown: lines.map((l) => ({ tax: l.tax, label: l.tax, amount: fromCents(l.cents) })),
+        assumptions: [
+          `Lucro Real, apuração trimestral (${quarterMonths[0]} a ${quarterMonths[2]}); o mês mostra um terço de IRPJ e CSLL do trimestre. PIS e COFINS são do próprio mês.`,
+          q.profitCents <= 0
+            ? `O trimestre tem prejuízo estimado de R$ ${fromCents(-q.profitCents).toLocaleString("pt-BR")}: sem IRPJ e CSLL, e o prejuízo vira saldo a compensar (R$ ${fromCents(q.lossBalanceCents).toLocaleString("pt-BR")}).`
+            : `Lucro estimado do trimestre: R$ ${fromCents(q.profitCents).toLocaleString("pt-BR")} (receita × margem informada)${q.offsetCents > 0 ? `; compensação de prejuízo de R$ ${fromCents(q.offsetCents).toLocaleString("pt-BR")}, limitada a 30% do lucro` : ""}.`,
+          monthPurchases > 0 ? `Créditos de PIS/COFINS de R$ ${fromCents(pc.creditCents).toLocaleString("pt-BR")} supondo que todas as compras (R$ ${monthPurchases.toLocaleString("pt-BR")}) dão direito a crédito: confira com as notas.` : "Sem compras informadas no mês: nenhum crédito de PIS/COFINS foi considerado.",
+          "A margem informada foi tratada como lucro antes do IRPJ e da CSLL; o lucro real depende da escrituração, com adições e exclusões. ICMS, ISS e encargos da folha ainda não estão incluídos.",
+          "Tabelas ainda aguardam validação de um profissional.",
+          `Regras versão ${version}.`,
+        ],
+        disclaimer: DISCLAIMER,
+        rulesVersion: version,
+        rulesUsed: [refOf(rule)],
+      },
+    };
+  }
+
   const diagnoseCompany = (p: CompanyProfile): EngineResult<Diagnosis> =>
-    p.regime === "simples" ? diagnoseSimples(p) : p.regime === "mei" ? diagnoseMei(p) : p.regime === "presumido" ? diagnosePresumido(p) : notCovered("o Lucro Real (chega em #86)");
+    p.regime === "simples" ? diagnoseSimples(p) : p.regime === "mei" ? diagnoseMei(p) : p.regime === "presumido" ? diagnosePresumido(p) : p.regime === "real" ? diagnoseReal(p) : notCovered("esse regime");
 
   return {
     version,

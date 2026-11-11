@@ -98,8 +98,4 @@ describe("real engine: Lucro Presumido", () => {
     const v = (r as { value: { current: Diagnosis; scenario: Diagnosis } }).value;
     expect(v.scenario.monthlyTotal).toBe(v.current.monthlyTotal * 2); // below the additional threshold, taxes scale linearly
   });
-
-  it("Lucro Real is still not claimed", () => {
-    expect(createRealEngine({ competence: "2026-01" }).diagnose(company({ regime: "real" })).status).toBe("not_applicable");
-  });
 });
