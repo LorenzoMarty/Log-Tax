@@ -14,6 +14,12 @@ updates:
       # Next is upgraded by hand (middleware and config behaviour change between majors).
       - dependency-name: next
         update-types: [version-update:semver-major]
+      # Moves together with Next: each major of eslint-config-next targets the same Next major (16 needs Next 16, #222).
+      - dependency-name: eslint-config-next
+        update-types: [version-update:semver-major]
+      # TypeScript 7 (native compiler) is not supported yet by typescript-eslint or by Next 15's config loader (#221).
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
   - package-ecosystem: github-actions
     directory: /
     schedule:
