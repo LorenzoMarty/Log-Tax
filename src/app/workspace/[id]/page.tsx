@@ -108,6 +108,7 @@ export default async function WorkspaceChatPage({
             initialMessages={state.messages}
             initialDashboard={state.dashboard}
             initialAlerts={alerts}
+            workspaceKind={state.kind}
           />
           <SharePanel workspaceId={id} defaultOpen={Boolean(notice)} members={(members ?? []) as MemberRow[]} invites={(invites ?? []) as InviteRow[]} />
           {documentsPanel}
