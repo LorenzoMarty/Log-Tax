@@ -7,8 +7,10 @@ test("revoking the documents consent blocks the next upload, keeps the history a
   await login(page, "consent");
   await createAndOpen(page, /Minha Empresa/);
   const workspaceId = page.url().split("/").pop()!;
+  // A new file each time: the same bytes twice would be refused as a duplicate (#164), which is not what this test is about.
+  let sent = 0;
   const upload = (consent: boolean) =>
-    page.request.post("/api/documents", { multipart: { workspaceId, ...(consent ? { consent: "on" } : {}), file: { name: "nota.xml", mimeType: "application/xml", buffer: Buffer.from("<nfe><x/></nfe>") } } });
+    page.request.post("/api/documents", { multipart: { workspaceId, ...(consent ? { consent: "on" } : {}), file: { name: "nota.xml", mimeType: "application/xml", buffer: Buffer.from(`<nfe><x>${++sent}</x></nfe>`) } } });
 
   // no decision yet: refused; ticking the box records the acceptance and uploads
   expect((await upload(false)).status()).toBe(400);
