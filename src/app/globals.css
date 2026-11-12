@@ -97,3 +97,47 @@ a:focus-visible {
     padding: var(--space-2);
   }
 }
+
+/* Painel em movimento (#131): bloco novo sobe e aparece; mover e remover usam View Transitions (src/dashboard/motion.ts). */
+@keyframes lg-widget-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.lg-widget-enter {
+  animation: lg-widget-in 0.24s ease-out;
+}
+::view-transition-group(*) {
+  animation-duration: 0.24s;
+}
+
+/* Esqueleto enquanto a IA monta o painel. */
+@keyframes lg-skeleton-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+.lg-skeleton {
+  min-height: 96px;
+  animation: lg-skeleton-pulse 1.2s ease-in-out infinite;
+}
+.lg-skeleton-line {
+  display: block;
+  height: 12px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+}
+
+/* Movimento reduzido pedido pelo sistema: nada se move nem pisca. */
+@media (prefers-reduced-motion: reduce) {
+  .lg-widget-enter,
+  .lg-skeleton {
+    animation: none;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

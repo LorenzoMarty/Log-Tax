@@ -5,6 +5,7 @@ import { AgentList } from "@/agents/agent-list";
 import { AlertBar } from "@/alerts/alert-bar";
 import type { AlertStatus } from "@/alerts/evaluate";
 import { DashboardView } from "@/dashboard/dashboard-view";
+import { applyWithTransition } from "@/dashboard/view-transition";
 import type { Dashboard } from "@/dashboard/types";
 import { Button, Input, Panel } from "@/ui/log";
 import type { PendingConfirmation } from "./orchestrator";
@@ -50,7 +51,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Algo deu errado.");
       setMessages((m) => [...m, { role: "assistant", text: data.text }]);
-      setDashboard(data.dashboard);
+      applyWithTransition(() => setDashboard(data.dashboard));
       setAlerts(data.alerts ?? []);
       setAgents(data.agents ?? agents);
       setPending(data.pendingConfirmations ?? []);
@@ -75,7 +76,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
       <AlertBar alerts={alerts} />
       <div className="grid items-start gap-6 lg:grid-cols-[1fr_380px]">
         <div className="order-2 min-w-0 lg:order-none">
-          <DashboardView dashboard={dashboard} />
+          <DashboardView dashboard={dashboard} loading={busy} />
         </div>
       <Panel label="Conversa com a IA" className="order-1 min-w-0 lg:order-none lg:sticky lg:top-6">
         <div role="log" aria-label="Mensagens da conversa" aria-live="polite" tabIndex={0} className="flex max-h-[28rem] flex-col gap-3 overflow-y-auto p-1">

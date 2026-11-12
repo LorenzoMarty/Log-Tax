@@ -5,6 +5,22 @@ import { sampleDashboard } from "../fixtures";
 import { ESTIMATE_KINDS } from "../types";
 
 describe("DashboardView", () => {
+  it("shows a skeleton while the AI works, even on an empty dashboard (#131)", () => {
+    const { rerender } = render(<DashboardView dashboard={{ ...sampleDashboard, widgets: [] }} loading />);
+    expect(screen.getByTestId("widget-skeleton")).toHaveAttribute("aria-hidden", "true");
+    expect(screen.queryByText(/nenhum bloco/i)).not.toBeInTheDocument();
+    rerender(<DashboardView dashboard={{ ...sampleDashboard, widgets: [] }} />);
+    expect(screen.queryByTestId("widget-skeleton")).not.toBeInTheDocument();
+    expect(screen.getByText(/nenhum bloco/i)).toBeInTheDocument();
+  });
+
+  it("gives every block its own view-transition name", () => {
+    render(<DashboardView dashboard={sampleDashboard} />);
+    for (const w of sampleDashboard.widgets) {
+      expect(screen.getByTestId(`widget-${w.id}`).parentElement?.style.viewTransitionName).toBe(`widget-${w.id}`);
+    }
+  });
+
   it("renders all 9 widget kinds", () => {
     render(<DashboardView dashboard={sampleDashboard} />);
     const kinds = new Set(sampleDashboard.widgets.map((w) => w.kind));

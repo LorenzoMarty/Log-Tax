@@ -16,6 +16,15 @@ async function axeViolations(page: Page, label: string): Promise<void> {
   await page.waitForLoadState("networkidle");
   // The route loading screens (loading.tsx) mark themselves aria-busy: audit the real screen, not the skeleton.
   await expect(page.locator('[aria-busy="true"]')).toHaveCount(0);
+  // A block fading in (#131) has low opacity for a moment; measure contrast once finite animations are done.
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((a) => a.effect?.getTiming().iterations !== Infinity)
+        .map((a) => a.finished.catch(() => undefined)),
+    ),
+  );
   // Streamed pages move their <title> into the head a moment after the body: audit once it is there.
   await expect(page).not.toHaveTitle("");
   const { violations } = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze();
