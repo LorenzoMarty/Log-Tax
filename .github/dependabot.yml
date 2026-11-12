@@ -20,6 +20,9 @@ updates:
       # TypeScript 7 (native compiler) is not supported yet by typescript-eslint or by Next 15's config loader (#221).
       - dependency-name: typescript
         update-types: [version-update:semver-major]
+      # Types follow the Node that runs the app (22 in CI): newer majors would type-check APIs Node 22 lacks (#258).
+      - dependency-name: "@types/node"
+        update-types: [version-update:semver-major]
   - package-ecosystem: github-actions
     directory: /
     schedule:
