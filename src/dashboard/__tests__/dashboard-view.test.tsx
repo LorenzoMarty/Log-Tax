@@ -5,6 +5,19 @@ import { sampleDashboard } from "../fixtures";
 import { ESTIMATE_KINDS } from "../types";
 
 describe("DashboardView", () => {
+  it("offers a CSV download on every block with a table, named after the block (#132)", () => {
+    render(<DashboardView dashboard={sampleDashboard} />);
+    for (const w of sampleDashboard.widgets) {
+      const link = within(screen.getByTestId(`widget-${w.id}`)).queryByRole("link", { name: `Baixar CSV de ${w.title}` });
+      if (w.kind === "text") {
+        expect(link).toBeNull();
+        continue;
+      }
+      expect(link?.getAttribute("href")).toMatch(/^data:text\/csv;charset=utf-8,/);
+      expect(link?.getAttribute("download")).toMatch(/\.csv$/);
+    }
+  });
+
   it("shows a skeleton while the AI works, even on an empty dashboard (#131)", () => {
     const { rerender } = render(<DashboardView dashboard={{ ...sampleDashboard, widgets: [] }} loading />);
     expect(screen.getByTestId("widget-skeleton")).toHaveAttribute("aria-hidden", "true");
