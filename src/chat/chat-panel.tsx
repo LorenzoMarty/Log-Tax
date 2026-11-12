@@ -9,6 +9,7 @@ import { applyWithTransition } from "@/dashboard/view-transition";
 import type { Dashboard } from "@/dashboard/types";
 import { Button, Input, Panel } from "@/ui/log";
 import type { PendingConfirmation } from "./orchestrator";
+import { RequestExamples } from "./request-examples";
 import type { Agent } from "./types";
 import type { DisplayMessage } from "./workspace-state";
 
@@ -80,7 +81,12 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
         </div>
       <Panel label="Conversa com a IA" className="order-1 min-w-0 lg:order-none lg:sticky lg:top-6">
         <div role="log" aria-label="Mensagens da conversa" aria-live="polite" tabIndex={0} className="flex max-h-[28rem] flex-col gap-3 overflow-y-auto p-1">
-          {messages.length === 0 && <p className="text-sm text-ink-muted">O que você precisa resolver?</p>}
+          {messages.length === 0 && (
+            <>
+              <p className="text-sm text-ink-muted">O que você precisa resolver?</p>
+              <RequestExamples disabled={busy} onPick={(text) => void send(text)} />
+            </>
+          )}
           {messages.map((m, i) => (
             <p key={i} data-role={m.role} className={`lg-msg lg-msg-${m.role === "user" ? "user" : "assistant"} whitespace-pre-line`}>
               {m.role === "assistant" ? withReportLinks(m.text) : m.text}

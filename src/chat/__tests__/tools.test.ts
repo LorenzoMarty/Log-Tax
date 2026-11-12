@@ -86,6 +86,30 @@ describe("dashboard tools", () => {
     expect((await call("dashboard_reorder", { id: "ghost", toIndex: 0 })).status).toBe("error");
   });
 
+  it("rejects any invalid update patch and leaves the widget untouched (#130)", async () => {
+    const before = structuredClone(ctx.store.getDashboard());
+    const invalid: Record<string, unknown>[] = [
+      { size: "xl" }, // out of the enum
+      { title: "" }, // empty
+      { title: 42 }, // wrong type
+      { value: 1000 }, // kpi value is a string
+      { hologram: true }, // unknown field
+      { data: [{ label: "x", value: 1 }] }, // field of another kind
+    ];
+    for (const patch of invalid) {
+      const r = await call("dashboard_update_widget", { id: "kpi", patch });
+      expect(r.status, JSON.stringify(patch)).toBe("error");
+    }
+    expect(ctx.store.getDashboard()).toEqual(before);
+  });
+
+  it("keeps id and kind when the patch tries to change them", async () => {
+    expect((await call("dashboard_update_widget", { id: "kpi", patch: { id: "x", kind: "text", title: "Novo" } })).status).toBe("ok");
+    const kpi = ctx.store.getDashboard().widgets.find((w) => w.id === "kpi");
+    expect(kpi?.kind).toBe("kpi");
+    expect(kpi?.title).toBe("Novo");
+  });
+
   it("removing a widget requires out-of-band confirmation; the model cannot self-approve", async () => {
     const r = await call("dashboard_remove_widget", { id: "kpi" });
     expect(r).toMatchObject({ status: "confirmation_required", key: approvalKey("dashboard_remove_widget", { id: "kpi" }) });
