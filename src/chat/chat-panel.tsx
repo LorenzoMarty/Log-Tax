@@ -9,6 +9,7 @@ import { applyWithTransition } from "@/dashboard/view-transition";
 import type { Dashboard } from "@/dashboard/types";
 import { Button, Input, Panel } from "@/ui/log";
 import type { PendingConfirmation } from "./orchestrator";
+import { nextQuestions, type SpaceProgress } from "./next-questions";
 import { RequestExamples } from "./request-examples";
 import type { Agent } from "./types";
 import type { DisplayMessage } from "./workspace-state";
@@ -28,7 +29,7 @@ function withReportLinks(text: string): React.ReactNode[] {
   );
 }
 
-export function ChatPanel(props: { workspaceId: string; initialMessages: DisplayMessage[]; initialDashboard: Dashboard; initialAlerts?: AlertStatus[]; agentId?: string; initialAgents?: Agent[] }) {
+export function ChatPanel(props: { workspaceId: string; initialMessages: DisplayMessage[]; initialDashboard: Dashboard; initialAlerts?: AlertStatus[]; agentId?: string; initialAgents?: Agent[]; workspaceKind?: SpaceProgress["kind"] }) {
   const [messages, setMessages] = useState(props.initialMessages);
   const [dashboard, setDashboard] = useState(props.initialDashboard);
   const [alerts, setAlerts] = useState(props.initialAlerts ?? []);
@@ -63,6 +64,12 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
     }
   }
 
+  // Follow-ups after the AI answers (#119); not in a specialised AI's conversation, whose tools are scoped down.
+  const suggestions =
+    props.workspaceKind && !props.agentId && !busy && pending.length === 0 && messages.at(-1)?.role === "assistant"
+      ? nextQuestions({ kind: props.workspaceKind, dashboard, alertCount: alerts.length, agentCount: agents.length })
+      : [];
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const text = draft.trim();
@@ -93,6 +100,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
             </p>
           ))}
           {busy && <p className="text-sm text-ink-subtle">Pensando…</p>}
+          {suggestions.length > 0 && <RequestExamples title="Sugestões" prompts={suggestions} disabled={busy} onPick={(text) => void send(text)} />}
         </div>
         {pending.map((p) => (
           <div key={p.key} className="rounded-[var(--radius-md)] bg-warning-tint p-4 text-sm text-warning-ink">

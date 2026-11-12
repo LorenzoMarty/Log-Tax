@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { sampleDashboard } from "@/dashboard/fixtures";
 import { ChatPanel } from "../chat-panel";
@@ -14,6 +14,22 @@ const send = (text: string) => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("ChatPanel", () => {
+  it("offers follow-up questions that match the space after the AI answers (#119)", async () => {
+    const fetchMock = reply({ text: "Você paga R$ 42.800.", pendingConfirmations: [], dashboard: sampleDashboard });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<ChatPanel workspaceId="ws1" workspaceKind="empresa" initialMessages={[]} initialDashboard={{ ...sampleDashboard, widgets: [] }} />);
+    send("Empresa");
+    const suggestions = await screen.findByRole("region", { name: "Sugestões" });
+    expect(within(suggestions).queryByRole("button", { name: "Mostre quanto estou pagando de imposto." })).not.toBeInTheDocument(); // the kpi is there now
+    fireEvent.click(within(suggestions).getAllByRole("button")[0]);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+  });
+
+  it("does not suggest inside a specialised AI's conversation", () => {
+    render(<ChatPanel workspaceId="ws1" workspaceKind="empresa" agentId="a1" initialMessages={[{ role: "assistant", text: "Olá!" }]} initialDashboard={sampleDashboard} />);
+    expect(screen.queryByRole("region", { name: "Sugestões" })).not.toBeInTheDocument();
+  });
+
   it("on an empty conversation, a clicked example starts the conversation (#158)", async () => {
     const fetchMock = reply({ text: "Você paga R$ 42.800.", pendingConfirmations: [], dashboard: sampleDashboard });
     vi.stubGlobal("fetch", fetchMock);
