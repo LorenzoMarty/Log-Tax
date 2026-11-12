@@ -42,6 +42,13 @@ test("documents: consent, upload, identification, download, refusal and deletion
   await expect(nota).toContainText("1234");
   await expect(nota).toContainText("leitura alta");
 
+  // the same file again, under another name, is refused instead of doubling the invoice (#164)
+  await pick("nota-copia.xml", "application/xml", NFE);
+  await docs.getByLabel(/Autorizo o Log Tax/).check();
+  await send();
+  await expect(docs.getByRole("alert")).toContainText("Este documento já foi enviado (nota.xml)");
+  await expect(docs.getByTestId("document")).toHaveCount(1);
+
   // a PDF is only classified by name, and the page says so instead of inventing values
   await pick("informe-rendimentos-2025.pdf", "application/pdf", "%PDF-1.4 conteudo");
   await docs.getByLabel(/Autorizo o Log Tax/).check();
@@ -122,4 +129,20 @@ test("documents: consent, upload, identification, download, refusal and deletion
   await expect(docs.getByTestId("document")).toHaveCount(1);
   expect((await page.request.get(`/api/documents/${informeId}`, { maxRedirects: 0 })).status()).toBe(404);
   await ctx.close();
+});
+
+// #164: an NF-e is the same invoice by its access key, even when the XML around it differs.
+test("the same NF-e sent twice with different XML is refused by its access key", async ({ page }) => {
+  await login(page, "docs-dup");
+  await createAndOpen(page, /Minha Empresa/);
+  const docs = page.getByRole("region", { name: "Documentos" });
+  const key = "35261012345678000190550010000012341000012345";
+  for (const [name, extra] of [["nota-a.xml", ""], ["nota-b.xml", "<!-- reexportada -->"]]) {
+    await docs.getByLabel(/Documento \(PDF/).setInputFiles({ name, mimeType: "application/xml", buffer: Buffer.from(NFE.replace("<infNFe>", `<infNFe Id="NFe${key}">${extra}`)) });
+    await docs.getByLabel(/Autorizo o Log Tax/).check();
+    await docs.getByRole("button", { name: "Anexar documento" }).click();
+    await expect(docs.getByTestId("document").or(docs.getByRole("alert")).first()).toBeVisible();
+  }
+  await expect(docs.getByRole("alert")).toContainText("Este documento já foi enviado (nota-a.xml)");
+  await expect(docs.getByTestId("document")).toHaveCount(1);
 });

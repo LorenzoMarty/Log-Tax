@@ -94,3 +94,32 @@ describe("the documents table", () => {
     expect((await owner.client.from("documents").select()).data).toEqual([]);
   });
 });
+
+describe("one copy per workspace (#164)", () => {
+  const dup = (workspace: string, extra: Record<string, unknown>) => {
+    const id = crypto.randomUUID();
+    return { ...row(), id, workspace_id: workspace, storage_path: `${workspace}/${id}/nota.xml`, ...extra };
+  };
+
+  it("refuses the same content twice in a workspace, until the first copy is deleted", async () => {
+    const first = dup(ws, { content_hash: "a".repeat(64) });
+    expect((await owner.client.from("documents").insert(first)).error).toBeNull();
+    expect((await owner.client.from("documents").insert(dup(ws, { content_hash: "a".repeat(64) }))).error?.code).toBe("23505");
+    await owner.client.from("documents").delete().eq("id", first.id);
+    expect((await owner.client.from("documents").insert(dup(ws, { content_hash: "a".repeat(64) }))).error).toBeNull();
+  });
+
+  it("refuses the same NF-e key under different content", async () => {
+    const key = "3".repeat(44);
+    expect((await owner.client.from("documents").insert(dup(ws, { content_hash: "b".repeat(64), nfe_key: key }))).error).toBeNull();
+    expect((await owner.client.from("documents").insert(dup(ws, { content_hash: "c".repeat(64), nfe_key: key }))).error?.code).toBe("23505");
+  });
+
+  it("another workspace may hold the same file", async () => {
+    expect((await stranger.client.from("documents").insert(dup(otherWs, { content_hash: "a".repeat(64), nfe_key: "3".repeat(44) }))).error).toBeNull();
+  });
+
+  it("rows without a fingerprint (uploaded before #164) are not compared", async () => {
+    for (let i = 0; i < 2; i++) expect((await owner.client.from("documents").insert(dup(ws, {}))).error).toBeNull();
+  });
+});
