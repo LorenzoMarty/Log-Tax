@@ -1,4 +1,5 @@
 import { Icon } from "@/ui/log";
+import { csvFileName, widgetCsv } from "./csv";
 import type { Point, Widget } from "./types";
 
 export const brl = (n: number) =>
@@ -160,12 +161,29 @@ function Body({ w }: { w: Widget }) {
   }
 }
 
+/** "Baixar CSV": a plain link with the file inline, so it works in server-rendered and shared views without JS (#132). */
+function CsvLink({ widget }: { widget: Widget }) {
+  const csv = widgetCsv(widget);
+  if (!csv) return null;
+  return (
+    <a
+      href={`data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`}
+      download={csvFileName(widget.title)}
+      aria-label={`Baixar CSV de ${widget.title}`}
+      className="mt-3 inline-block text-xs font-medium text-ink-muted underline print:hidden"
+    >
+      Baixar CSV
+    </a>
+  );
+}
+
 export function WidgetView({ widget, showDisclaimer, compact = false }: { widget: Widget; showDisclaimer: boolean; compact?: boolean }) {
   return (
     <section data-testid={`widget-${widget.id}`} className="lg-surface-card h-full text-ink" style={compact ? { padding: "var(--space-3)" } : undefined}>
       <h3 className="mb-3 text-[14px] leading-5 font-semibold text-ink">{widget.title}</h3>
       <Body w={widget} />
       {showDisclaimer && <p className="mt-3 text-xs font-medium text-ink-subtle">Estimativa ilustrativa, valide com um contador.</p>}
+      <CsvLink widget={widget} />
     </section>
   );
 }
