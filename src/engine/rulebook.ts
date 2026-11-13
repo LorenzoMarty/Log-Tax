@@ -32,6 +32,7 @@ export interface RuleRef {
   validFrom: string;
   source: string;
   requiresValidation: boolean;
+  confidence: RuleVersion<unknown>["confidence"];
 }
 
 const COMPETENCE = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -128,4 +129,27 @@ export class RuleBook {
   }
 }
 
-export const refOf = (v: RuleVersion<unknown>): RuleRef => ({ id: v.id, validFrom: v.validFrom, source: v.source, requiresValidation: v.requiresValidation });
+export const refOf = (v: RuleVersion<unknown>): RuleRef => ({ id: v.id, validFrom: v.validFrom, source: v.source, requiresValidation: v.requiresValidation, confidence: v.confidence });
+
+export interface ResultSeal {
+  /** The weakest confidence among the rules behind the result; "ilustrativo" when the engine reports none. */
+  level: "alta" | "média" | "baixa" | "ilustrativo";
+  /** True only when every rule used was checked by a professional. */
+  validated: boolean;
+  /** Latest start of validity among the rules (YYYY-MM), when known. */
+  since?: string;
+  text: string;
+}
+
+const LEVELS = ["baixa", "média", "alta"] as const;
+const LEVEL_OF = { low: "baixa", medium: "média", high: "alta" } as const;
+
+/** One badge per result: how firm the rules behind it are, since when they apply and whether a professional validated them. */
+export function sealOf(rules: RuleRef[] | undefined): ResultSeal {
+  if (!rules?.length) return { level: "ilustrativo", validated: false, text: "Regras ilustrativas: confira com um contador." };
+  const level = LEVEL_OF[[...rules].sort((a, b) => LEVELS.indexOf(LEVEL_OF[a.confidence]) - LEVELS.indexOf(LEVEL_OF[b.confidence]))[0].confidence];
+  const validated = rules.every((r) => !r.requiresValidation);
+  const since = rules.map((r) => r.validFrom).sort().at(-1);
+  const when = since ? ` Vigência das regras desde ${since.split("-").reverse().join("/")}.` : "";
+  return { level, validated, since, text: `Confiança ${level}.${when} ${validated ? "Regras validadas por contador." : "Ainda não validado por contador."}` };
+}

@@ -1,7 +1,7 @@
 import type { AlertStatus } from "@/alerts/evaluate";
 import { DOC_LABEL, type DocType } from "@/documents/classify";
 import { MISSING_LABEL } from "@/documents/storage";
-import { DISCLAIMER, type CalcStep, type CompanyProfile, type EngineResult, type PersonProfile, type TaxEngine } from "@/engine";
+import { DISCLAIMER, sealOf, type CalcStep, type CompanyProfile, type EngineResult, type PersonProfile, type TaxEngine } from "@/engine";
 
 /** The calculation memory as a report section, or none when the engine does not provide steps (the mock engine). */
 export function memoriaSection(steps: CalcStep[] | undefined): ReportSection[] {
@@ -15,6 +15,8 @@ export interface ReportSection {
   paragraphs?: string[];
   table?: { head: string[]; rows: string[][] };
   items?: string[];
+  /** Result badge: how firm the rules behind the numbers are. */
+  seal?: { level: string; text: string };
 }
 
 export interface Report {
@@ -90,6 +92,7 @@ function companyReport(i: ReportInput): Report {
       ? {
           id: "impostos",
           title: "Impostos",
+          seal: sealOf(diag.value.rulesUsed),
           table: { head: ["Tributo", "Por mês"], rows: [...diag.value.breakdown.map((b) => [b.label, money(b.amount)]), ["Total", money(diag.value.monthlyTotal)]] },
         }
       : { id: "impostos", title: "Impostos", paragraphs: [`Não foi possível calcular os impostos. ${problem(diag)}`] };
