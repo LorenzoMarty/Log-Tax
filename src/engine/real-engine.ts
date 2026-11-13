@@ -3,7 +3,7 @@ import { SIMPLES_RULES, type SimplesRules } from "./data/simples";
 import { DISCLAIMER } from "./mock-engine";
 import { ISS_LIMITS } from "./data/iss";
 import { issMonth } from "./iss";
-import { compareRegimes, regimeOpportunity } from "./compare";
+import { foundOpportunities } from "./opportunities";
 import { ICMS_RULES } from "./data/icms";
 import { icmsMonth } from "./icms";
 import { INSS_CEILING, PAYROLL_RULES, type InssCeilingRules, type PayrollRules } from "./data/payroll";
@@ -466,7 +466,7 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
       return scenario.status === "ok" ? { status: "ok", value: { current: current.value, scenario: scenario.value } } : scenario;
     },
     opportunities(p) {
-      const found = regimeOpportunity(compareRegimes(engine, p), p.regime);
+      const found = foundOpportunities({ engine, profile: p, competence, book });
       return found ? { status: "ok", value: found } : { status: "none_found" };
     },
     diagnosePerson,
