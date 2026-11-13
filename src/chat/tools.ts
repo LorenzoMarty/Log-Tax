@@ -38,6 +38,10 @@ const person = z.strictObject({
 });
 
 const none = z.strictObject({});
+/** What a scenario may change: the fields that drive the calculation. Identity data (CNPJ, name, series) is not simulated. */
+const scenarioChanges = companyFieldsSchema
+  .pick({ regime: true, activity: true, monthlyRevenue: true, employees: true, monthlyPurchases: true, profitMargin: true, uf: true, anexo: true, fatorR: true, issRate: true, substituicaoTributaria: true, ratGrade: true, fap: true, terceirosRate: true, meiActivity: true })
+  .partial();
 const alertRule = z.strictObject({
   metric: z.enum(["monthlyTotal", "effectiveRate", "annualSavings"]),
   operator: z.enum(["gt", "lt"]),
@@ -63,10 +67,53 @@ const TOOLS: Tool[] = [
     name: "run_simulation",
     readOnly: true,
     kinds: ["empresa"],
-    description: "Simula um novo faturamento mensal e compara com o cenário atual.",
-    schema: z.strictObject({ monthlyRevenue: z.number().min(0) }),
+    description:
+      "Simula mudanças na empresa e compara com o cenário atual. Aceita `monthlyRevenue` (um cenário) ou `scenarios` (até 3, nomeados, cada um com `changes`: regime, faturamento, funcionários, compras, margem, UF, atividade, anexo...). Com `save: true`, guarda cada cenário como bloco no painel.",
+    schema: z.strictObject({
+      monthlyRevenue: z.number().min(0).optional(),
+      scenarios: z.array(z.strictObject({ name: z.string().min(1).max(60), changes: scenarioChanges })).min(1).max(3).optional(),
+      save: z.boolean().optional(),
+    }),
     engine: true,
-    run: (ctx, a) => ctx.engine.simulate(ctx.store.getCompany(), { monthlyRevenue: a.monthlyRevenue }),
+    run(ctx, a) {
+      const company = ctx.store.getCompany();
+      if (!a.scenarios) return ctx.engine.simulate(company, { monthlyRevenue: a.monthlyRevenue });
+      const current = ctx.engine.diagnose(company);
+      if (current.status !== "ok") return current;
+      const money = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+      const scenarios = a.scenarios.map((sc) => {
+        const result = ctx.engine.diagnose({ ...company, ...sc.changes });
+        if (result.status !== "ok") throw new ToolError(`Cenário "${sc.name}": ${result.status === "insufficient_data" ? `faltam dados: ${result.missing.join(", ")}.` : result.status === "not_applicable" ? result.reason : "sem resultado."}`);
+        const r = result.value;
+        const deltaMonthly = r.monthlyTotal - current.value.monthlyTotal;
+        const deltaAnnual = r.annualTotal - current.value.annualTotal;
+        if (a.save) {
+          const base = `scenario-${sc.name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
+          const ids = new Set(ctx.store.getDashboard().widgets.map((w) => w.id));
+          let id = base;
+          for (let i = 2; ids.has(id); i++) id = `${base}-${i}`;
+          const c = current.value;
+          ctx.store.dispatch({
+            type: "add",
+            widget: {
+              id,
+              kind: "compare",
+              title: `Cenário: ${sc.name}`,
+              size: "md",
+              labels: ["Atual", sc.name],
+              rows: [
+                { label: "Tributos/mês", today: money(c.monthlyTotal), potential: money(r.monthlyTotal) },
+                { label: "Tributos/ano", today: money(c.annualTotal), potential: money(r.annualTotal) },
+                { label: "Alíquota efetiva", today: `${(c.effectiveRate * 100).toFixed(1)}%`, potential: `${(r.effectiveRate * 100).toFixed(1)}%` },
+              ],
+              summary: `${deltaAnnual <= 0 ? "Economia" : "Custo extra"} estimada de ${money(Math.abs(deltaAnnual))}/ano. Premissas: ${JSON.stringify(sc.changes)}. Estimativa, não substitui contador.`,
+            } as Widget,
+          });
+        }
+        return { name: sc.name, changes: sc.changes, result: r, deltaMonthly, deltaAnnual };
+      });
+      return { status: "ok", value: { current: current.value, scenarios } };
+    },
   }),
   defineTool({
     name: "list_opportunities",
