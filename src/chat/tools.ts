@@ -1,3 +1,4 @@
+import { upcomingDeadlines } from "@/engine/calendar";
 import { z } from "zod";
 import type { Widget } from "@/dashboard/types";
 import type { ToolContext, ToolOutcome, ToolSpec, Scope } from "./types";
@@ -75,6 +76,14 @@ const TOOLS: Tool[] = [
     schema: none,
     engine: true,
     run: (ctx) => ctx.engine.opportunities(ctx.store.getCompany()),
+  }),
+  defineTool({
+    name: "get_deadlines",
+    readOnly: true,
+    kinds: ["empresa"],
+    description: "Lista os próximos vencimentos de obrigações da empresa (DAS, DCTFWeb, declarações anuais), com fonte e o que ainda não é coberto.",
+    schema: z.strictObject({ horizonDays: z.int().min(1).max(365).optional() }),
+    run: (ctx, a) => upcomingDeadlines(ctx.store.getCompany(), new Date().toISOString().slice(0, 10), a.horizonDays ?? 60),
   }),
   defineTool({
     name: "explain_result",

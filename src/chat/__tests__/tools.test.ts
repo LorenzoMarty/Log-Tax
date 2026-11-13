@@ -13,10 +13,10 @@ beforeEach(() => {
 });
 
 describe("registry", () => {
-  it("exposes the 15 tools with JSON-schema parameters", () => {
-    expect(TOOL_NAMES).toHaveLength(15);
+  it("exposes the 16 tools with JSON-schema parameters", () => {
+    expect(TOOL_NAMES).toHaveLength(16);
     const specs = toolSpecs(ctx.scope);
-    expect(specs).toHaveLength(15);
+    expect(specs).toHaveLength(16);
     for (const s of specs) expect(s.parameters).toMatchObject({ type: "object" });
   });
 
@@ -30,6 +30,16 @@ describe("engine tools", () => {
   it("diagnoses the seed company", async () => {
     const r = await call("get_tax_diagnosis");
     expect(r).toMatchObject({ status: "ok", data: { status: "ok", value: { monthlyTotal: 42800 } } });
+  });
+
+  it("lists deadlines of the company's regime with source and what is not covered", async () => {
+    const r = await call("get_deadlines", { horizonDays: 365 });
+    expect(r.status).toBe("ok");
+    const data = (r as { data: { deadlines: { id: string; source: string }[]; notCovered: string[] } }).data;
+    expect(data.deadlines.map((d) => d.id)).toContain("dctfweb");
+    expect(data.deadlines.every((d) => d.source.length > 0)).toBe(true);
+    expect(data.notCovered.length).toBeGreaterThan(0);
+    expect((await call("get_deadlines", { horizonDays: 0 })).status).toBe("error");
   });
 
   it("simulates a revenue scenario", async () => {
