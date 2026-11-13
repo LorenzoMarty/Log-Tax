@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { mockEngine } from "@/engine";
+import { createRealEngine, mockEngine } from "@/engine";
 import { approvalKey, invokeTool, TOOL_NAMES, toolSpecs } from "../tools";
 import { createMemoryStore } from "../memory-store";
 import type { ToolContext } from "../types";
@@ -32,9 +32,47 @@ describe("engine tools", () => {
     expect(r).toMatchObject({ status: "ok", data: { status: "ok", value: { monthlyTotal: 42800 } } });
   });
 
+  it("compares named scenarios with several profile fields against the current one, with premises", async () => {
+    const real = { ...ctx, engine: createRealEngine({ competence: "2026-03" }) };
+    const months = ["2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02"];
+    ctx.store.saveCompany({ series: months.map((month) => ({ month, revenue: { comercio: 350000 }, payroll: 40000 })) });
+    const r = await call("run_simulation", {
+      scenarios: [
+        { name: "Contratar 5 e ir pro Simples", changes: { employees: 13, regime: "simples", anexo: "I" } },
+        { name: "Só mais faturamento", changes: { monthlyRevenue: 500000 } },
+      ],
+    }, real);
+    expect(r, JSON.stringify(r)).toMatchObject({ status: "ok" });
+    const v = (r as { data: { value: { current: { monthlyTotal: number }; scenarios: { name: string; changes: object; result: { monthlyTotal: number; assumptions: string[] }; deltaMonthly: number }[] } } }).data.value;
+    expect(v.scenarios.map((x) => x.name)).toEqual(["Contratar 5 e ir pro Simples", "Só mais faturamento"]);
+    expect(v.scenarios[0].changes).toMatchObject({ regime: "simples", employees: 13 });
+    expect(v.scenarios[0].result.assumptions.length).toBeGreaterThan(0);
+    expect(v.scenarios[0].deltaMonthly).toBeCloseTo(v.scenarios[0].result.monthlyTotal - v.current.monthlyTotal, 2);
+    expect((await call("run_simulation", { scenarios: [{ name: "x", changes: { cnpj: "1" } }] })).status).toBe("error");
+  });
+
+  it("a scenario that cannot be computed says what is missing instead of guessing", async () => {
+    const real = { ...ctx, engine: createRealEngine({ competence: "2026-03" }) };
+    const r = await call("run_simulation", { scenarios: [{ name: "Simples", changes: { regime: "simples", anexo: "I" } }] }, real);
+    expect(r).toMatchObject({ status: "error", message: expect.stringContaining("faltam dados") });
+    // when the current situation itself cannot be computed, that result is returned as is
+    ctx.store.saveCompany({ regime: "simples", anexo: "I" });
+    const current = await call("run_simulation", { scenarios: [{ name: "x", changes: { employees: 9 } }] }, real);
+    expect(current).toMatchObject({ status: "ok", data: { status: "insufficient_data" } });
+  });
+
+  it("saving a scenario puts a compare block on the dashboard, so it comes back after reload", async () => {
+    const r = await call("run_simulation", { scenarios: [{ name: "Faturar mais", changes: { monthlyRevenue: 500000 } }], save: true });
+    expect(r, JSON.stringify(r)).toMatchObject({ status: "ok" });
+    const w = ctx.store.getDashboard().widgets.find((x) => x.id === "scenario-faturar-mais");
+    expect(w).toMatchObject({ kind: "compare", title: "Cenário: Faturar mais", labels: ["Atual", "Faturar mais"] });
+    await call("run_simulation", { scenarios: [{ name: "Faturar mais", changes: { monthlyRevenue: 600000 } }], save: true });
+    expect(ctx.store.getDashboard().widgets.filter((x) => x.id.startsWith("scenario-faturar-mais"))).toHaveLength(2);
+  });
+
   it("lists deadlines of the company's regime with source and what is not covered", async () => {
     const r = await call("get_deadlines", { horizonDays: 365 });
-    expect(r.status).toBe("ok");
+    expect(r, JSON.stringify(r)).toMatchObject({ status: "ok" });
     const data = (r as { data: { deadlines: { id: string; source: string }[]; notCovered: string[] } }).data;
     expect(data.deadlines.map((d) => d.id)).toContain("dctfweb");
     expect(data.deadlines.every((d) => d.source.length > 0)).toBe(true);
@@ -146,7 +184,7 @@ describe("alerts and agents", () => {
 
   it("creates and updates agents", async () => {
     const r = await call("create_agent", { name: "IA da Empresa", objective: "Acompanhar impostos", tools: ["get_tax_diagnosis"] });
-    expect(r.status).toBe("ok");
+    expect(r, JSON.stringify(r)).toMatchObject({ status: "ok" });
     const id = ctx.store.listAgents()[0].id;
     expect((await call("update_agent", { id, patch: { objective: "Novo objetivo" } })).status).toBe("ok");
     expect(ctx.store.listAgents()[0].objective).toBe("Novo objetivo");
