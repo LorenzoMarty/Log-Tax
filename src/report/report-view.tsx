@@ -60,6 +60,11 @@ export function ReportView({ report, backHref }: { report: Report; backHref?: st
               {p}
             </p>
           ))}
+          {s.seal && (
+            <p role="note" data-seal={s.seal.level} className="inline-block rounded-full border border-neutral-400 px-3 py-1 text-xs font-medium">
+              Selo: {s.seal.text}
+            </p>
+          )}
           {s.table && <Table {...s.table} />}
           {s.items && (
             <ul className="list-disc space-y-1 pl-5 text-sm">

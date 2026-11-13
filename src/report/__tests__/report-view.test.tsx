@@ -52,4 +52,24 @@ describe("ReportView", () => {
     expect(controls).not.toBeNull();
     expect(screen.getByRole("link", { name: /Voltar/ })).toHaveAttribute("href", "/workspace/ws1");
   });
+
+  it("shows the seal of the weakest rule, validity and validation status, never promising anything", () => {
+    const base = mockEngine.diagnose(seedCompany);
+    if (base.status !== "ok") throw new Error("seed must compute");
+    const refs = [
+      { id: "a", validFrom: "2026-01", source: "lei", requiresValidation: false, confidence: "high" as const },
+      { id: "b", validFrom: "2026-03", source: "lei", requiresValidation: true, confidence: "low" as const },
+    ];
+    const engine = { ...mockEngine, diagnose: () => ({ status: "ok" as const, value: { ...base.value, rulesUsed: refs } }) };
+    render(<ReportView report={buildReport({ ...input, engine })} />);
+    const seal = within(screen.getByRole("region", { name: "Impostos" })).getByRole("note");
+    expect(seal).toHaveAttribute("data-seal", "baixa");
+    expect(seal).toHaveTextContent(/Confiança baixa.*desde 03\/2026.*Ainda não validado por contador/);
+    expect(seal.textContent).not.toMatch(/garantid/i);
+  });
+
+  it("an engine without rule data gets the illustrative seal", () => {
+    render(<ReportView report={buildReport(input)} />);
+    expect(within(screen.getByRole("region", { name: "Impostos" })).getByRole("note")).toHaveAttribute("data-seal", "ilustrativo");
+  });
 });
