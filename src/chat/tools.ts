@@ -1,4 +1,5 @@
 import { upcomingDeadlines } from "@/engine/calendar";
+import { taxHistory } from "@/engine/history";
 import { z } from "zod";
 import type { Widget } from "@/dashboard/types";
 import type { ToolContext, ToolOutcome, ToolSpec, Scope } from "./types";
@@ -131,6 +132,20 @@ const TOOLS: Tool[] = [
     description: "Lista os próximos vencimentos de obrigações da empresa (DAS, DCTFWeb, declarações anuais), com fonte e o que ainda não é coberto.",
     schema: z.strictObject({ horizonDays: z.int().min(1).max(365).optional() }),
     run: (ctx, a) => upcomingDeadlines(ctx.store.getCompany(), new Date().toISOString().slice(0, 10), a.horizonDays ?? 60),
+  }),
+  defineTool({
+    name: "get_tax_history",
+    readOnly: true,
+    kinds: ["empresa"],
+    description:
+      "Imposto mês a mês (até 24 meses) usando a regra vigente em cada mês, e comparação entre dois meses (ex.: mesmo mês do ano passado). Só usa meses com dados gravados; sem histórico responde que faltam dados, nunca estima.",
+    schema: z.strictObject({
+      to: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "mês no formato AAAA-MM"),
+      months: z.int().min(1).max(24).optional(),
+      compareWith: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "mês no formato AAAA-MM").optional(),
+    }),
+    engine: true,
+    run: (ctx, a) => taxHistory(ctx.store.getCompany(), a.to, a.months ?? 12, a.compareWith),
   }),
   defineTool({
     name: "explain_result",
