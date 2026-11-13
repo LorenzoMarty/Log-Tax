@@ -13,10 +13,10 @@ beforeEach(() => {
 });
 
 describe("registry", () => {
-  it("exposes the 16 tools with JSON-schema parameters", () => {
-    expect(TOOL_NAMES).toHaveLength(16);
+  it("exposes the 17 tools with JSON-schema parameters", () => {
+    expect(TOOL_NAMES).toHaveLength(17);
     const specs = toolSpecs(ctx.scope);
-    expect(specs).toHaveLength(16);
+    expect(specs).toHaveLength(17);
     for (const s of specs) expect(s.parameters).toMatchObject({ type: "object" });
   });
 
@@ -68,6 +68,18 @@ describe("engine tools", () => {
     expect(w).toMatchObject({ kind: "compare", title: "Cenário: Faturar mais", labels: ["Atual", "Faturar mais"] });
     await call("run_simulation", { scenarios: [{ name: "Faturar mais", changes: { monthlyRevenue: 600000 } }], save: true });
     expect(ctx.store.getDashboard().widgets.filter((x) => x.id.startsWith("scenario-faturar-mais"))).toHaveLength(2);
+  });
+
+  it("compares the same month of two years from recorded data, and refuses to estimate without history", async () => {
+    const rec = (m: string, v: number) => ({ month: m, revenue: { comercio: v }, payroll: 20000 });
+    const months = (from: number, v: number) => Array.from({ length: 12 }, (_, i) => rec(`${from + Math.floor((i + 3) / 12)}-${String(((i + 3) % 12) + 1).padStart(2, "0")}`, v));
+    ctx.store.saveCompany({ regime: "simples", anexo: "I", series: [...months(2024, 100000), ...months(2025, 150000)] });
+    const ok = await call("get_tax_history", { to: "2026-03", months: 2, compareWith: "2025-03" });
+    expect(ok).toMatchObject({ status: "ok", data: { comparison: { from: "2025-03", to: "2026-03" } } });
+    const gap = await call("get_tax_history", { to: "2026-03", months: 1, compareWith: "2020-03" });
+    expect(gap).toMatchObject({ status: "ok", data: { gaps: [expect.stringContaining("2020-03")] } });
+    expect((gap as { data: { comparison?: unknown } }).data.comparison).toBeUndefined();
+    expect((await call("get_tax_history", { to: "2026-13" })).status).toBe("error");
   });
 
   it("lists deadlines of the company's regime with source and what is not covered", async () => {
