@@ -13,10 +13,10 @@ beforeEach(() => {
 });
 
 describe("registry", () => {
-  it("exposes the 18 tools with JSON-schema parameters", () => {
-    expect(TOOL_NAMES).toHaveLength(18);
+  it("exposes the 21 tools with JSON-schema parameters", () => {
+    expect(TOOL_NAMES).toHaveLength(21);
     const specs = toolSpecs(ctx.scope);
-    expect(specs).toHaveLength(18);
+    expect(specs).toHaveLength(21);
     for (const s of specs) expect(s.parameters).toMatchObject({ type: "object" });
   });
 
@@ -301,5 +301,20 @@ describe("personal workspace (IR) tools", () => {
   it("explains the IR rules with their sources", async () => {
     const r = await call("explain_result", { subject: "ir" }, pf());
     expect(r).toMatchObject({ status: "ok", data: { rules: expect.arrayContaining([expect.objectContaining({ id: "ir-tabela", requiresValidation: true })]) } });
+  });
+});
+describe("long-term memory tools", () => {
+  it("remembers, lists and forgets, with a cap and an unknown id as clear errors", async () => {
+    const saved = await call("remember_fact", { text: "Prefiro respostas curtas" });
+    expect(saved).toMatchObject({ status: "ok", data: { text: "Prefiro respostas curtas" } });
+    const listed = await call("list_memories");
+    expect(listed).toMatchObject({ status: "ok", data: [{ text: "Prefiro respostas curtas" }] });
+    const id = (saved as { data: { id: string } }).data.id;
+    expect(await call("forget_memory", { id })).toMatchObject({ status: "ok" });
+    expect(ctx.store.listMemories()).toEqual([]);
+    expect((await call("forget_memory", { id })).status).toBe("error");
+    for (let i = 0; i < 30; i++) await call("remember_fact", { text: `fato ${i}` });
+    expect((await call("remember_fact", { text: "mais um" })).status).toBe("error");
+    expect((await call("remember_fact", { text: "x".repeat(301) })).status).toBe("error");
   });
 });

@@ -62,6 +62,12 @@ export interface Agent {
   tools: string[];
 }
 
+/** A short fact or preference the user asked the assistant to remember in this workspace. */
+export interface Memory {
+  id: string;
+  text: string;
+}
+
 /** Everything the tools may touch. Already bound to one workspace: tool args never name one. */
 export interface ChatStore {
   getCompany(): CompanyProfile;
@@ -75,6 +81,9 @@ export interface ChatStore {
   addAgent(agent: Omit<Agent, "id">): Agent;
   updateAgent(id: string, patch: Partial<Omit<Agent, "id">>): Agent | undefined;
   listAgents(): Agent[];
+  listMemories(): Memory[];
+  addMemory(text: string): Memory;
+  removeMemory(id: string): boolean;
 }
 
 export interface ToolContext {

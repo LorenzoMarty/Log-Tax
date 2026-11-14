@@ -4,7 +4,7 @@ import { demoSeedEnabled, seedCompany, seedPerson, type CompanyProfile, type Per
 import { normalizeProfile } from "@/engine/company-schema";
 import { decryptField, encryptField } from "@/lib/crypto";
 import type { StoreState } from "./memory-store";
-import type { Agent, Alert, Msg } from "./types";
+import type { Agent, Alert, Memory, Msg } from "./types";
 
 export interface DisplayMessage {
   role: "user" | "assistant";
@@ -50,13 +50,15 @@ export async function loadWorkspaceState(sb: SupabaseClient, workspaceId: string
   const conversation = agentId
     ? sb.from("agent_conversations").select("history, messages").eq("agent_id", agentId).eq("workspace_id", workspaceId).maybeSingle()
     : sb.from("conversations").select("history, messages").eq("workspace_id", workspaceId).maybeSingle();
-  const [dash, alerts, agents, conv] = await Promise.all([
+  const [dash, alerts, agents, conv, mems] = await Promise.all([
     sb.from("dashboards").select("id, data").eq("workspace_id", workspaceId).order("created_at").limit(1).maybeSingle(),
     sb.from("alerts").select("id, rule, active").eq("workspace_id", workspaceId).order("created_at"),
     sb.from("agents").select("id, name, objective, config").eq("workspace_id", workspaceId).order("created_at"),
     conversation,
+    // Owner-only by RLS: a guest gets an empty list.
+    sb.from("workspace_memories").select("id, text").eq("workspace_id", workspaceId).order("created_at"),
   ]);
-  for (const [res, what] of [[dash, "dashboards"], [alerts, "alerts"], [agents, "agents"], [conv, "conversations"]] as const) ok(res, what);
+  for (const [res, what] of [[dash, "dashboards"], [alerts, "alerts"], [agents, "agents"], [conv, "conversations"], [mems, "workspace_memories"]] as const) ok(res, what);
 
   const agentList: Agent[] = (agents.data ?? []).map((a) => ({ id: a.id, name: a.name, objective: a.objective, tools: a.config?.tools ?? [] }));
   const agent = agentId ? agentList.find((a) => a.id === agentId) : undefined;
@@ -81,6 +83,7 @@ export async function loadWorkspaceState(sb: SupabaseClient, workspaceId: string
     dashboardRowId: dash.data?.id,
     alerts: (alerts.data ?? []) as Alert[],
     agents: agentList,
+    memories: (mems.data ?? []) as Memory[],
     agent,
     history: conv.data?.history ?? [],
     messages: conv.data?.messages ?? [],
@@ -91,7 +94,7 @@ export async function loadWorkspaceState(sb: SupabaseClient, workspaceId: string
 export async function saveWorkspaceState(
   sb: SupabaseClient,
   workspaceId: string,
-  s: StoreState & { kind: WorkspaceState["kind"]; dashboardRowId?: string; agentId?: string; history: Msg[]; messages: DisplayMessage[] },
+  s: StoreState & { removedMemoryIds?: string[]; kind: WorkspaceState["kind"]; dashboardRowId?: string; agentId?: string; history: Msg[]; messages: DisplayMessage[] },
 ): Promise<Agent[]> {
   ok(await sb.from("workspaces").update({ profile: s.kind === "pessoal" ? s.person : s.company.cnpj ? { ...s.company, cnpj: encryptField(s.company.cnpj) } : s.company }).eq("id", workspaceId), "workspaces");
 
@@ -105,6 +108,11 @@ export async function saveWorkspaceState(
 
   const newAlerts = s.alerts.filter((a) => !UUID.test(a.id)).map((a) => ({ workspace_id: workspaceId, rule: a.rule, active: a.active }));
   if (newAlerts.length) ok(await sb.from("alerts").insert(newAlerts), "alerts");
+
+  const removed = (s.removedMemoryIds ?? []).filter((id) => UUID.test(id));
+  if (removed.length) ok(await sb.from("workspace_memories").delete().in("id", removed).eq("workspace_id", workspaceId), "workspace_memories");
+  const newMemories = s.memories.filter((m) => !UUID.test(m.id)).map((m) => ({ workspace_id: workspaceId, text: m.text }));
+  if (newMemories.length) ok(await sb.from("workspace_memories").insert(newMemories), "workspace_memories");
 
   const saved: Agent[] = [];
   for (const a of s.agents) {
