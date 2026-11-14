@@ -1,4 +1,3 @@
-import { Button } from "@/ui/log";
 import { ESTIMATE_KINDS, type Dashboard, type Widget, type WidgetSize } from "./types";
 import { widgetTransitionName } from "./motion";
 import { WidgetView } from "./widgets";
@@ -40,9 +39,9 @@ export function DashboardView({ dashboard, loading = false, onAsk }: { dashboard
             <div key={w.id} className={`lg-widget-enter ${SPAN[w.size]}`} style={{ viewTransitionName: widgetTransitionName(w.id) }}>
               <WidgetView widget={w} compact={compact} showDisclaimer={ESTIMATE_KINDS.includes(w.kind)} />
               {onAsk && (
-                <Button type="button" variant="ghost" size="sm" aria-label={`Perguntar sobre isto: ${w.title}`} onClick={() => onAsk(w)}>
+                <button type="button" aria-label={`Perguntar sobre isto: ${w.title}`} onClick={() => onAsk(w)} className="mt-1 text-sm font-medium text-ink underline underline-offset-2">
                   Perguntar sobre isto
-                </Button>
+                </button>
               )}
             </div>
           ))}
