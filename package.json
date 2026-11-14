@@ -14,7 +14,8 @@
     "test:rls": "vitest run --config vitest.rls.config.mts",
     "db:start": "supabase start -x imgproxy,edge-runtime,vector,logflare,studio",
     "db:reset": "supabase db reset",
-    "test:live": "vitest run --config vitest.live.config.mts"
+    "test:live": "vitest run --config vitest.live.config.mts",
+    "api:types": "openapi-typescript api/openapi.json -o src/api/schema.d.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -40,6 +41,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.29",
     "jsdom": "^31.0.0",
+    "openapi-typescript": "^7.13.0",
     "supabase": "^3.1.0",
     "tailwindcss": "^4",
     "typescript": "^5",
