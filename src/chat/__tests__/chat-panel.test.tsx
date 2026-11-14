@@ -3,6 +3,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { sampleDashboard } from "@/dashboard/fixtures";
 import { ChatPanel } from "../chat-panel";
 
+const clearConversation = vi.hoisted(() => vi.fn());
+vi.mock("../actions", () => ({ clearConversation }));
+
 const reply = (body: unknown, ok = true) => vi.fn().mockResolvedValue({ ok, headers: new Headers(), json: async () => body });
 const setup = () =>
   render(<ChatPanel workspaceId="ws1" initialMessages={[{ role: "assistant", text: "Olá!" }]} initialDashboard={{ ...sampleDashboard, widgets: [] }} />);
@@ -189,5 +192,28 @@ describe("ChatPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: `Perguntar sobre isto: ${sampleDashboard.widgets[0].title}` }));
     fireEvent.click(screen.getByRole("button", { name: "Remover o bloco da pergunta" }));
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("deleting the conversation asks first, then empties the chat", async () => {
+    clearConversation.mockResolvedValue({ ok: true });
+    setup();
+    expect(screen.getByText("Olá!")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Apagar conversa" }));
+    expect(clearConversation).not.toHaveBeenCalled();
+    fireEvent.click(within(screen.getByRole("group", { name: "Confirmar apagar conversa" })).getByRole("button", { name: "Apagar" }));
+    await waitFor(() => expect(clearConversation).toHaveBeenCalledWith({ workspaceId: "ws1", agentId: undefined }));
+    await waitFor(() => expect(screen.queryByText("Olá!")).not.toBeInTheDocument());
+  });
+
+  it("cancelling the deletion keeps the conversation, and a refusal shows a clear message", async () => {
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: "Apagar conversa" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(screen.getByText("Olá!")).toBeInTheDocument();
+    clearConversation.mockResolvedValue({ ok: false });
+    fireEvent.click(screen.getByRole("button", { name: "Apagar conversa" }));
+    fireEvent.click(within(screen.getByRole("group", { name: "Confirmar apagar conversa" })).getByRole("button", { name: "Apagar" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/Só o dono/);
+    expect(screen.getByText("Olá!")).toBeInTheDocument();
   });
 });
