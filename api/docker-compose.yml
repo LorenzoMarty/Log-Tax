@@ -1,0 +1,10 @@
+# Development: the API next to the local Supabase (`npm run db:start` from the repo root).
+services:
+  api:
+    build: .
+    ports:
+      - "8100:8000"
+    environment:
+      LOGTAX_ENVIRONMENT: development
+      LOGTAX_CORS_ORIGINS: '["http://localhost:3000","http://localhost:3457"]'
+      LOGTAX_SUPABASE_URL: http://host.docker.internal:55321

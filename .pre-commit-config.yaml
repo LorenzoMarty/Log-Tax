@@ -18,3 +18,9 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+      - id: api-check
+        name: api (ruff, mypy, import-linter, pytest)
+        entry: bash -c 'cd api && poetry run ruff check . && poetry run ruff format --check . && poetry run mypy && poetry run lint-imports && poetry run pytest -q'
+        language: system
+        files: ^api/
+        pass_filenames: false

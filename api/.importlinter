@@ -1,0 +1,20 @@
+[importlinter]
+root_package = app
+
+# The tax engine is pure: it must never reach for the chat, the database or the HTTP layer.
+[importlinter:contract:engine-is-pure]
+name = engine does not import chat, db or api
+type = forbidden
+source_modules = app.engine
+forbidden_modules =
+    app.chat
+    app.db
+    app.api
+
+# The chat may use the engine, but not the other way round, and it does not talk to HTTP routes.
+[importlinter:contract:chat-below-api]
+name = chat does not import the HTTP layer
+type = forbidden
+source_modules = app.chat
+forbidden_modules =
+    app.api

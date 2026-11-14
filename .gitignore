@@ -46,3 +46,11 @@ next-env.d.ts
 /test-results
 !.env.example
 eval-reports/
+
+# api/ (Python)
+api/.venv/
+api/.mypy_cache/
+api/.ruff_cache/
+api/.pytest_cache/
+api/.coverage
+__pycache__/
