@@ -7,6 +7,14 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.core.logging import log, request_id_var
 
 
+class DbError(Exception):
+    """The Data API refused or failed. `status` is what PostgREST answered; the detail is never shown to the client."""
+
+    def __init__(self, status: int, detail: str) -> None:
+        super().__init__(detail)
+        self.status = status
+
+
 class ErrorBody(BaseModel):
     code: str
     message: str
@@ -30,6 +38,15 @@ _HTTP_MESSAGES = {
 }
 
 
+def db_error_status(status: int) -> tuple[int, str, str]:
+    """What the client learns when the database refuses: RLS denials look like "not found", never like details."""
+    if status in (401, 403):
+        return 403, *_HTTP_MESSAGES[403]
+    if status == 404:
+        return 404, *_HTTP_MESSAGES[404]
+    return 502, "upstream_error", "Não consegui falar com o banco agora. Tente de novo."
+
+
 def install_error_handlers(app: FastAPI) -> None:
     # Starlette's class is the base of FastAPI's, so this also covers unknown routes (404) and wrong methods (405).
     @app.exception_handler(StarletteHTTPException)
@@ -39,6 +56,12 @@ def install_error_handlers(app: FastAPI) -> None:
         if exc.headers:
             response.headers.update(exc.headers)
         return response
+
+    @app.exception_handler(DbError)
+    async def _db(_: Request, exc: DbError) -> JSONResponse:
+        status, code, message = db_error_status(exc.status)
+        log.info("db_refused", extra={"db_status": exc.status})
+        return error_response(status, code, message)
 
     @app.exception_handler(RequestValidationError)
     async def _validation(_: Request, __: RequestValidationError) -> JSONResponse:
