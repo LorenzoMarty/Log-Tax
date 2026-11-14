@@ -13,16 +13,38 @@ beforeEach(() => {
 });
 
 describe("registry", () => {
-  it("exposes the 17 tools with JSON-schema parameters", () => {
-    expect(TOOL_NAMES).toHaveLength(17);
+  it("exposes the 18 tools with JSON-schema parameters", () => {
+    expect(TOOL_NAMES).toHaveLength(18);
     const specs = toolSpecs(ctx.scope);
-    expect(specs).toHaveLength(17);
+    expect(specs).toHaveLength(18);
     for (const s of specs) expect(s.parameters).toMatchObject({ type: "object" });
   });
 
   it("unknown tool and malformed JSON are errors, not crashes", async () => {
     expect((await call("drop_database")).status).toBe("error");
     expect((await invokeTool(ctx, "get_tax_diagnosis", "{not json")).status).toBe("error");
+  });
+});
+
+describe("reform impact tool", () => {
+  it("asks for the missing inputs and never invents rates", async () => {
+    const r = await call("get_reform_impact", {});
+    expect(r).toMatchObject({ status: "ok", data: { status: "insufficient_data" } });
+  });
+  it("shows the year-by-year load against today for a Presumido company", async () => {
+    ctx.store.saveCompany({ regime: "presumido", activity: "servico", monthlyRevenue: 100_000, monthlyPurchases: 20_000 });
+    const real = { ...ctx, engine: createRealEngine({ competence: "2026-03" }) };
+    const r = await call("get_reform_impact", { category: "geral", cbsReferenceRate: 0.088, ibsReferenceRate: 0.177 }, real);
+    const data = (r as { data: { status: string; value?: { years: { year: number }[]; assumptions: string[] } } }).data;
+    expect(data.status).toBe("ok");
+    expect(data.value!.years.map((y) => y.year)).toEqual([2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033]);
+    expect(data.value!.assumptions.length).toBeGreaterThan(3);
+  });
+  it("sends Simples companies to the Simples comparison", async () => {
+    ctx.store.saveCompany({ regime: "simples", monthlyRevenue: 50_000, monthlyPurchases: 10_000 });
+    const real = { ...ctx, engine: createRealEngine({ competence: "2026-03" }) };
+    const r = await call("get_reform_impact", { category: "geral", cbsReferenceRate: 0.088, ibsReferenceRate: 0.177 }, real);
+    expect(JSON.stringify(r)).toMatch(/Simples/);
   });
 });
 
