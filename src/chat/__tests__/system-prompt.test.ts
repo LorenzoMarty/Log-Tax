@@ -78,3 +78,21 @@ describe("memories in the prompt", () => {
     expect(buildSystemPrompt({ workspaceName: "X" })).not.toMatch(/pediu para você lembrar/);
   });
 });
+
+describe("scope, honesty and plain language (#115)", () => {
+  const prompt = buildSystemPrompt({ workspaceName: "Minha Empresa" });
+  it("refuses off-topic requests politely and steers back to taxes", () => {
+    expect(prompt).toMatch(/Escopo:[^"]*recuse com educação/);
+  });
+  it("refuses tax evasion and points to legal planning", () => {
+    expect(prompt).toMatch(/sonegação é crime/);
+    expect(prompt).toMatch(/dentro da lei/);
+  });
+  it("is not the accountant and gives no definitive opinion or promise", () => {
+    expect(prompt).toMatch(/não substitui contador/);
+    expect(prompt).toMatch(/parecer definitivo/);
+  });
+  it("explains every technical term the first time", () => {
+    expect(prompt).toMatch(/termo técnico[^"]*explicação curta/);
+  });
+});
