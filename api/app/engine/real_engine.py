@@ -22,6 +22,7 @@ from app.engine.presumido import presumido_quarter, spread_over_months
 from app.engine.result import EngineResult, InsufficientData, NoneFound, NotApplicable, Ok
 from app.engine.rulebook import RuleBook, RuleVersion, competence_of, ref_of
 from app.engine.rules_data import default_rulebook
+from app.engine.selective_tax import selective_tax
 from app.engine.serial import Camel
 from app.engine.simples import annex_by_fator_r, fator_r, rbt12_of, simples_das
 from app.engine.types import DISCLAIMER, CalcStep, CompanyProfile, Diagnosis, PersonProfile, TaxLine, month_revenue
@@ -647,7 +648,16 @@ class RealEngine:
         return self._real(p)
 
     def diagnose(self, p: CompanyProfile) -> EngineResult[Diagnosis]:
-        return self._with_payroll(p, self._with_iss(p, self._with_icms(p, self._regime(p))))
+        return self._with_selective_notice(p, self._with_payroll(p, self._with_iss(p, self._with_icms(p, self._regime(p)))))
+
+    def _with_selective_notice(self, p: CompanyProfile, result: EngineResult[Diagnosis]) -> EngineResult[Diagnosis]:
+        """A company in the Imposto Seletivo list sees the notice next to its diagnosis (#104); the total is unchanged."""
+        if not isinstance(result, Ok):
+            return result
+        notice = selective_tax(self.competence, p.cnaes or [])
+        if not isinstance(notice, Ok):
+            return result
+        return Ok(replace(result.value, assumptions=[*result.value.assumptions, notice.value.message]))
 
     def simulate(self, p: CompanyProfile, overrides: dict[str, Any]) -> EngineResult[Simulation]:
         current = self.diagnose(p)
