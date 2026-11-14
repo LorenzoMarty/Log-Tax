@@ -40,6 +40,12 @@ const person = z.strictObject({
   taxWithheld: z.number().min(0),
 });
 
+const MAX_WORKSPACES = 10;
+const needWorkspaces = (ctx: ToolContext) => {
+  if (!ctx.workspaces) throw new ToolError("Gerenciar espaços não está disponível agora.");
+  return ctx.workspaces;
+};
+
 const none = z.strictObject({});
 /** What a scenario may change: the fields that drive the calculation. Identity data (CNPJ, name, series) is not simulated. */
 const scenarioChanges = companyFieldsSchema
@@ -188,6 +194,46 @@ const TOOLS: Tool[] = [
     schema: z.strictObject({ id: z.string().min(1) }),
     run(ctx, a) {
       if (!ctx.store.removeMemory(a.id)) throw new ToolError("Não encontrei esse item na memória.");
+      return { removed: a.id };
+    },
+  }),
+  defineTool({
+    name: "list_workspaces",
+    readOnly: true,
+    description: "Lista os espaços (empresas e vidas pessoais) que o usuário tem, com o id de cada um.",
+    schema: none,
+    async run(ctx) {
+      return (await needWorkspaces(ctx).list()).map((w) => ({ ...w, atual: w.id === ctx.scope.workspaceId, url: `/workspace/${w.id}` }));
+    },
+  }),
+  defineTool({
+    name: "create_workspace",
+    description: "Cria um novo espaço vazio (ex.: uma segunda empresa ou o espaço de outra pessoa) e devolve o caminho para abri-lo. Máximo de 10 espaços.",
+    schema: z.strictObject({ name: z.string().trim().min(1).max(60), kind: z.enum(["empresa", "pessoal"]) }),
+    async run(ctx, a) {
+      const admin = needWorkspaces(ctx);
+      if ((await admin.list()).length >= MAX_WORKSPACES) throw new ToolError(`Você já tem ${MAX_WORKSPACES} espaços. Remova algum antes de criar outro.`);
+      const w = await admin.create(a.name, a.kind);
+      return { ...w, url: `/workspace/${w.id}` };
+    },
+  }),
+  defineTool({
+    name: "rename_workspace",
+    description: "Renomeia um espaço (use o id de list_workspaces).",
+    schema: z.strictObject({ id: z.uuid(), name: z.string().trim().min(1).max(60) }),
+    async run(ctx, a) {
+      if (!(await needWorkspaces(ctx).rename(a.id, a.name))) throw new ToolError("Não encontrei esse espaço ou você não é o dono dele.");
+      return { id: a.id, name: a.name };
+    },
+  }),
+  defineTool({
+    name: "remove_workspace",
+    destructive: true,
+    description: "Remove PERMANENTEMENTE um espaço e tudo que há nele (painel, conversas, dados). Não remove o espaço em que a conversa acontece.",
+    schema: z.strictObject({ id: z.uuid() }),
+    async run(ctx, a) {
+      if (a.id === ctx.scope.workspaceId) throw new ToolError("Não posso remover o espaço em que estamos conversando. Abra outro espaço e peça por lá.");
+      if (!(await needWorkspaces(ctx).remove(a.id))) throw new ToolError("Não encontrei esse espaço ou você não é o dono dele.");
       return { removed: a.id };
     },
   }),
