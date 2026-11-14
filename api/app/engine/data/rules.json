@@ -1,5 +1,20 @@
 {
   "version": 1,
+  "constants": {
+    "icmsInterstate": {
+      "imported": 0.04,
+      "southSoutheastToOthers": 0.07,
+      "general": 0.12
+    },
+    "icmsSouthSoutheastExceptEs": [
+      "PR",
+      "SC",
+      "RS",
+      "SP",
+      "RJ",
+      "MG"
+    ]
+  },
   "rules": [
     {
       "id": "folha-encargos",
