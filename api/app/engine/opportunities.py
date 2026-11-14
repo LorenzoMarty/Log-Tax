@@ -8,6 +8,7 @@ from app.engine.compare import REGIME_LABEL, compare_regimes
 from app.engine.format import number_pt
 from app.engine.result import EngineResult, InsufficientData, Ok
 from app.engine.rulebook import RuleBook, RuleVersion
+from app.engine.serial import Camel
 from app.engine.simples import annex_by_fator_r, fator_r
 from app.engine.types import CompanyProfile, Diagnosis, month_revenue
 
@@ -17,7 +18,7 @@ class OpportunityEngine(Protocol):
 
 
 @dataclass(frozen=True)
-class Opportunity:
+class Opportunity(Camel):
     id: str
     title: str
     status: Literal["found", "insufficient_data", "not_applicable"]
@@ -30,7 +31,7 @@ class Opportunity:
 
 
 @dataclass(frozen=True)
-class OpportunitySet:
+class OpportunitySet(Camel):
     items: list[Opportunity]
     annual_savings: Decimal
 

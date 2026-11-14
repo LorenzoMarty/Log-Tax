@@ -9,6 +9,7 @@ from datetime import date, timedelta
 from typing import Any
 
 from app.engine.rules_data import default_constants
+from app.engine.serial import Camel
 
 
 def _calendar() -> dict[str, Any]:
@@ -33,7 +34,7 @@ def next_business_day(day: str) -> str:
 
 
 @dataclass(frozen=True)
-class Deadline:
+class Deadline(Camel):
     id: str
     label: str
     date: str  # YYYY-MM-DD, already moved off weekends and holidays when the rule says so
@@ -45,7 +46,7 @@ class Deadline:
 
 
 @dataclass(frozen=True)
-class DeadlineList:
+class DeadlineList(Camel):
     deadlines: list[Deadline]
     not_covered: list[str]
     holiday_scope: str = "nacional"

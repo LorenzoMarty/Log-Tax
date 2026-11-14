@@ -7,6 +7,8 @@ from datetime import date, timedelta
 from itertools import pairwise
 from typing import Literal
 
+from app.engine.serial import Camel
+
 type Confidence = Literal["low", "medium", "high"]
 
 _COMPETENCE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
@@ -29,7 +31,7 @@ class RuleVersion[T]:
 
 
 @dataclass(frozen=True)
-class RuleRef:
+class RuleRef(Camel):
     """What a result says about each rule it used, so any number traces back to a law and a date."""
 
     id: str
@@ -40,7 +42,7 @@ class RuleRef:
 
 
 @dataclass(frozen=True)
-class RuleStatus:
+class RuleStatus(Camel):
     id: str
     name: str
     valid_until: str
@@ -48,7 +50,7 @@ class RuleStatus:
 
 
 @dataclass(frozen=True)
-class ChangelogEntry:
+class ChangelogEntry(Camel):
     id: str
     name: str
     valid_from: str

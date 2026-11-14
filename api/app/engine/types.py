@@ -2,7 +2,10 @@
 
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Any, Literal
+from typing import Literal
+
+from app.engine.rulebook import RuleRef
+from app.engine.serial import Camel
 
 
 @dataclass(frozen=True)
@@ -25,7 +28,7 @@ DISCLAIMER = "Estimativa ilustrativa: valide com um contador antes de decidir."
 
 
 @dataclass(frozen=True)
-class CalcStep:
+class CalcStep(Camel):
     """One line of the calculation memory: what was computed, how, and which rule (with its source) says so."""
 
     label: str
@@ -82,14 +85,14 @@ class CompanyProfile:
 
 
 @dataclass(frozen=True)
-class TaxLine:
+class TaxLine(Camel):
     tax: str  # ICMS, PIS/COFINS, IRPJ, CSLL, OUTROS, CPP, ISS, IPI, FOLHA
     label: str
     amount: Decimal
 
 
 @dataclass(frozen=True)
-class Diagnosis:
+class Diagnosis(Camel):
     monthly_revenue: Decimal
     monthly_total: Decimal
     annual_total: Decimal
@@ -98,5 +101,5 @@ class Diagnosis:
     assumptions: list[str]
     disclaimer: str
     rules_version: str
-    rules_used: list[Any] = field(default_factory=list)
+    rules_used: list[RuleRef] = field(default_factory=list)
     steps: list[CalcStep] = field(default_factory=list)

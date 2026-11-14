@@ -6,11 +6,12 @@ from decimal import Decimal
 from app.engine.real_engine import RealEngine
 from app.engine.result import InsufficientData, NotApplicable, Ok
 from app.engine.rulebook import RuleBook
+from app.engine.serial import Camel
 from app.engine.types import CompanyProfile
 
 
 @dataclass(frozen=True)
-class HistoryPoint:
+class HistoryPoint(Camel):
     month: str
     status: str  # "ok" or "missing"
     monthly_total: Decimal | None = None
@@ -19,7 +20,7 @@ class HistoryPoint:
 
 
 @dataclass(frozen=True)
-class Comparison:
+class Comparison(Camel):
     from_month: str
     to_month: str
     from_total: Decimal
@@ -29,7 +30,7 @@ class Comparison:
 
 
 @dataclass(frozen=True)
-class TaxHistory:
+class TaxHistory(Camel):
     points: list[HistoryPoint]
     gaps: list[str] | None = field(default=None)  # why a requested comparison could not be made, in plain language
     comparison: Comparison | None = None  # present only when both months were computed: never an estimate on a gap

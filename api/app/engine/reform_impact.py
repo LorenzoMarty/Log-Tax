@@ -9,11 +9,12 @@ from app.engine.money import to_cents
 from app.engine.reform import reform_taxes
 from app.engine.result import EngineResult, InsufficientData, NotApplicable, Ok
 from app.engine.rulebook import RuleBook, RuleVersion
+from app.engine.serial import Camel
 from app.engine.types import CompanyProfile, Diagnosis
 
 
 @dataclass(frozen=True)
-class ReformYear:
+class ReformYear(Camel):
     year: int
     legacy_cents: int  # annual load of the old taxes that remain in the year
     reform_cents: int  # annual IBS + CBS
@@ -22,7 +23,7 @@ class ReformYear:
 
 
 @dataclass(frozen=True)
-class ReformImpact:
+class ReformImpact(Camel):
     today_cents: int
     years: list[ReformYear]
     assumptions: list[str]

@@ -22,6 +22,7 @@ from app.engine.presumido import presumido_quarter, spread_over_months
 from app.engine.result import EngineResult, InsufficientData, NoneFound, NotApplicable, Ok
 from app.engine.rulebook import RuleBook, RuleVersion, competence_of, ref_of
 from app.engine.rules_data import default_rulebook
+from app.engine.serial import Camel
 from app.engine.simples import annex_by_fator_r, fator_r, rbt12_of, simples_das
 from app.engine.types import DISCLAIMER, CalcStep, CompanyProfile, Diagnosis, PersonProfile, TaxLine, month_revenue
 
@@ -63,7 +64,7 @@ def _ratio(numerator: int, denominator: int) -> Decimal:
 
 
 @dataclass(frozen=True)
-class Simulation:
+class Simulation(Camel):
     current: Diagnosis
     scenario: Diagnosis
 

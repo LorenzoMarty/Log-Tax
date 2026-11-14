@@ -8,13 +8,14 @@ from app.engine.format import brl, number_pt
 from app.engine.money import from_cents, mul_rate, rounding_for, to_cents
 from app.engine.result import EngineResult, InsufficientData, NotApplicable, Ok
 from app.engine.rulebook import RuleBook, RuleRef, RuleVersion, ref_of
+from app.engine.serial import Camel
 from app.engine.types import DISCLAIMER, CalcStep, PersonProfile
 
 type Model = Literal["simplificada", "completa"]
 
 
 @dataclass(frozen=True)
-class IrScenario:
+class IrScenario(Camel):
     model: Model
     deductions: Decimal
     taxable_base: Decimal
@@ -23,7 +24,7 @@ class IrScenario:
 
 
 @dataclass(frozen=True)
-class PersonDiagnosis:
+class PersonDiagnosis(Camel):
     annual_gross_income: Decimal
     simplified: IrScenario
     complete: IrScenario
