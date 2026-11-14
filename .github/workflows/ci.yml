@@ -34,6 +34,25 @@ jobs:
       - run: poetry run lint-imports
       - run: poetry run pytest
 
+  api-rls:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: npm ci
+      - run: npx supabase start -x imgproxy,edge-runtime,vector,logflare,studio,mailpit
+      - run: pip install "poetry>=2,<3" && cd api && poetry install
+      - name: JWT validation and RLS through the API data path (owner, guest, stranger)
+        run: |
+          eval "$(npx supabase status -o env | sed 's/^/export /')"
+          export LOGTAX_SUPABASE_URL="$API_URL" LOGTAX_SUPABASE_ANON_KEY="$ANON_KEY" LOGTAX_SUPABASE_JWT_SECRET="$JWT_SECRET" LOGTAX_SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY"
+          cd api && poetry run pytest tests/integration --no-cov
+
   rls:
     runs-on: ubuntu-latest
     steps:
