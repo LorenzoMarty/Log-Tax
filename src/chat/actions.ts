@@ -4,6 +4,7 @@ import { z } from "zod";
 import { audit } from "@/lib/audit";
 import { createClient } from "@/lib/supabase/server";
 import { deleteConversation } from "./conversation";
+import { rateMessage, ratingInput, type RatingInput } from "./rating";
 
 const input = z.object({ workspaceId: z.uuid(), agentId: z.uuid().optional() });
 
@@ -19,4 +20,11 @@ export async function clearConversation(raw: { workspaceId: string; agentId?: st
   const removed = await deleteConversation(sb, parsed.data.workspaceId, parsed.data.agentId);
   if (removed) await audit(sb, parsed.data.workspaceId, "destructive_action", "delete_conversation");
   return { ok: removed };
+}
+
+/** Thumbs up/down (with an optional reason) on one AI answer. */
+export async function rateAnswer(raw: RatingInput): Promise<{ ok: boolean }> {
+  const parsed = ratingInput.safeParse(raw);
+  if (!parsed.success) return { ok: false };
+  return { ok: await rateMessage(await createClient(), parsed.data) };
 }

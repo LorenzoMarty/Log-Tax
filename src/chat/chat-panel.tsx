@@ -11,7 +11,7 @@ import type { Dashboard } from "@/dashboard/types";
 import { Button, Input, Panel } from "@/ui/log";
 import type { PendingConfirmation } from "./orchestrator";
 import { nextQuestions, type SpaceProgress } from "./next-questions";
-import { clearConversation } from "./actions";
+import { clearConversation, rateAnswer } from "./actions";
 import { NDJSON, toolProgressLabel, type ChatStreamLine } from "./progress";
 import { RequestExamples } from "./request-examples";
 import type { Agent } from "./types";
@@ -79,6 +79,10 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
   // The block the user chose with "Perguntar sobre isto": it goes with the next message as context.
   const [topic, setTopic] = useState<Widget | null>(null);
   const [confirmingClear, setConfirmingClear] = useState(false);
+  // Ratings given in this session, by message position; `reasonFor` is the answer whose "what was missing?" box is open.
+  const [rated, setRated] = useState<Record<number, 1 | -1>>({});
+  const [reasonFor, setReasonFor] = useState<number | null>(null);
+  const [reason, setReason] = useState("");
 
   async function send(message: string, approve?: string[], display = message) {
     setBusy(true);
@@ -111,6 +115,17 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
     }
   }
 
+  async function rate(index: number, rating: 1 | -1, why?: string) {
+    const r = await rateAnswer({ workspaceId: props.workspaceId, messageIndex: index, rating, reason: why });
+    if (!r.ok) {
+      setError("Não consegui registrar sua avaliação agora.");
+      return;
+    }
+    setRated((m) => ({ ...m, [index]: rating }));
+    setReasonFor(null);
+    setReason("");
+  }
+
   async function clear() {
     setConfirmingClear(false);
     setError("");
@@ -120,6 +135,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
       return;
     }
     setMessages([]);
+    setRated({});
     setPending([]);
     setTopic(null);
   }
@@ -158,9 +174,41 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
             </>
           )}
           {messages.map((m, i) => (
-            <p key={i} data-role={m.role} className={`lg-msg lg-msg-${m.role === "user" ? "user" : "assistant"} whitespace-pre-line`}>
-              {m.role === "assistant" ? withReportLinks(m.text) : m.text}
-            </p>
+            <div key={i} className="flex flex-col gap-1">
+              <p data-role={m.role} className={`lg-msg lg-msg-${m.role === "user" ? "user" : "assistant"} whitespace-pre-line`}>
+                {m.role === "assistant" ? withReportLinks(m.text) : m.text}
+              </p>
+              {m.role === "assistant" && i > 0 && (
+                <div className="flex flex-wrap items-center gap-2 text-sm text-ink">
+                  {rated[i] ? (
+                    <span role="status">Obrigado pela avaliação.</span>
+                  ) : (
+                    <>
+                      <button type="button" className="underline underline-offset-2" aria-label="Resposta útil" onClick={() => void rate(i, 1)}>
+                        Útil
+                      </button>
+                      <button type="button" className="underline underline-offset-2" aria-label="Resposta não ajudou" onClick={() => setReasonFor(i)}>
+                        Não ajudou
+                      </button>
+                    </>
+                  )}
+                  {reasonFor === i && !rated[i] && (
+                    <form
+                      className="flex w-full gap-2"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        void rate(i, -1, reason.trim() || undefined);
+                      }}
+                    >
+                      <Input aria-label="O que faltou? (opcional)" placeholder="O que faltou? (opcional)" value={reason} maxLength={500} onChange={(e) => setReason(e.target.value)} className="min-w-0 flex-1" />
+                      <Button type="submit" size="sm" variant="inverse">
+                        Enviar avaliação
+                      </Button>
+                    </form>
+                  )}
+                </div>
+              )}
+            </div>
           ))}
           {busy && <p className="text-sm text-ink-subtle">{progress || "Pensando…"}</p>}
           {suggestions.length > 0 && <RequestExamples title="Sugestões" prompts={suggestions} disabled={busy} onPick={(text) => void send(text)} />}
