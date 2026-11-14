@@ -1,5 +1,7 @@
 import { upcomingDeadlines } from "@/engine/calendar";
 import { taxHistory } from "@/engine/history";
+import { DEFAULT_RULEBOOK } from "@/engine/real-engine";
+import { reformImpact } from "@/engine/reform-impact";
 import { z } from "zod";
 import type { Widget } from "@/dashboard/types";
 import type { ToolContext, ToolOutcome, ToolSpec, Scope } from "./types";
@@ -146,6 +148,23 @@ const TOOLS: Tool[] = [
     }),
     engine: true,
     run: (ctx, a) => taxHistory(ctx.store.getCompany(), a.to, a.months ?? 12, a.compareWith),
+  }),
+  defineTool({
+    name: "get_reform_impact",
+    readOnly: true,
+    kinds: ["empresa"],
+    description:
+      "Como a Reforma Tributária (IBS/CBS) muda a carga anual da empresa, ano a ano de 2026 a 2033, comparada à atual. Precisa da categoria da operação e das alíquotas de referência de CBS e IBS (informadas pelo usuário; não invente). Sem esses dados responde o que falta.",
+    schema: z.strictObject({
+      category: z.enum(["geral", "saude", "educacao", "medicamentos", "dispositivos_medicos", "acessibilidade", "cesta_basica", "profissional_liberal"]).optional(),
+      cbsReferenceRate: z.number().min(0).max(1).optional(),
+      ibsReferenceRate: z.number().min(0).max(1).optional(),
+    }),
+    engine: true,
+    run(ctx, a) {
+      const company = ctx.store.getCompany();
+      return reformImpact(DEFAULT_RULEBOOK, company, () => ctx.engine.diagnose(company), a);
+    },
   }),
   defineTool({
     name: "explain_result",
