@@ -11,6 +11,7 @@ import type { Dashboard } from "@/dashboard/types";
 import { Button, Input, Panel } from "@/ui/log";
 import type { PendingConfirmation } from "./orchestrator";
 import { nextQuestions, type SpaceProgress } from "./next-questions";
+import { clearConversation } from "./actions";
 import { NDJSON, toolProgressLabel, type ChatStreamLine } from "./progress";
 import { RequestExamples } from "./request-examples";
 import type { Agent } from "./types";
@@ -77,6 +78,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
   const inputRef = useRef<HTMLInputElement>(null);
   // The block the user chose with "Perguntar sobre isto": it goes with the next message as context.
   const [topic, setTopic] = useState<Widget | null>(null);
+  const [confirmingClear, setConfirmingClear] = useState(false);
 
   async function send(message: string, approve?: string[], display = message) {
     setBusy(true);
@@ -107,6 +109,19 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
       setProgress("");
       abort.current = null;
     }
+  }
+
+  async function clear() {
+    setConfirmingClear(false);
+    setError("");
+    const r = await clearConversation({ workspaceId: props.workspaceId, agentId: props.agentId });
+    if (!r.ok) {
+      setError("Não consegui apagar a conversa agora. Só o dono do espaço pode apagá-la.");
+      return;
+    }
+    setMessages([]);
+    setPending([]);
+    setTopic(null);
   }
 
   // Follow-ups after the AI answers (#119); not in a specialised AI's conversation, whose tools are scoped down.
@@ -150,6 +165,22 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
           {busy && <p className="text-sm text-ink-subtle">{progress || "Pensando…"}</p>}
           {suggestions.length > 0 && <RequestExamples title="Sugestões" prompts={suggestions} disabled={busy} onPick={(text) => void send(text)} />}
         </div>
+        {messages.length > 0 &&
+          (confirmingClear ? (
+            <div role="group" aria-label="Confirmar apagar conversa" className="flex flex-wrap items-center gap-2 rounded-[var(--radius-md)] bg-warning-tint px-3 py-2 text-sm text-warning-ink">
+              <span>Apagar esta conversa de vez? Isso não pode ser desfeito.</span>
+              <Button variant="inverse" size="sm" onClick={() => void clear()}>
+                Apagar
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setConfirmingClear(false)}>
+                Cancelar
+              </Button>
+            </div>
+          ) : (
+            <Button variant="ghost" size="sm" disabled={busy} onClick={() => setConfirmingClear(true)}>
+              Apagar conversa
+            </Button>
+          ))}
         {pending.map((p) => (
           <div key={p.key} className="rounded-[var(--radius-md)] bg-warning-tint p-4 text-sm text-warning-ink">
             <p>{p.summary}</p>
