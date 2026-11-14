@@ -9,6 +9,8 @@ export async function deleteConversation(sb: SupabaseClient, workspaceId: string
   const q = agentId
     ? sb.from("agent_conversations").delete().eq("workspace_id", workspaceId).eq("agent_id", agentId)
     : sb.from("conversations").delete().eq("workspace_id", workspaceId);
+  // The ratings point at positions in this conversation: they go with it.
+  if (!agentId) await sb.from("message_ratings").delete().eq("workspace_id", workspaceId);
   const { data, error } = await q.select("workspace_id");
   if (error) throw new Error(`conversations: ${error.message}`);
   return (data ?? []).length > 0;

@@ -4,7 +4,8 @@ import { sampleDashboard } from "@/dashboard/fixtures";
 import { ChatPanel } from "../chat-panel";
 
 const clearConversation = vi.hoisted(() => vi.fn());
-vi.mock("../actions", () => ({ clearConversation }));
+const rateAnswer = vi.hoisted(() => vi.fn());
+vi.mock("../actions", () => ({ clearConversation, rateAnswer }));
 
 const reply = (body: unknown, ok = true) => vi.fn().mockResolvedValue({ ok, headers: new Headers(), json: async () => body });
 const setup = () =>
@@ -215,5 +216,31 @@ describe("ChatPanel", () => {
     fireEvent.click(within(screen.getByRole("group", { name: "Confirmar apagar conversa" })).getByRole("button", { name: "Apagar" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(/Só o dono/);
     expect(screen.getByText("Olá!")).toBeInTheDocument();
+  });
+
+  it("rates an answer up, once, tied to its position", async () => {
+    rateAnswer.mockResolvedValue({ ok: true });
+    render(<ChatPanel workspaceId="ws1" initialMessages={[{ role: "user", text: "oi" }, { role: "assistant", text: "Olá!" }]} initialDashboard={{ ...sampleDashboard, widgets: [] }} />);
+    fireEvent.click(screen.getByRole("button", { name: "Resposta útil" }));
+    await waitFor(() => expect(rateAnswer).toHaveBeenCalledWith({ workspaceId: "ws1", messageIndex: 1, rating: 1, reason: undefined }));
+    expect(await screen.findByText("Obrigado pela avaliação.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Resposta útil" })).not.toBeInTheDocument();
+  });
+
+  it("a negative rating takes an optional reason", async () => {
+    rateAnswer.mockResolvedValue({ ok: true });
+    render(<ChatPanel workspaceId="ws1" initialMessages={[{ role: "user", text: "oi" }, { role: "assistant", text: "Olá!" }]} initialDashboard={{ ...sampleDashboard, widgets: [] }} />);
+    fireEvent.click(screen.getByRole("button", { name: "Resposta não ajudou" }));
+    fireEvent.change(screen.getByLabelText("O que faltou? (opcional)"), { target: { value: "errou o valor" } });
+    fireEvent.click(screen.getByRole("button", { name: "Enviar avaliação" }));
+    await waitFor(() => expect(rateAnswer).toHaveBeenCalledWith({ workspaceId: "ws1", messageIndex: 1, rating: -1, reason: "errou o valor" }));
+  });
+
+  it("a failed save says so and keeps the buttons", async () => {
+    rateAnswer.mockResolvedValue({ ok: false });
+    render(<ChatPanel workspaceId="ws1" initialMessages={[{ role: "user", text: "oi" }, { role: "assistant", text: "Olá!" }]} initialDashboard={{ ...sampleDashboard, widgets: [] }} />);
+    fireEvent.click(screen.getByRole("button", { name: "Resposta útil" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(/avaliação/);
+    expect(screen.getByRole("button", { name: "Resposta útil" })).toBeInTheDocument();
   });
 });
