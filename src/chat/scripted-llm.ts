@@ -72,7 +72,24 @@ const irCompare = (d: PersonDiagnosis) => ({
 
 const NEED_INCOME = "Preciso da sua renda anual para calcular. Qual foi a sua renda bruta no ano?";
 
+// #125: appearance requests. Density and theme are read independently ("escuro e mais limpo" sets both).
+const COMPACT = /minimalista|mais limp|mais compact|mais simples|menos espa/i;
+const COMFORTABLE = /mais espa[çc]ad|menos compact|mais confort/i;
+const DARK = /escur|painel financeiro|modo noturno/i;
+const LIGHT = /\bclaro\b|modo dia/i;
+
+export function styleFrom(text: string): { theme?: "light" | "dark"; density?: "comfortable" | "compact" } {
+  const density = COMPACT.test(text) ? "compact" : COMFORTABLE.test(text) ? "comfortable" : undefined;
+  const theme = DARK.test(text) ? "dark" : LIGHT.test(text) ? "light" : undefined;
+  return { ...(theme && { theme }), ...(density && { density }) };
+}
+
 const PLANS: Plan[] = [
+  {
+    match: new RegExp([COMPACT, COMFORTABLE, DARK].map((r) => r.source).join("|"), "i"),
+    steps: [(_p, text) => ({ name: "dashboard_set_style", args: styleFrom(text) })],
+    reply: ([r]) => (r?.status === "ok" ? "Pronto, mudei a aparência do painel. Os blocos continuam os mesmos." : "Não consegui mudar a aparência do painel."),
+  },
   {
     match: /relat[óo]rio/i,
     steps: [() => ({ name: "generate_report", args: {} })],

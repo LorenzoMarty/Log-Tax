@@ -25,3 +25,20 @@ test("follow-up suggestions move along with the space", async ({ page }) => {
   await expect(page.getByTestId("widget-opportunities")).toBeVisible();
   await expect(suggestions.getByRole("button", { name: "Como posso pagar menos?" })).toHaveCount(0);
 });
+
+// #125: appearance through the conversation; the blocks stay.
+test("'deixa mais minimalista' makes the dashboard compact without losing blocks", async ({ page }) => {
+  await login(page, "style");
+  await createAndOpen(page, /Minha Empresa/);
+  await sendChatMessage(page, "Empresa", /42\.800/);
+  const panel = page.locator("[data-density]");
+  const blocks = page.locator('[data-testid^="widget-"]');
+  const count = await blocks.count();
+  expect(count).toBeGreaterThan(0);
+  await expect(panel).toHaveAttribute("data-density", "comfortable");
+  await sendChatMessage(page, "Deixa mais minimalista", /mudei a apar[êe]ncia/);
+  await expect(panel).toHaveAttribute("data-density", "compact");
+  await expect(blocks).toHaveCount(count);
+  await page.reload();
+  await expect(page.locator("[data-density]")).toHaveAttribute("data-density", "compact");
+});
