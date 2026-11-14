@@ -21,9 +21,7 @@ class UserDb:
         self._headers = {"Authorization": f"Bearer {token}", "apikey": anon_key, "Accept": "application/json"}
 
     async def _send(self, method: str, path: str, **kwargs: Any) -> Any:
-        response = await self._http.request(
-            method, path, headers={**self._headers, **kwargs.pop("headers", {})}, **kwargs
-        )
+        response = await self._http.request(method, path, headers={**self._headers, **kwargs.pop("headers", {})}, **kwargs)
         if response.status_code >= 400:
             raise DbError(response.status_code, response.text[:200])
         return response.json() if response.content else None

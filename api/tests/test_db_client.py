@@ -37,9 +37,7 @@ async def test_write_calls_and_rpc() -> None:
 
     def handler(request: httpx.Request) -> httpx.Response:
         calls.append((request.method, request.url.path, json.loads(request.content) if request.content else None))
-        return httpx.Response(
-            200, json=[{"ok": True}] if request.method != "POST" or "rpc" not in request.url.path else 0
-        )
+        return httpx.Response(200, json=[{"ok": True}] if request.method != "POST" or "rpc" not in request.url.path else 0)
 
     db = make_db(httpx.MockTransport(handler))
     await db.insert("alerts", {"rule": "x"})

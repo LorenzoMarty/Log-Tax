@@ -11,9 +11,7 @@ from app.core.middleware import request_context
 def create_app() -> FastAPI:
     settings = get_settings()
     configure_logging(settings.log_level)
-    app = FastAPI(
-        title="Log Tax API", version="0.1.0", docs_url="/docs" if settings.environment != "production" else None
-    )
+    app = FastAPI(title="Log Tax API", version="0.1.0", docs_url="/docs" if settings.environment != "production" else None)
     app.middleware("http")(request_context)
     if settings.cors_origins:
         app.add_middleware(
