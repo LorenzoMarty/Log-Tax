@@ -378,6 +378,20 @@ const TOOLS: Tool[] = [
     },
   }),
   defineTool({
+    name: "dashboard_set_style",
+    description:
+      "Muda a aparência do painel sem tocar nos blocos (#125). theme: light ou dark (escuro, 'parecido com painel financeiro'). " +
+      "density: comfortable ou compact ('mais minimalista', 'mais limpo', 'visão mais simples', 'mais compacto').",
+    schema: z.strictObject({ theme: z.enum(["light", "dark"]).optional(), density: z.enum(["comfortable", "compact"]).optional() }),
+    run(ctx, a) {
+      if (!a.theme && !a.density) throw new ToolError("Diga o tema (light ou dark) ou a densidade (comfortable ou compact).");
+      if (a.theme) ctx.store.dispatch({ type: "setTheme", theme: a.theme });
+      if (a.density) ctx.store.dispatch({ type: "setDensity", density: a.density });
+      const d = ctx.store.getDashboard();
+      return { theme: d.theme, density: d.density, widgets: d.widgets.length };
+    },
+  }),
+  defineTool({
     name: "create_alert",
     kinds: ["empresa"],
     description: "Cria um alerta: avisa quando a métrica ficar acima (gt) ou abaixo (lt) do limite. effectiveRate é fração (0.15 = 15%).",

@@ -158,6 +158,22 @@ describe("dashboard tools", () => {
     expect((await call("dashboard_add_widget", { widget: text })).status).toBe("error"); // duplicate id
   });
 
+  it("changes theme and density without touching the blocks (#125)", async () => {
+    const before = ctx.store.getDashboard().widgets;
+    const r = await call("dashboard_set_style", { density: "compact" });
+    expect(r.status).toBe("ok");
+    expect(ctx.store.getDashboard().density).toBe("compact");
+    await call("dashboard_set_style", { theme: "dark", density: "comfortable" });
+    expect(ctx.store.getDashboard()).toMatchObject({ theme: "dark", density: "comfortable" });
+    expect(ctx.store.getDashboard().widgets).toEqual(before);
+  });
+
+  it("refuses an empty or unknown style", async () => {
+    expect((await call("dashboard_set_style", {})).status).toBe("error");
+    expect((await call("dashboard_set_style", { theme: "neon" })).status).toBe("error");
+    expect((await call("dashboard_set_style", { density: "compact", widgets: [] })).status).toBe("error");
+  });
+
   it("updates with schema validation and reorders", async () => {
     expect((await call("dashboard_update_widget", { id: "kpi", patch: { title: "Novo" } })).status).toBe("ok");
     expect(ctx.store.getDashboard().widgets.find((w) => w.id === "kpi")?.title).toBe("Novo");
