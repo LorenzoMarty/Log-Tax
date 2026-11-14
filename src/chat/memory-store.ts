@@ -2,7 +2,7 @@ import { initHistory, reduce, type Action } from "@/dashboard/reducer";
 import { sampleDashboard } from "@/dashboard/fixtures";
 import type { Dashboard } from "@/dashboard/types";
 import { seedCompany, seedPerson, type CompanyProfile, type PersonProfile } from "@/engine";
-import type { Agent, Alert, ChatStore } from "./types";
+import type { Agent, Alert, ChatStore, Memory } from "./types";
 
 export interface StoreState {
   company: CompanyProfile;
@@ -10,9 +10,10 @@ export interface StoreState {
   dashboard: Dashboard;
   alerts: Alert[];
   agents: Agent[];
+  memories: Memory[];
 }
 
-export type MemoryStore = ChatStore & { snapshot(): StoreState };
+export type MemoryStore = ChatStore & { snapshot(): StoreState & { removedMemoryIds: string[] } };
 
 /**
  * Working copy of one workspace's state for the duration of a chat turn. Defaults to the demo
@@ -24,6 +25,8 @@ export function createMemoryStore(init: Partial<StoreState> = {}): MemoryStore {
   let history = initHistory(init.dashboard ?? sampleDashboard);
   const alerts = [...(init.alerts ?? [])];
   const agents = [...(init.agents ?? [])];
+  let memories = [...(init.memories ?? [])];
+  const removedMemoryIds: string[] = [];
   // Ids that are not UUIDs mark rows the database has not seen yet.
   let n = 0;
 
@@ -59,6 +62,18 @@ export function createMemoryStore(init: Partial<StoreState> = {}): MemoryStore {
       return agent && Object.assign(agent, patch);
     },
     listAgents: () => agents,
-    snapshot: () => ({ company, person, dashboard: history.present, alerts, agents }),
+    listMemories: () => memories,
+    addMemory(text) {
+      const m = { id: `new-memory-${++n}`, text };
+      memories.push(m);
+      return m;
+    },
+    removeMemory(id) {
+      const had = memories.some((m) => m.id === id);
+      memories = memories.filter((m) => m.id !== id);
+      if (had) removedMemoryIds.push(id);
+      return had;
+    },
+    snapshot: () => ({ company, person, dashboard: history.present, alerts, agents, memories, removedMemoryIds }),
   };
 }

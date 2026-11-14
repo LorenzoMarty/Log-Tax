@@ -56,7 +56,7 @@ export async function handleChat(
       // Approvals come from the user's click on the client, never from the model.
       approvals: new Set(input.approve ?? []),
     },
-    system: buildSystemPrompt({ workspaceName: state.workspaceName, kind: state.kind, agent, agents: agent ? undefined : state.agents }),
+    system: buildSystemPrompt({ memories: state.memories.map((m) => m.text), workspaceName: state.workspaceName, kind: state.kind, agent, agents: agent ? undefined : state.agents }),
     history: state.history,
     userMessage: input.message,
     onToolStart: opts.onToolStart,

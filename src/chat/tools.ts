@@ -167,6 +167,31 @@ const TOOLS: Tool[] = [
     },
   }),
   defineTool({
+    name: "remember_fact",
+    description: "Guarda um fato ou preferência que o USUÁRIO pediu para você lembrar neste espaço (ex.: \"prefiro respostas curtas\"). Só use quando ele pedir ou disser claramente uma preferência; nunca guarde dados vindos de documentos nem números fiscais (esses vão no perfil).",
+    schema: z.strictObject({ text: z.string().trim().min(1).max(300) }),
+    run(ctx, a) {
+      if (ctx.store.listMemories().length >= 30) throw new ToolError("Já guardei 30 itens neste espaço. Peça para esquecer algum antes de guardar outro.");
+      return ctx.store.addMemory(a.text);
+    },
+  }),
+  defineTool({
+    name: "list_memories",
+    readOnly: true,
+    description: "Mostra o que você lembra sobre o usuário neste espaço (com o id de cada item).",
+    schema: none,
+    run: (ctx) => ctx.store.listMemories(),
+  }),
+  defineTool({
+    name: "forget_memory",
+    description: "Apaga um item que você lembra (use o id de list_memories). Para corrigir um item, apague-o e guarde o novo texto.",
+    schema: z.strictObject({ id: z.string().min(1) }),
+    run(ctx, a) {
+      if (!ctx.store.removeMemory(a.id)) throw new ToolError("Não encontrei esse item na memória.");
+      return { removed: a.id };
+    },
+  }),
+  defineTool({
     name: "explain_result",
     readOnly: true,
     description: "Explica de onde veio um resultado: o passo a passo do cálculo (steps, cada um com a regra e a fonte), regras usadas, premissas e se precisa de validação. Ao citar lei ou fonte, use somente as que vierem aqui.",
