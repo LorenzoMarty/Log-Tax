@@ -10,6 +10,7 @@ import type { Dashboard } from "@/dashboard/types";
 import { Button, Input, Panel } from "@/ui/log";
 import type { PendingConfirmation } from "./orchestrator";
 import { nextQuestions, type SpaceProgress } from "./next-questions";
+import { NDJSON, toolProgressLabel, type ChatStreamLine } from "./progress";
 import { RequestExamples } from "./request-examples";
 import type { Agent } from "./types";
 import type { DisplayMessage } from "./workspace-state";
@@ -29,6 +30,32 @@ function withReportLinks(text: string): React.ReactNode[] {
   );
 }
 
+/** Reads the NDJSON stream: tool lines update the progress text, the last line carries the reply (or an error). */
+async function readStream(res: Response, onProgress: (text: string) => void) {
+  const reader = res.body!.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let result: Record<string, unknown> | undefined;
+  const handle = (raw: string) => {
+    if (!raw.trim()) return;
+    const line = JSON.parse(raw) as ChatStreamLine;
+    if (line.type === "tool") onProgress(toolProgressLabel(line.name));
+    else if (line.type === "done") result = line.reply;
+    else throw new Error(line.error);
+  };
+  for (;;) {
+    const { done, value } = await reader.read();
+    buffer += decoder.decode(value, { stream: !done });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    lines.forEach(handle);
+    if (done) break;
+  }
+  handle(buffer);
+  if (!result) throw new Error("Não consegui falar com a IA agora. Tente de novo.");
+  return result as Record<string, never>;
+}
+
 export function ChatPanel(props: { workspaceId: string; initialMessages: DisplayMessage[]; initialDashboard: Dashboard; initialAlerts?: AlertStatus[]; agentId?: string; initialAgents?: Agent[]; workspaceKind?: SpaceProgress["kind"] }) {
   const [messages, setMessages] = useState(props.initialMessages);
   const [dashboard, setDashboard] = useState(props.initialDashboard);
@@ -38,6 +65,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [progress, setProgress] = useState("");
 
   async function send(message: string, approve?: string[]) {
     setBusy(true);
@@ -47,10 +75,10 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Accept: NDJSON },
         body: JSON.stringify({ workspaceId: props.workspaceId, agentId: props.agentId, message, approve }),
       });
-      const data = await res.json();
+      const data = res.headers.get("content-type")?.includes(NDJSON) ? await readStream(res, setProgress) : await res.json();
       if (!res.ok) throw new Error(data.error ?? "Algo deu errado.");
       setMessages((m) => [...m, { role: "assistant", text: data.text }]);
       applyWithTransition(() => setDashboard(data.dashboard));
@@ -61,6 +89,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
       setError(e instanceof Error ? e.message : "Algo deu errado.");
     } finally {
       setBusy(false);
+      setProgress("");
     }
   }
 
@@ -99,7 +128,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
               {m.role === "assistant" ? withReportLinks(m.text) : m.text}
             </p>
           ))}
-          {busy && <p className="text-sm text-ink-subtle">Pensando…</p>}
+          {busy && <p className="text-sm text-ink-subtle">{progress || "Pensando…"}</p>}
           {suggestions.length > 0 && <RequestExamples title="Sugestões" prompts={suggestions} disabled={busy} onPick={(text) => void send(text)} />}
         </div>
         {pending.map((p) => (

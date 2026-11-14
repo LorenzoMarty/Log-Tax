@@ -39,6 +39,7 @@ export async function handleChat(
   sb: SupabaseClient,
   llm: LlmClient,
   input: { workspaceId: string; agentId?: string; message: string; approve?: string[] },
+  onToolStart?: (name: string) => void,
 ): Promise<ChatReply | null> {
   const state = await loadWorkspaceState(sb, input.workspaceId, input.agentId);
   if (!state) return null;
@@ -58,6 +59,7 @@ export async function handleChat(
     system: buildSystemPrompt({ workspaceName: state.workspaceName, kind: state.kind, agent, agents: agent ? undefined : state.agents }),
     history: state.history,
     userMessage: input.message,
+    onToolStart,
   });
 
   // A destructive tool that actually ran was confirmed by the user: leave a trace of it.
