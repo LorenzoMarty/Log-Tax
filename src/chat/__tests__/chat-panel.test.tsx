@@ -141,4 +141,18 @@ describe("ChatPanel", () => {
     send("oi");
     expect(await screen.findByRole("alert")).toHaveTextContent("Falhou aqui.");
   });
+
+  it("stop aborts the request and says so", async () => {
+    let signal!: AbortSignal;
+    vi.stubGlobal("fetch", vi.fn((_u: string, init: RequestInit) => {
+      signal = init.signal as AbortSignal;
+      return new Promise((_, reject) => signal.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError"))));
+    }));
+    setup();
+    send("quanto pago?");
+    fireEvent.click(await screen.findByRole("button", { name: "Parar" }));
+    expect(signal.aborted).toBe(true);
+    expect(await screen.findByText(/Parei\./)).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
 });

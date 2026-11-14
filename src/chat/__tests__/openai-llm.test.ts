@@ -60,4 +60,11 @@ describe("openAiLlm", () => {
   it("fails loudly without an API key", () => {
     expect(() => createOpenAiLlm({})).toThrow(/OPENAI_API_KEY/);
   });
+
+  it("passes the abort signal to the provider call", async () => {
+    const { client, create } = fakeClient(response([], "oi"));
+    const controller = new AbortController();
+    await openAiLlm(client, "m").respond({ system: "s", history: [], tools, signal: controller.signal });
+    expect(create.mock.calls[0][1]).toEqual({ signal: controller.signal });
+  });
 });

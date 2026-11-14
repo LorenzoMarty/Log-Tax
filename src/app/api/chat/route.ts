@@ -3,6 +3,7 @@ import { handleChat, ReadOnlyError } from "@/chat/handle-chat";
 import { getLlm } from "@/chat/llm-factory";
 import { NDJSON, type ChatStreamLine } from "@/chat/progress";
 import { errorFields, log, requestIdOf } from "@/lib/log";
+import { budgetExhaustedMessage, recordTokens, tokensLeft } from "@/lib/token-budget";
 import { checkRate, clientIp, tooMany } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
@@ -35,6 +36,9 @@ export async function POST(request: Request) {
     return Response.json({ error: "IA indisponível: configure OPENAI_API_KEY." }, { status: 503 });
   }
 
+  // Out of budget: say so clearly and never call the model.
+  if ((await tokensLeft(sb)) <= 0) return Response.json({ error: budgetExhaustedMessage }, { status: 429 });
+
   const logChat = (usage: { input: number; output: number }, events: { name: string; status: string }[]) =>
     log("info", "chat", {
       requestId,
@@ -55,15 +59,17 @@ export async function POST(request: Request) {
         const send = (line: ChatStreamLine) => controller.enqueue(encoder.encode(`${JSON.stringify(line)}
 `));
         try {
-          const reply = await handleChat(sb, llm, parsed.data, (name) => send({ type: "tool", name }));
+          const reply = await handleChat(sb, llm, parsed.data, { onToolStart: (name) => send({ type: "tool", name }), signal: request.signal });
           if (!reply) send({ type: "error", error: "Espaço não encontrado." });
           else {
             const { usage, ...rest } = reply;
             logChat(usage, rest.events);
+            await recordTokens(sb, usage);
             send({ type: "done", reply: rest });
           }
         } catch (e) {
           if (e instanceof ReadOnlyError) send({ type: "error", error: e.message });
+          else if (request.signal.aborted) log("info", "chat_cancelled", { requestId, userId: user.id, latencyMs: Date.now() - started });
           else {
             log("error", "chat_failed", { requestId, userId: user.id, workspaceId: parsed.data.workspaceId, latencyMs: Date.now() - started, error: errorFields(e) });
             send({ type: "error", error: "Não consegui falar com a IA agora. Tente de novo." });
@@ -76,14 +82,19 @@ export async function POST(request: Request) {
   }
 
   try {
-    const reply = await handleChat(sb, llm, parsed.data);
+    const reply = await handleChat(sb, llm, parsed.data, { signal: request.signal });
     if (!reply) return Response.json({ error: "Espaço não encontrado." }, { status: 404 });
     const { usage, ...body } = reply;
     // Metrics only (see `logChat`): never the message or the answer.
     logChat(usage, body.events);
+    await recordTokens(sb, usage);
     return Response.json(body);
   } catch (e) {
     if (e instanceof ReadOnlyError) return Response.json({ error: e.message }, { status: 403 });
+    if (request.signal.aborted) {
+      log("info", "chat_cancelled", { requestId, userId: user.id, latencyMs: Date.now() - started });
+      return new Response(null, { status: 499 });
+    }
     log("error", "chat_failed", { requestId, userId: user.id, workspaceId: parsed.data.workspaceId, latencyMs: Date.now() - started, error: errorFields(e) });
     return Response.json({ error: "Não consegui falar com a IA agora. Tente de novo." }, { status: 502 });
   }

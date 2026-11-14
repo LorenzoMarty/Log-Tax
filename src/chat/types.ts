@@ -31,7 +31,8 @@ export interface LlmTurn {
 }
 
 export interface LlmClient {
-  respond(req: { system: string; history: Msg[]; tools: ToolSpec[] }): Promise<LlmTurn>;
+  /** `signal` aborts the provider call (the user pressed stop or left). */
+  respond(req: { system: string; history: Msg[]; tools: ToolSpec[]; signal?: AbortSignal }): Promise<LlmTurn>;
 }
 
 // ---- Scope and state ----
