@@ -1,6 +1,7 @@
 import { DISCLAIMER } from "@/engine";
 import { hasUntrusted } from "./untrusted";
 import { buildSystemPrompt } from "./system-prompt";
+import { trimHistory } from "./trim-history";
 import { ENGINE_TOOLS, invokeTool, toolSpecs } from "./tools";
 import type { LlmClient, Msg, ToolContext, ToolOutcome } from "./types";
 
@@ -36,7 +37,8 @@ export async function runTurn(o: {
 }): Promise<TurnResult> {
   const { llm, ctx } = o;
   const system = o.system ?? buildSystemPrompt({ workspaceName: ctx.scope.workspaceName ?? "seu espaço" });
-  const history: Msg[] = [...o.history, { role: "user", content: o.userMessage }];
+  // Older turns are summarised so the payload (and the stored history) stays bounded.
+  const history: Msg[] = [...trimHistory(o.history), { role: "user", content: o.userMessage }];
   const events: ToolEvent[] = [];
   const usage = { input: 0, output: 0 };
   let untrusted = hasUntrusted(JSON.stringify(history));
