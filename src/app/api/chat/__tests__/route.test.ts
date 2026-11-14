@@ -56,4 +56,25 @@ describe("POST /api/chat logging", () => {
     expect(entry.error.stack).toContain("provider exploded");
     expect(JSON.stringify(entry)).not.toContain("MEU-CNPJ");
   });
+
+  it("streams one line per tool and then the reply when the client asks for NDJSON, still without usage", async () => {
+    handleChat.mockImplementation(async (_sb: unknown, _llm: unknown, _in: unknown, onToolStart: (n: string) => void) => {
+      onToolStart("get_tax_diagnosis");
+      return { text: "ok", events: [], pendingConfirmations: [], dashboard: {}, alerts: [], agents: [], messages: [], usage: { input: 1, output: 2 } };
+    });
+    const res = await POST(new Request("http://x/api/chat", { method: "POST", headers: { Accept: "application/x-ndjson", "Content-Type": "application/json" }, body: JSON.stringify({ workspaceId: WORKSPACE, message: "oi" }) }));
+    expect(res.headers.get("content-type")).toContain("application/x-ndjson");
+    const lines = (await res.text()).trim().split("\n").map((l) => JSON.parse(l));
+    expect(lines[0]).toEqual({ type: "tool", name: "get_tax_diagnosis" });
+    expect(lines[1]).toMatchObject({ type: "done", reply: { text: "ok" } });
+    expect(lines[1].reply).not.toHaveProperty("usage");
+  });
+
+  it("reports a failure as an error line in the stream", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    handleChat.mockRejectedValue(new Error("boom"));
+    const res = await POST(new Request("http://x/api/chat", { method: "POST", headers: { Accept: "application/x-ndjson", "Content-Type": "application/json" }, body: JSON.stringify({ workspaceId: WORKSPACE, message: "oi" }) }));
+    const lines = (await res.text()).trim().split("\n").map((l) => JSON.parse(l));
+    expect(lines).toEqual([{ type: "error", error: "Não consegui falar com a IA agora. Tente de novo." }]);
+  });
 });

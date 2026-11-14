@@ -31,6 +31,8 @@ export async function runTurn(o: {
   history: Msg[];
   userMessage: string;
   system?: string;
+  /** Called right before each tool runs, so the UI can say what is happening. */
+  onToolStart?: (name: string) => void;
 }): Promise<TurnResult> {
   const { llm, ctx } = o;
   const system = o.system ?? buildSystemPrompt({ workspaceName: ctx.scope.workspaceName ?? "seu espaço" });
@@ -53,6 +55,7 @@ export async function runTurn(o: {
     }
 
     for (const call of turn.calls) {
+      o.onToolStart?.(call.name);
       const outcome = await invokeTool({ ...ctx, untrustedInContext: untrusted }, call.name, call.args);
       events.push({ name: call.name, args: call.args, outcome });
       if (outcome.status === "confirmation_required") {

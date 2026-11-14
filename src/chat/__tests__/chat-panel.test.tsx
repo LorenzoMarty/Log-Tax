@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { sampleDashboard } from "@/dashboard/fixtures";
 import { ChatPanel } from "../chat-panel";
 
-const reply = (body: unknown, ok = true) => vi.fn().mockResolvedValue({ ok, json: async () => body });
+const reply = (body: unknown, ok = true) => vi.fn().mockResolvedValue({ ok, headers: new Headers(), json: async () => body });
 const setup = () =>
   render(<ChatPanel workspaceId="ws1" initialMessages={[{ role: "assistant", text: "Olá!" }]} initialDashboard={{ ...sampleDashboard, widgets: [] }} />);
 const send = (text: string) => {
@@ -62,8 +62,8 @@ describe("ChatPanel", () => {
   it("offers confirm/cancel for pending confirmations and sends the approval key", async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ text: "Confirma?", pendingConfirmations: [{ tool: "dashboard_remove_widget", key: "k1", summary: "Remover bloco kpi" }], dashboard: sampleDashboard }) })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ text: "Removido.", pendingConfirmations: [], dashboard: { ...sampleDashboard, widgets: [] } }) });
+      .mockResolvedValueOnce({ ok: true, headers: new Headers(), json: async () => ({ text: "Confirma?", pendingConfirmations: [{ tool: "dashboard_remove_widget", key: "k1", summary: "Remover bloco kpi" }], dashboard: sampleDashboard }) })
+      .mockResolvedValueOnce({ ok: true, headers: new Headers(), json: async () => ({ text: "Removido.", pendingConfirmations: [], dashboard: { ...sampleDashboard, widgets: [] } }) });
     vi.stubGlobal("fetch", fetchMock);
     setup();
     send("tira o kpi");
@@ -76,8 +76,8 @@ describe("ChatPanel", () => {
   it("cancelling sends no approval", async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ text: "Confirma?", pendingConfirmations: [{ tool: "t", key: "k1", summary: "s" }], dashboard: sampleDashboard }) })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ text: "Ok, cancelado.", pendingConfirmations: [], dashboard: sampleDashboard }) });
+      .mockResolvedValueOnce({ ok: true, headers: new Headers(), json: async () => ({ text: "Confirma?", pendingConfirmations: [{ tool: "t", key: "k1", summary: "s" }], dashboard: sampleDashboard }) })
+      .mockResolvedValueOnce({ ok: true, headers: new Headers(), json: async () => ({ text: "Ok, cancelado.", pendingConfirmations: [], dashboard: sampleDashboard }) });
     vi.stubGlobal("fetch", fetchMock);
     setup();
     send("tira");
@@ -110,5 +110,35 @@ describe("ChatPanel", () => {
     setup();
     send("oi");
     expect(await screen.findByRole("alert")).toHaveTextContent(/indisponível/i);
+  });
+
+  it("shows which tool is running while the reply streams, then the answer", async () => {
+    const enc = new TextEncoder();
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const body = new ReadableStream({
+      async start(c) {
+        c.enqueue(enc.encode('{"type":"tool","name":"get_tax_diagnosis"}\n'));
+        await gate;
+        c.enqueue(enc.encode(`${JSON.stringify({ type: "done", reply: { text: "Você paga R$ 42.800.", pendingConfirmations: [], dashboard: sampleDashboard } })}
+`));
+        c.close();
+      },
+    });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, headers: new Headers({ "content-type": "application/x-ndjson" }), body }));
+    setup();
+    send("quanto pago?");
+    expect(await screen.findByText("calculando o diagnóstico…")).toBeInTheDocument();
+    release();
+    expect(await screen.findByText("Você paga R$ 42.800.")).toBeInTheDocument();
+    expect(screen.queryByText("calculando o diagnóstico…")).not.toBeInTheDocument();
+  });
+
+  it("shows the error line of a stream", async () => {
+    const body = new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode('{"type":"error","error":"Falhou aqui."}\n')); c.close(); } });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, headers: new Headers({ "content-type": "application/x-ndjson" }), body }));
+    setup();
+    send("oi");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Falhou aqui.");
   });
 });
