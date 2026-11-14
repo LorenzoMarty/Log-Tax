@@ -8,6 +8,7 @@ from app.engine.format import brl
 from app.engine.money import from_cents, mul_rate, to_cents
 from app.engine.result import EngineResult, NotApplicable, Ok
 from app.engine.rulebook import RuleBook, RuleVersion
+from app.engine.serial import Camel
 
 
 @dataclass(frozen=True)
@@ -48,7 +49,7 @@ type InvestmentIncome = RendaFixa | FundoAcoes | Acoes | GanhoCapital | Aluguel 
 
 
 @dataclass(frozen=True)
-class InvestmentTax:
+class InvestmentTax(Camel):
     tax_cents: int  # definitive withholding or monthly carnê-leão
     rate: Decimal
     note: str
