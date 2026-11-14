@@ -26,3 +26,24 @@ export const REFORM_PHASES: RuleVersion<ReformPhase>[] = [
   { ...base, validFrom: "2032-01", validUntil: "2032-12", data: { ibsShare: 0.4, legacyShare: 0.6, pisCofins: false } },
   { ...base, validFrom: "2033-01", notes: "Modelo novo pleno: ICMS e ISS extintos.", data: { ibsShare: 1, legacyShare: 0, pisCofins: false } },
 ];
+
+/** Reduction of the IBS/CBS rate by category of the operation (LC 214/2025). `reduction` 1 = rate zero. */
+export type ReformCategory = "geral" | "saude" | "educacao" | "medicamentos" | "dispositivos_medicos" | "acessibilidade" | "cesta_basica" | "profissional_liberal";
+
+export interface ReformReductions {
+  reduction: Record<ReformCategory, number>;
+}
+
+export const REFORM_REDUCTIONS: RuleVersion<ReformReductions>[] = [
+  {
+    id: "reforma-reducoes",
+    name: "Reduções de alíquota do IBS/CBS por categoria",
+    jurisdiction: "Federal",
+    validFrom: "2026-01",
+    source: "LC 214/2025 arts. 125 (cesta básica nacional, alíquota zero), 128 (60%: educação, saúde, dispositivos médicos, acessibilidade, medicamentos) e profissionais liberais (30%): https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+    confidence: "medium",
+    requiresValidation: true,
+    notes: "Só vale para itens dos anexos da lei (NCM/NBS) e regulares na Anvisa; o motor não confere o anexo. Parte dos medicamentos tem alíquota zero (art. 146). Percentuais de 50%/40% da LC 227/2026 não modelados.",
+    data: { reduction: { geral: 0, saude: 0.6, educacao: 0.6, medicamentos: 0.6, dispositivos_medicos: 0.6, acessibilidade: 0.6, cesta_basica: 1, profissional_liberal: 0.3 } },
+  },
+];
