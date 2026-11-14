@@ -2,10 +2,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 // The chat route with its collaborators stubbed: what matters here is what it writes to the logs.
-vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({ auth: { getUser: async () => ({ data: { user: { id: "user-opaque-1" } } }) } }) }));
+vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({ auth: { getUser: async () => ({ data: { user: { id: "user-opaque-1" } } }) }, rpc }) }));
 vi.mock("@/lib/rate-limit", () => ({ checkRate: async () => 0, clientIp: () => "1.2.3.4", tooMany: () => new Response(null, { status: 429 }) }));
 vi.mock("@/chat/llm-factory", () => ({ getLlm: () => ({}) }));
 const handleChat = vi.fn();
+const rpc = vi.fn(async (name: string) => (name === "token_budget_left" ? { data: 1000, error: null } : { data: null, error: null }));
 vi.mock("@/chat/handle-chat", () => ({ handleChat: (...a: unknown[]) => handleChat(...a), ReadOnlyError: class ReadOnlyError extends Error {} }));
 
 import { POST } from "../route";
@@ -58,8 +59,8 @@ describe("POST /api/chat logging", () => {
   });
 
   it("streams one line per tool and then the reply when the client asks for NDJSON, still without usage", async () => {
-    handleChat.mockImplementation(async (_sb: unknown, _llm: unknown, _in: unknown, onToolStart: (n: string) => void) => {
-      onToolStart("get_tax_diagnosis");
+    handleChat.mockImplementation(async (_sb: unknown, _llm: unknown, _in: unknown, opts: { onToolStart: (n: string) => void }) => {
+      opts.onToolStart("get_tax_diagnosis");
       return { text: "ok", events: [], pendingConfirmations: [], dashboard: {}, alerts: [], agents: [], messages: [], usage: { input: 1, output: 2 } };
     });
     const res = await POST(new Request("http://x/api/chat", { method: "POST", headers: { Accept: "application/x-ndjson", "Content-Type": "application/json" }, body: JSON.stringify({ workspaceId: WORKSPACE, message: "oi" }) }));
@@ -76,5 +77,22 @@ describe("POST /api/chat logging", () => {
     const res = await POST(new Request("http://x/api/chat", { method: "POST", headers: { Accept: "application/x-ndjson", "Content-Type": "application/json" }, body: JSON.stringify({ workspaceId: WORKSPACE, message: "oi" }) }));
     const lines = (await res.text()).trim().split("\n").map((l) => JSON.parse(l));
     expect(lines).toEqual([{ type: "error", error: "Não consegui falar com a IA agora. Tente de novo." }]);
+  });
+
+  it("out of daily budget: a clear 429 and the model is never called", async () => {
+    rpc.mockImplementationOnce(async () => ({ data: 0, error: null }));
+    handleChat.mockClear();
+    const res = await call("oi");
+    expect(res.status).toBe(429);
+    expect((await res.json()).error).toMatch(/limite diário/);
+    expect(handleChat).not.toHaveBeenCalled();
+  });
+
+  it("records the tokens a turn spent and hands the request signal to the turn", async () => {
+    rpc.mockClear();
+    handleChat.mockResolvedValue({ text: "ok", events: [], pendingConfirmations: [], dashboard: {}, alerts: [], agents: [], messages: [], usage: { input: 120, output: 45 } });
+    await call("oi");
+    expect(rpc).toHaveBeenCalledWith("token_usage_add", { p_tokens: 165 });
+    expect((handleChat.mock.calls.at(-1)![3] as { signal: AbortSignal }).signal).toBeInstanceOf(AbortSignal);
   });
 });

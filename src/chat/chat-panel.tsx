@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { AgentList } from "@/agents/agent-list";
 import { AlertBar } from "@/alerts/alert-bar";
 import type { AlertStatus } from "@/alerts/evaluate";
@@ -66,17 +66,21 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [progress, setProgress] = useState("");
+  const abort = useRef<AbortController | null>(null);
 
   async function send(message: string, approve?: string[]) {
     setBusy(true);
     setError("");
     setPending([]);
     setMessages((m) => [...m, { role: "user", text: message }]);
+    const controller = new AbortController();
+    abort.current = controller;
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: NDJSON },
         body: JSON.stringify({ workspaceId: props.workspaceId, agentId: props.agentId, message, approve }),
+        signal: controller.signal,
       });
       const data = res.headers.get("content-type")?.includes(NDJSON) ? await readStream(res, setProgress) : await res.json();
       if (!res.ok) throw new Error(data.error ?? "Algo deu errado.");
@@ -86,10 +90,12 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
       setAgents(data.agents ?? agents);
       setPending(data.pendingConfirmations ?? []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Algo deu errado.");
+      if (controller.signal.aborted) setMessages((m) => [...m, { role: "assistant", text: "Parei. Pode me dizer o que prefere fazer agora." }]);
+      else setError(e instanceof Error ? e.message : "Algo deu errado.");
     } finally {
       setBusy(false);
       setProgress("");
+      abort.current = null;
     }
   }
 
@@ -151,6 +157,11 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
         )}
         <form onSubmit={submit} className="flex gap-2">
           <Input aria-label="Mensagem" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Quero entender meus impostos..." className="min-w-0 flex-1" />
+          {busy ? (
+            <Button type="button" variant="ghost" onClick={() => abort.current?.abort()}>
+              Parar
+            </Button>
+          ) : null}
           <Button type="submit" variant="primary" disabled={busy}>
             Enviar
           </Button>

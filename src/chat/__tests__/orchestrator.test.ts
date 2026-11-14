@@ -87,4 +87,27 @@ describe("runTurn", () => {
     await runTurn({ llm, ctx: ctxFor(), history: [], userMessage: "x" });
     expect(seen.every((s) => /ilustrativa/i.test(s.system))).toBe(true);
   });
+
+  it("a cancelled turn stops before the next model call and before any further tool", async () => {
+    const controller = new AbortController();
+    let calls = 0;
+    const diagnosis = use("c1", "get_tax_diagnosis");
+    const llm: LlmClient = {
+      async respond() {
+        calls++;
+        controller.abort();
+        return diagnosis;
+      },
+    };
+    await expect(runTurn({ llm, ctx: ctxFor(), history: [], userMessage: "quanto pago?", signal: controller.signal })).rejects.toThrow();
+    expect(calls).toBe(1);
+  });
+
+  it("hands the signal to the model call", async () => {
+    const controller = new AbortController();
+    let got: AbortSignal | undefined;
+    const llm: LlmClient = { async respond(req) { got = req.signal; return say("oi"); } };
+    await runTurn({ llm, ctx: ctxFor(), history: [], userMessage: "oi", signal: controller.signal });
+    expect(got).toBe(controller.signal);
+  });
 });

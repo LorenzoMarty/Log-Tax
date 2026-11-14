@@ -7,6 +7,9 @@ import type { LlmClient, Msg } from "./types";
 // Overridable with OPENAI_MODEL; confirm it exists for your account.
 export const DEFAULT_MODEL = "gpt-5.6-terra";
 
+/** One provider call may take this long; the SDK retries timeouts, 429 and 5xx twice with backoff. */
+export const REQUEST_TIMEOUT_MS = 60_000;
+
 type OutItem = { type: string; call_id?: string; name?: string; arguments?: string };
 
 const toInput = (m: Msg) => {
@@ -27,7 +30,7 @@ const toInput = (m: Msg) => {
  */
 export function openAiLlm(client: Pick<OpenAI, "responses">, model: string): LlmClient {
   return {
-    async respond({ system, history, tools }) {
+    async respond({ system, history, tools, signal }) {
       const req = {
         model,
         instructions: redact(system),
@@ -35,7 +38,7 @@ export function openAiLlm(client: Pick<OpenAI, "responses">, model: string): Llm
         tools: tools.map((t) => ({ type: "function" as const, name: t.name, description: t.description, parameters: t.parameters, strict: false })),
         store: false,
       } as ResponseCreateParamsNonStreaming;
-      const res = await client.responses.create(req);
+      const res = await client.responses.create(req, { signal });
       const items = res.output as unknown as OutItem[];
       return {
         usage: res.usage ? { input: res.usage.input_tokens, output: res.usage.output_tokens } : undefined,
@@ -52,5 +55,5 @@ export function openAiLlm(client: Pick<OpenAI, "responses">, model: string): Llm
 export function createOpenAiLlm(env: Record<string, string | undefined> = process.env): LlmClient {
   const apiKey = env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY ausente: defina-a em .env.local.");
-  return openAiLlm(new OpenAI({ apiKey }), env.OPENAI_MODEL || DEFAULT_MODEL);
+  return openAiLlm(new OpenAI({ apiKey, timeout: REQUEST_TIMEOUT_MS, maxRetries: 2 }), env.OPENAI_MODEL || DEFAULT_MODEL);
 }

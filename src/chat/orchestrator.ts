@@ -34,6 +34,8 @@ export async function runTurn(o: {
   system?: string;
   /** Called right before each tool runs, so the UI can say what is happening. */
   onToolStart?: (name: string) => void;
+  /** Stops the turn: the model call is aborted and no further tool runs. */
+  signal?: AbortSignal;
 }): Promise<TurnResult> {
   const { llm, ctx } = o;
   const system = o.system ?? buildSystemPrompt({ workspaceName: ctx.scope.workspaceName ?? "seu espaço" });
@@ -45,7 +47,8 @@ export async function runTurn(o: {
   const pendingConfirmations: PendingConfirmation[] = [];
 
   for (let step = 0; step < MAX_STEPS; step++) {
-    const turn = await llm.respond({ system, history, tools: toolSpecs(ctx.scope) });
+    o.signal?.throwIfAborted();
+    const turn = await llm.respond({ system, history, tools: toolSpecs(ctx.scope), signal: o.signal });
     usage.input += turn.usage?.input ?? 0;
     usage.output += turn.usage?.output ?? 0;
     history.push({ role: "llm", items: turn.items });
@@ -57,6 +60,7 @@ export async function runTurn(o: {
     }
 
     for (const call of turn.calls) {
+      o.signal?.throwIfAborted();
       o.onToolStart?.(call.name);
       const outcome = await invokeTool({ ...ctx, untrustedInContext: untrusted }, call.name, call.args);
       events.push({ name: call.name, args: call.args, outcome });
