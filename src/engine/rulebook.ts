@@ -61,6 +61,11 @@ export class RuleBook {
     }
   }
 
+  /** Every version of every rule, ordered by id then start (used to export the rules as neutral data). */
+  all(): RuleVersion<unknown>[] {
+    return [...this.byId.entries()].sort(([a], [b]) => a.localeCompare(b)).flatMap(([, list]) => list);
+  }
+
   ids(): string[] {
     return [...this.byId.keys()];
   }
