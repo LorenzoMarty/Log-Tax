@@ -1,0 +1,1048 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "folha-encargos",
+      "name": "Encargos sobre a folha: INSS patronal, RAT/FAP e FGTS",
+      "jurisdiction": "Federal",
+      "validFrom": "2018-01",
+      "validUntil": null,
+      "source": "Receita Federal, contribuições previdenciárias de pessoas jurídicas: https://www.gov.br/receitafederal/pt-br/assuntos/orientacao-tributaria/tributos/contribuicoes-previdenciarias-pj ; FGTS: https://www.gov.br/trabalho-e-emprego/pt-br/servicos/trabalhador/fgts/fundo-de-garantia-do-tempo-de-servico-fgts",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": null,
+      "data": {
+        "employerInssRate": 0.2,
+        "fgtsRate": 0.08,
+        "ratRates": {
+          "1": 0.01,
+          "2": 0.02,
+          "3": 0.03
+        },
+        "fapMin": 0.5,
+        "fapMax": 2
+      }
+    },
+    {
+      "id": "icms-interno-AC",
+      "name": "ICMS: alíquota interna geral (AC)",
+      "jurisdiction": "Estadual (AC)",
+      "validFrom": "2024-01",
+      "validUntil": null,
+      "source": "https://dfe-portal.svrs.rs.gov.br/Difal/aliquotas",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": "Portal da DIFAL: regra geral 19%, atualizada em 01/04/2023.",
+      "data": {
+        "internal": 0.19,
+        "fcp": 0
+      }
+    },
+    {
+      "id": "icms-interno-AM",
+      "name": "ICMS: alíquota interna geral (AM)",
+      "jurisdiction": "Estadual (AM)",
+      "validFrom": "2024-01",
+      "validUntil": null,
+      "source": "https://dfe-portal.svrs.rs.gov.br/Difal/aliquotas",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": "Alíquota modal do Amazonas.",
+      "data": {
+        "internal": 0.18,
+        "fcp": 0
+      }
+    },
+    {
+      "id": "icms-interno-AP",
+      "name": "ICMS: alíquota interna geral (AP)",
+      "jurisdiction": "Estadual (AP)",
+      "validFrom": "2024-01",
+      "validUntil": null,
+      "source": "https://dfe-portal.svrs.rs.gov.br/Difal/aliquotas",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": null,
+      "data": {
+        "internal": 0.18,
+        "fcp": 0
+      }
+    },
+    {
+      "id": "icms-interno-BA",
+      "name": "ICMS: alíquota interna geral (BA)",
+      "jurisdiction": "Estadual (BA)",
+      "validFrom": "2024-02",
+      "validUntil": null,
+      "source": "https://dfe-portal.svrs.rs.gov.br/Difal/aliquotas",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": "Portal da DIFAL: regra geral 20,5%, atualizada em 07/02/2024.",
+      "data": {
+        "internal": 0.205,
+        "fcp": 0
+      }
+    },
+    {
+      "id": "icms-interno-CE",
+      "name": "ICMS: alíquota interna geral (CE)",
+      "jurisdiction": "Estadual (CE)",
+      "validFrom": "2024-01",
+      "validUntil": null,
+      "source": "https://dfe-portal.svrs.rs.gov.br/Difal/aliquotas",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": null,
+      "data": {
+        "internal": 0.18,
+        "fcp": 0
+      }
+    },
+    {
+      "id": "icms-interno-DF",
+      "name": "ICMS: alíquota interna geral (DF)",
+      "jurisdiction": "Estadual (DF)",
+      "validFrom": "2024-01",
+      "validUntil": null,
+      "source": "https://dfe-portal.svrs.rs.gov.br/Difal/aliquotas",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": "Portal da DIFAL: regra geral 20%, atualizada em 22/01/2024.",
+      "data": {
+        "internal": 0.2,
+        "fcp": 0
+      }
+    },
+    {
+      "id": "icms-interno-ES",
+      "name": "ICMS: alíquota interna geral (ES)",
+      "jurisdiction": "Estadual (ES)",
+      "validFrom": "2024-01",
+      "validUntil": null,
+      "source": "https://dfe-portal.svrs.rs.gov.br/Difal/aliquotas",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": "Lei 7.000/2001, art. 20, I.",
+      "data": {
+        "internal": 0.17,
+        "fcp": 0
+      }
+    },
+    {
+      "id": "icms-interno-RJ",
+      "name": "ICMS: alíquota interna geral (RJ)",
+      "jurisdiction": "Estadual (RJ)",
+      "validFrom": "2024-01",
+      "validUntil": null,
+      "source": "SEFAZ-RJ, Alíquotas Internas (20% + 2% FECP = 22%): https://portal.fazenda.rj.gov.br/pagamentos/aliquotas-internas/",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": null,
+      "data": {
+        "internal": 0.2,
+        "fcp": 0.02
+      }
+    },
+    {
+      "id": "icms-interno-SP",
+      "name": "ICMS: alíquota interna geral (SP)",
+      "jurisdiction": "Estadual (SP)",
+      "validFrom": "2024-01",
+      "validUntil": null,
+      "source": "RICMS/SP art. 52, I: https://legislacao.fazenda.sp.gov.br/Paginas/art052.aspx",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": null,
+      "data": {
+        "internal": 0.18,
+        "fcp": 0
+      }
+    },
+    {
+      "id": "inss-teto",
+      "name": "Teto do salário de contribuição do INSS",
+      "jurisdiction": "Federal",
+      "validFrom": "2026-01",
+      "validUntil": null,
+      "source": "INSS, teto de R$ 8.475,55 em 2026 (Portaria Interministerial MPS/MF nº 13/2026): https://www.gov.br/inss/pt-br/assuntos/com-reajuste-de-3-9-teto-do-inss-chega-a-r-8-475-55-em-2026",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": "Sem versões anteriores conferidas: para competências antes de 2026 a retenção do pró-labore não é calculada.",
+      "data": {
+        "ceiling": 8475.55,
+        "proLaboreRate": 0.11
+      }
+    },
+    {
+      "id": "irpf-anual-deducoes",
+      "name": "Deduções e desconto simplificado da DIRPF",
+      "jurisdiction": "Federal",
+      "validFrom": "2024-01",
+      "validUntil": "2025-12",
+      "source": "Receita Federal, Tributação de 2024 e 2025 (dependente R$ 2.275,08; instrução R$ 3.561,50; desconto simplificado de 20% até R$ 16.754,34): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2025",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": "O limite do desconto simplificado e as deduções de 2026 em diante não foram conferidos (uma fonte cita R$ 17.640).",
+      "data": {
+        "simplifiedRate": 0.2,
+        "simplifiedCap": 16754.34,
+        "educationCap": 3561.5,
+        "dependentYear": 2275.08
+      }
+    },
+    {
+      "id": "irpf-investimentos",
+      "name": "IRPF sobre investimentos e ganho de capital",
+      "jurisdiction": "Federal",
+      "validFrom": "2025-01",
+      "validUntil": null,
+      "source": "Receita Federal: alíquotas de ganhos de capital https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/pagamento/ganhos-de-capital/aliquotas ; tabelas de tributação https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026 ; Lei 11.033/2004 (isenção de R$ 20.000 em vendas de ações no mês)",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": "Lido de resultados de busca nas páginas da Receita (não da página inteira). Day trade, FII, ETF, cripto, exterior e os dividendos tributados a partir de 2026 (Lei 15.270/2025) não estão modelados.",
+      "data": {
+        "regressive": [
+          {
+            "upToDays": 180,
+            "rate": 0.225
+          },
+          {
+            "upToDays": 360,
+            "rate": 0.2
+          },
+          {
+            "upToDays": 720,
+            "rate": 0.175
+          },
+          {
+            "upToDays": null,
+            "rate": 0.15
+          }
+        ],
+        "equityFundRate": 0.15,
+        "stockRate": 0.15,
+        "stockMonthlyExemption": 20000,
+        "capitalGain": [
+          {
+            "upTo": 5000000,
+            "rate": 0.15
+          },
+          {
+            "upTo": 10000000,
+            "rate": 0.175
+          },
+          {
+            "upTo": 30000000,
+            "rate": 0.2
+          },
+          {
+            "upTo": null,
+            "rate": 0.225
+          }
+        ]
+      }
+    },
+    {
+      "id": "irpf-tabela-anual",
+      "name": "Tabela progressiva anual do IRPF (DIRPF)",
+      "jurisdiction": "Federal",
+      "validFrom": "2024-01",
+      "validUntil": "2024-12",
+      "source": "Receita Federal, Tributação de 2024, incidência anual no exercício 2025 (ano-calendário 2024): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/copy_of_2024",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": null,
+      "data": {
+        "brackets": [
+          {
+            "upTo": 26963.2,
+            "rate": 0,
+            "deduction": 0
+          },
+          {
+            "upTo": 33919.8,
+            "rate": 0.075,
+            "deduction": 2022.24
+          },
+          {
+            "upTo": 45012.6,
+            "rate": 0.15,
+            "deduction": 4566.23
+          },
+          {
+            "upTo": 55976.16,
+            "rate": 0.225,
+            "deduction": 7942.17
+          },
+          {
+            "upTo": null,
+            "rate": 0.275,
+            "deduction": 10740.98
+          }
+        ]
+      }
+    },
+    {
+      "id": "irpf-tabela-anual",
+      "name": "Tabela progressiva anual do IRPF (DIRPF)",
+      "jurisdiction": "Federal",
+      "validFrom": "2025-01",
+      "validUntil": "2025-12",
+      "source": "Receita Federal, Tributação de 2025, incidência anual a partir do exercício 2026 (ano-calendário 2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2025",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": null,
+      "data": {
+        "brackets": [
+          {
+            "upTo": 28467.2,
+            "rate": 0,
+            "deduction": 0
+          },
+          {
+            "upTo": 33919.8,
+            "rate": 0.075,
+            "deduction": 2135.04
+          },
+          {
+            "upTo": 45012.6,
+            "rate": 0.15,
+            "deduction": 4679.03
+          },
+          {
+            "upTo": 55976.16,
+            "rate": 0.225,
+            "deduction": 8054.97
+          },
+          {
+            "upTo": null,
+            "rate": 0.275,
+            "deduction": 10853.78
+          }
+        ]
+      }
+    },
+    {
+      "id": "irpf-tabela-mensal",
+      "name": "Tabela progressiva mensal do IRPF",
+      "jurisdiction": "Federal",
+      "validFrom": "2024-02",
+      "validUntil": "2025-04",
+      "source": "Receita Federal, Tributação de 2024, incidência mensal a partir de fevereiro/2024 (Lei 14.848/2024): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/copy_of_2024",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": null,
+      "data": {
+        "dependentMonthly": 189.59,
+        "brackets": [
+          {
+            "upTo": 2259.2,
+            "rate": 0,
+            "deduction": 0
+          },
+          {
+            "upTo": 2826.65,
+            "rate": 0.075,
+            "deduction": 169.44
+          },
+          {
+            "upTo": 3751.05,
+            "rate": 0.15,
+            "deduction": 381.44
+          },
+          {
+            "upTo": 4664.68,
+            "rate": 0.225,
+            "deduction": 662.77
+          },
+          {
+            "upTo": null,
+            "rate": 0.275,
+            "deduction": 896
+          }
+        ]
+      }
+    },
+    {
+      "id": "irpf-tabela-mensal",
+      "name": "Tabela progressiva mensal do IRPF",
+      "jurisdiction": "Federal",
+      "validFrom": "2025-05",
+      "validUntil": null,
+      "source": "Receita Federal, Tributação de 2025, incidência mensal a partir de maio/2025 (Lei 15.191/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2025",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": null,
+      "data": {
+        "dependentMonthly": 189.59,
+        "brackets": [
+          {
+            "upTo": 2428.8,
+            "rate": 0,
+            "deduction": 0
+          },
+          {
+            "upTo": 2826.65,
+            "rate": 0.075,
+            "deduction": 182.16
+          },
+          {
+            "upTo": 3751.05,
+            "rate": 0.15,
+            "deduction": 394.16
+          },
+          {
+            "upTo": 4664.68,
+            "rate": 0.225,
+            "deduction": 675.49
+          },
+          {
+            "upTo": null,
+            "rate": 0.275,
+            "deduction": 908.73
+          }
+        ]
+      }
+    },
+    {
+      "id": "iss-limites",
+      "name": "ISS: alíquota mínima e máxima (LC 116/2003)",
+      "jurisdiction": "Municipal (limites federais)",
+      "validFrom": "2017-01",
+      "validUntil": null,
+      "source": "LC 116/2003 art. 8 e art. 8-A (LC 157/2016): https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp116.htm",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": "Exceções do art. 8-A (subitens 7.02, 7.05 e 16.01) e regras de local de incidência não modeladas.",
+      "data": {
+        "min": 0.02,
+        "max": 0.05
+      }
+    },
+    {
+      "id": "lucro-presumido-federal",
+      "name": "Lucro Presumido: IRPJ, CSLL, PIS e COFINS",
+      "jurisdiction": "Federal",
+      "validFrom": "2018-01",
+      "validUntil": null,
+      "source": "Lei 9.249/1995 (art. 3, 15 e 20), Lei 9.430/1996, Lei 7.689/1988 art. 3: https://www.planalto.gov.br/ccivil_03/leis/l9249.htm ; https://www.gov.br/receitafederal/pt-br/assuntos/orientacao-tributaria/tributos/IRPJ ; https://www.gov.br/receitafederal/pt-br/assuntos/orientacao-tributaria/tributos/CSLL",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": "Presunções especiais e exportação (PIS/COFINS) não modeladas.",
+      "data": {
+        "presumption": {
+          "comercio": {
+            "irpj": 0.08,
+            "csll": 0.12
+          },
+          "industria": {
+            "irpj": 0.08,
+            "csll": 0.12
+          },
+          "servico": {
+            "irpj": 0.32,
+            "csll": 0.32
+          }
+        },
+        "irpjRate": 0.15,
+        "additionalRate": 0.1,
+        "additionalPerMonth": 20000,
+        "csllRate": 0.09,
+        "pisRate": 0.0065,
+        "cofinsRate": 0.03
+      }
+    },
+    {
+      "id": "lucro-real-federal",
+      "name": "Lucro Real: IRPJ, CSLL, PIS e COFINS não cumulativos",
+      "jurisdiction": "Federal",
+      "validFrom": "2018-01",
+      "validUntil": null,
+      "source": "Lei 9.249/1995 art. 3; Lei 7.689/1988; Leis 10.637/2002 e 10.833/2003; Lei 8.981/1995 art. 42 e Lei 9.065/1995 art. 15: https://www.planalto.gov.br/ccivil_03/leis/l9249.htm ; https://www.gov.br/receitafederal/pt-br/assuntos/orientacao-tributaria/declaracoes-e-demonstrativos/ecf/perguntas-e-respostas-pessoa-juridica-2021-arquivos/capitulo-x-compensacao-de-prejuizos-2021.pdf",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": "Alíquotas reduzidas específicas de PIS/COFINS, regimes especiais e a lista de créditos permitidos não são modelados.",
+      "data": {
+        "irpjRate": 0.15,
+        "additionalRate": 0.1,
+        "additionalPerMonth": 20000,
+        "csllRate": 0.09,
+        "pisRate": 0.0165,
+        "cofinsRate": 0.076,
+        "lossOffsetLimit": 0.3
+      }
+    },
+    {
+      "id": "mei-das",
+      "name": "MEI: DAS mensal e limite de receita",
+      "jurisdiction": "Federal",
+      "validFrom": "2026-01",
+      "validUntil": null,
+      "source": "Receita Federal, Simples Nacional, valores devidos em 2026: https://www8.receita.fazenda.gov.br/simplesnacional/Noticias/NoticiaCompleta.aspx?id=c3b2044c-ff97-432a-b33c-ecf2a3df6dc3 ; LC 123/2006, art. 18-A",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": "Rules for the excess over the limit (up to 20%: effects from 1 January of the next year; above 20%: retroactive to 1 January or to the start of activity) follow LC 123 art. 18-A, confirmed in summary by the DASN-SIMEI manual; confirm the text with a professional (#98).",
+      "data": {
+        "minimumWage": 1621,
+        "inssRate": 0.05,
+        "inssRateCargo": 0.12,
+        "icms": 1,
+        "iss": 5,
+        "annualLimit": 81000,
+        "toleranceRate": 0.2
+      }
+    },
+    {
+      "id": "reforma-reducoes",
+      "name": "Reduções de alíquota do IBS/CBS por categoria",
+      "jurisdiction": "Federal",
+      "validFrom": "2026-01",
+      "validUntil": null,
+      "source": "LC 214/2025 arts. 125 (cesta básica nacional, alíquota zero), 128 (60%: educação, saúde, dispositivos médicos, acessibilidade, medicamentos) e profissionais liberais (30%): https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": "Só vale para itens dos anexos da lei (NCM/NBS) e regulares na Anvisa; o motor não confere o anexo. Parte dos medicamentos tem alíquota zero (art. 146). Percentuais de 50%/40% da LC 227/2026 não modelados.",
+      "data": {
+        "reduction": {
+          "geral": 0,
+          "saude": 0.6,
+          "educacao": 0.6,
+          "medicamentos": 0.6,
+          "dispositivos_medicos": 0.6,
+          "acessibilidade": 0.6,
+          "cesta_basica": 1,
+          "profissional_liberal": 0.3
+        }
+      }
+    },
+    {
+      "id": "reforma-transicao",
+      "name": "Transição IBS/CBS",
+      "jurisdiction": "Federal",
+      "validFrom": "2026-01",
+      "validUntil": "2026-12",
+      "source": "LC 214/2025 (transição, arts. 343 a 348 e 359 a 361), conforme resultados de busca em gov.br: https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": "Ano de teste: CBS 0,9% e IBS 0,1%, compensáveis com PIS/COFINS se as obrigações acessórias forem cumpridas.",
+      "data": {
+        "cbsTestRate": 0.009,
+        "ibsTestRate": 0.001,
+        "ibsShare": 0,
+        "legacyShare": 1,
+        "pisCofins": true
+      }
+    },
+    {
+      "id": "reforma-transicao",
+      "name": "Transição IBS/CBS",
+      "jurisdiction": "Federal",
+      "validFrom": "2027-01",
+      "validUntil": "2028-12",
+      "source": "LC 214/2025 (transição, arts. 343 a 348 e 359 a 361), conforme resultados de busca em gov.br: https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": "CBS cheia (alíquota de referência por resolução do Senado) extingue PIS/COFINS; IBS em teste (0,05% estadual + 0,05% municipal).",
+      "data": {
+        "ibsTestRate": 0.001,
+        "ibsShare": 0,
+        "legacyShare": 1,
+        "pisCofins": false
+      }
+    },
+    {
+      "id": "reforma-transicao",
+      "name": "Transição IBS/CBS",
+      "jurisdiction": "Federal",
+      "validFrom": "2029-01",
+      "validUntil": "2029-12",
+      "source": "LC 214/2025 (transição, arts. 343 a 348 e 359 a 361), conforme resultados de busca em gov.br: https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": null,
+      "data": {
+        "ibsShare": 0.1,
+        "legacyShare": 0.9,
+        "pisCofins": false
+      }
+    },
+    {
+      "id": "reforma-transicao",
+      "name": "Transição IBS/CBS",
+      "jurisdiction": "Federal",
+      "validFrom": "2030-01",
+      "validUntil": "2030-12",
+      "source": "LC 214/2025 (transição, arts. 343 a 348 e 359 a 361), conforme resultados de busca em gov.br: https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": null,
+      "data": {
+        "ibsShare": 0.2,
+        "legacyShare": 0.8,
+        "pisCofins": false
+      }
+    },
+    {
+      "id": "reforma-transicao",
+      "name": "Transição IBS/CBS",
+      "jurisdiction": "Federal",
+      "validFrom": "2031-01",
+      "validUntil": "2031-12",
+      "source": "LC 214/2025 (transição, arts. 343 a 348 e 359 a 361), conforme resultados de busca em gov.br: https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": null,
+      "data": {
+        "ibsShare": 0.3,
+        "legacyShare": 0.7,
+        "pisCofins": false
+      }
+    },
+    {
+      "id": "reforma-transicao",
+      "name": "Transição IBS/CBS",
+      "jurisdiction": "Federal",
+      "validFrom": "2032-01",
+      "validUntil": "2032-12",
+      "source": "LC 214/2025 (transição, arts. 343 a 348 e 359 a 361), conforme resultados de busca em gov.br: https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": null,
+      "data": {
+        "ibsShare": 0.4,
+        "legacyShare": 0.6,
+        "pisCofins": false
+      }
+    },
+    {
+      "id": "reforma-transicao",
+      "name": "Transição IBS/CBS",
+      "jurisdiction": "Federal",
+      "validFrom": "2033-01",
+      "validUntil": null,
+      "source": "LC 214/2025 (transição, arts. 343 a 348 e 359 a 361), conforme resultados de busca em gov.br: https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": "Modelo novo pleno: ICMS e ISS extintos.",
+      "data": {
+        "ibsShare": 1,
+        "legacyShare": 0,
+        "pisCofins": false
+      }
+    },
+    {
+      "id": "simples-anexos",
+      "name": "Simples Nacional: Anexos I a V (alíquotas, parcelas a deduzir e repartição)",
+      "jurisdiction": "Federal",
+      "validFrom": "2018-01",
+      "validUntil": null,
+      "source": "LC 123/2006 com a redação da LC 155/2016, art. 18 e Anexos I a V: https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp155.htm",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": "Valores transcritos de extração resumida da página oficial; conferir com o DOU e com o PGDAS-D. Alterações de 2025/2026 não verificadas.",
+      "data": {
+        "limit": 4800000,
+        "stateSublimit": 3600000,
+        "issCap": 0.05,
+        "fatorRThreshold": 0.28,
+        "annexes": {
+          "I": [
+            {
+              "upTo": 180000,
+              "rate": 0.04,
+              "deduction": 0,
+              "split": {
+                "IRPJ": 5.5,
+                "CSLL": 3.5,
+                "COFINS": 12.74,
+                "PIS": 2.76,
+                "CPP": 41.5,
+                "ICMS": 34
+              }
+            },
+            {
+              "upTo": 360000,
+              "rate": 0.073,
+              "deduction": 5940,
+              "split": {
+                "IRPJ": 5.5,
+                "CSLL": 3.5,
+                "COFINS": 12.74,
+                "PIS": 2.76,
+                "CPP": 41.5,
+                "ICMS": 34
+              }
+            },
+            {
+              "upTo": 720000,
+              "rate": 0.095,
+              "deduction": 13860,
+              "split": {
+                "IRPJ": 5.5,
+                "CSLL": 3.5,
+                "COFINS": 12.74,
+                "PIS": 2.76,
+                "CPP": 42,
+                "ICMS": 33.5
+              }
+            },
+            {
+              "upTo": 1800000,
+              "rate": 0.107,
+              "deduction": 22500,
+              "split": {
+                "IRPJ": 5.5,
+                "CSLL": 3.5,
+                "COFINS": 12.74,
+                "PIS": 2.76,
+                "CPP": 42,
+                "ICMS": 33.5
+              }
+            },
+            {
+              "upTo": 3600000,
+              "rate": 0.143,
+              "deduction": 87300,
+              "split": {
+                "IRPJ": 5.5,
+                "CSLL": 3.5,
+                "COFINS": 12.74,
+                "PIS": 2.76,
+                "CPP": 42,
+                "ICMS": 33.5
+              }
+            },
+            {
+              "upTo": 4800000,
+              "rate": 0.19,
+              "deduction": 378000,
+              "split": {
+                "IRPJ": 13.5,
+                "CSLL": 10,
+                "COFINS": 28.27,
+                "PIS": 6.13,
+                "CPP": 42.1
+              }
+            }
+          ],
+          "II": [
+            {
+              "upTo": 180000,
+              "rate": 0.045,
+              "deduction": 0,
+              "split": {
+                "IRPJ": 5.5,
+                "CSLL": 3.5,
+                "COFINS": 11.51,
+                "PIS": 2.49,
+                "CPP": 37.5,
+                "IPI": 7.5,
+                "ICMS": 32
+              }
+            },
+            {
+              "upTo": 360000,
+              "rate": 0.078,
+              "deduction": 5940,
+              "split": {
+                "IRPJ": 5.5,
+                "CSLL": 3.5,
+                "COFINS": 11.51,
+                "PIS": 2.49,
+                "CPP": 37.5,
+                "IPI": 7.5,
+                "ICMS": 32
+              }
+            },
+            {
+              "upTo": 720000,
+              "rate": 0.1,
+              "deduction": 13860,
+              "split": {
+                "IRPJ": 5.5,
+                "CSLL": 3.5,
+                "COFINS": 11.51,
+                "PIS": 2.49,
+                "CPP": 37.5,
+                "IPI": 7.5,
+                "ICMS": 32
+              }
+            },
+            {
+              "upTo": 1800000,
+              "rate": 0.112,
+              "deduction": 22500,
+              "split": {
+                "IRPJ": 5.5,
+                "CSLL": 3.5,
+                "COFINS": 11.51,
+                "PIS": 2.49,
+                "CPP": 37.5,
+                "IPI": 7.5,
+                "ICMS": 32
+              }
+            },
+            {
+              "upTo": 3600000,
+              "rate": 0.147,
+              "deduction": 85500,
+              "split": {
+                "IRPJ": 5.5,
+                "CSLL": 3.5,
+                "COFINS": 11.51,
+                "PIS": 2.49,
+                "CPP": 37.5,
+                "IPI": 7.5,
+                "ICMS": 32
+              }
+            },
+            {
+              "upTo": 4800000,
+              "rate": 0.3,
+              "deduction": 720000,
+              "split": {
+                "IRPJ": 8.5,
+                "CSLL": 7.5,
+                "COFINS": 20.96,
+                "PIS": 4.54,
+                "CPP": 23.5,
+                "IPI": 35
+              }
+            }
+          ],
+          "III": [
+            {
+              "upTo": 180000,
+              "rate": 0.06,
+              "deduction": 0,
+              "split": {
+                "IRPJ": 4,
+                "CSLL": 3.5,
+                "COFINS": 12.82,
+                "PIS": 2.78,
+                "CPP": 43.4,
+                "ISS": 33.5
+              }
+            },
+            {
+              "upTo": 360000,
+              "rate": 0.112,
+              "deduction": 9360,
+              "split": {
+                "IRPJ": 4,
+                "CSLL": 3.5,
+                "COFINS": 14.05,
+                "PIS": 3.05,
+                "CPP": 43.4,
+                "ISS": 32
+              }
+            },
+            {
+              "upTo": 720000,
+              "rate": 0.135,
+              "deduction": 17640,
+              "split": {
+                "IRPJ": 4,
+                "CSLL": 3.5,
+                "COFINS": 13.64,
+                "PIS": 2.96,
+                "CPP": 43.4,
+                "ISS": 32.5
+              }
+            },
+            {
+              "upTo": 1800000,
+              "rate": 0.16,
+              "deduction": 35640,
+              "split": {
+                "IRPJ": 4,
+                "CSLL": 3.5,
+                "COFINS": 13.64,
+                "PIS": 2.96,
+                "CPP": 43.4,
+                "ISS": 32.5
+              }
+            },
+            {
+              "upTo": 3600000,
+              "rate": 0.21,
+              "deduction": 125640,
+              "split": {
+                "IRPJ": 4,
+                "CSLL": 3.5,
+                "COFINS": 12.82,
+                "PIS": 2.78,
+                "CPP": 43.4,
+                "ISS": 33.5
+              }
+            },
+            {
+              "upTo": 4800000,
+              "rate": 0.33,
+              "deduction": 648000,
+              "split": {
+                "IRPJ": 35,
+                "CSLL": 15,
+                "COFINS": 16.03,
+                "PIS": 3.47,
+                "CPP": 30.5
+              }
+            }
+          ],
+          "IV": [
+            {
+              "upTo": 180000,
+              "rate": 0.045,
+              "deduction": 0,
+              "split": {
+                "IRPJ": 18.8,
+                "CSLL": 15.2,
+                "COFINS": 17.67,
+                "PIS": 3.83,
+                "ISS": 44.5
+              }
+            },
+            {
+              "upTo": 360000,
+              "rate": 0.09,
+              "deduction": 8100,
+              "split": {
+                "IRPJ": 19.8,
+                "CSLL": 15.2,
+                "COFINS": 20.55,
+                "PIS": 4.45,
+                "ISS": 40
+              }
+            },
+            {
+              "upTo": 720000,
+              "rate": 0.102,
+              "deduction": 12420,
+              "split": {
+                "IRPJ": 20.8,
+                "CSLL": 15.2,
+                "COFINS": 19.73,
+                "PIS": 4.27,
+                "ISS": 40
+              }
+            },
+            {
+              "upTo": 1800000,
+              "rate": 0.14,
+              "deduction": 39780,
+              "split": {
+                "IRPJ": 17.8,
+                "CSLL": 19.2,
+                "COFINS": 18.9,
+                "PIS": 4.1,
+                "ISS": 40
+              }
+            },
+            {
+              "upTo": 3600000,
+              "rate": 0.22,
+              "deduction": 183780,
+              "split": {
+                "IRPJ": 18.8,
+                "CSLL": 19.2,
+                "COFINS": 18.08,
+                "PIS": 3.92,
+                "ISS": 40
+              }
+            },
+            {
+              "upTo": 4800000,
+              "rate": 0.33,
+              "deduction": 828000,
+              "split": {
+                "IRPJ": 53.5,
+                "CSLL": 21.5,
+                "COFINS": 20.55,
+                "PIS": 4.45
+              }
+            }
+          ],
+          "V": [
+            {
+              "upTo": 180000,
+              "rate": 0.155,
+              "deduction": 0,
+              "split": {
+                "IRPJ": 25,
+                "CSLL": 15,
+                "COFINS": 14.1,
+                "PIS": 3.05,
+                "CPP": 28.85,
+                "ISS": 14
+              }
+            },
+            {
+              "upTo": 360000,
+              "rate": 0.18,
+              "deduction": 4500,
+              "split": {
+                "IRPJ": 23,
+                "CSLL": 15,
+                "COFINS": 14.1,
+                "PIS": 3.05,
+                "CPP": 27.85,
+                "ISS": 17
+              }
+            },
+            {
+              "upTo": 720000,
+              "rate": 0.195,
+              "deduction": 9900,
+              "split": {
+                "IRPJ": 24,
+                "CSLL": 15,
+                "COFINS": 14.92,
+                "PIS": 3.23,
+                "CPP": 23.85,
+                "ISS": 19
+              }
+            },
+            {
+              "upTo": 1800000,
+              "rate": 0.205,
+              "deduction": 17100,
+              "split": {
+                "IRPJ": 21,
+                "CSLL": 15,
+                "COFINS": 15.74,
+                "PIS": 3.41,
+                "CPP": 23.85,
+                "ISS": 21
+              }
+            },
+            {
+              "upTo": 3600000,
+              "rate": 0.23,
+              "deduction": 62100,
+              "split": {
+                "IRPJ": 23,
+                "CSLL": 12.5,
+                "COFINS": 14.1,
+                "PIS": 3.05,
+                "CPP": 23.85,
+                "ISS": 23.5
+              }
+            },
+            {
+              "upTo": 4800000,
+              "rate": 0.305,
+              "deduction": 540000,
+              "split": {
+                "IRPJ": 35,
+                "CSLL": 15.5,
+                "COFINS": 16.44,
+                "PIS": 3.56,
+                "CPP": 29.5
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

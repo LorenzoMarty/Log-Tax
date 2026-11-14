@@ -13,6 +13,7 @@ uvicorn = { version = ">=0.32,<1", extras = ["standard"] }
 pydantic = ">=2.9,<3"
 pydantic-settings = ">=2.6,<3"
 httpx = ">=0.27,<1"
+pyjwt = {version = ">=2.9,<3", extras = ["crypto"]}
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=8.3,<9"
@@ -27,15 +28,18 @@ requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
-line-length = 120
+line-length = 130
 target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "S", "N", "C4", "RUF"]
 ignore = ["S101"]
 
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends"]
+
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S105", "S106"]
+"tests/**" = ["S105", "S106", "N817"]
 
 [tool.mypy]
 strict = true

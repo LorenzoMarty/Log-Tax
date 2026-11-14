@@ -18,3 +18,16 @@ type = forbidden
 source_modules = app.chat
 forbidden_modules =
     app.api
+
+# The service-role key bypasses RLS: only the system tasks may touch it.
+[importlinter:contract:service-role-isolated]
+name = only app.tasks may use the service-role client
+type = forbidden
+source_modules =
+    app.api
+    app.chat
+    app.engine
+    app.core
+    app.db
+forbidden_modules =
+    app.tasks.system
