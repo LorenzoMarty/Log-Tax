@@ -1,6 +1,6 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { admin, createTestUser, createWorkspace, type TestUser } from "@/db/test-users";
-import { DISCLAIMER } from "@/engine";
+import { DISCLAIMER, mockEngine } from "@/engine";
 import { handleChat } from "../handle-chat";
 import { scriptedLlm } from "../scripted-llm";
 import type { LlmClient, LlmTurn } from "../types";
@@ -29,6 +29,17 @@ describe("company journey through the chat (scripted LLM, real database)", () =>
     expect(s.company.monthlyRevenue).toBe(350000);
     expect(s.dashboard.widgets).toEqual([]);
     expect(s.history).toEqual([]);
+  });
+
+  it("without demo mode a workspace with no data starts empty and shows no numbers", async () => {
+    vi.stubEnv("LOG_TAX_DEMO_SEED", "");
+    try {
+      const s = (await loadWorkspaceState(a.client, ws))!;
+      expect(s.company.monthlyRevenue).toBeUndefined();
+      expect(mockEngine.diagnose(s.company)).toEqual({ status: "insufficient_data", missing: ["monthlyRevenue"] });
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it("asks for the context, then diagnoses and builds the dashboard", async () => {

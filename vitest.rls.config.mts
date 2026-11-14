@@ -8,7 +8,8 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.rls.test.ts"],
-    env: loadEnv("", process.cwd(), ""),
+    // Demo mode: the existing journeys start from the fictional company; the empty start has its own test.
+    env: { ...loadEnv("", process.cwd(), ""), LOG_TAX_DEMO_SEED: "1" },
     fileParallelism: false,
   },
 });

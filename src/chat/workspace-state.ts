@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Dashboard } from "@/dashboard/types";
-import { seedCompany, seedPerson, type CompanyProfile, type PersonProfile } from "@/engine";
+import { demoSeedEnabled, seedCompany, seedPerson, type CompanyProfile, type PersonProfile } from "@/engine";
 import { normalizeProfile } from "@/engine/company-schema";
 import { decryptField, encryptField } from "@/lib/crypto";
 import type { StoreState } from "./memory-store";
@@ -65,8 +65,11 @@ export async function loadWorkspaceState(sb: SupabaseClient, workspaceId: string
   const blank: CompanyProfile = { id: ws.id, name: ws.name, regime: "presumido", activity: "comercio" };
   // Old profiles only lack the newer optional fields; the CNPJ is stored encrypted and opened here.
   const raw = ws.profile && typeof ws.profile === "object" && typeof ws.profile.cnpj === "string" ? { ...ws.profile, cnpj: decryptField(ws.profile.cnpj) } : ws.profile;
-  const company: CompanyProfile = ws.kind === "empresa" ? normalizeProfile(raw ?? seedCompany, seedCompany) : blank;
-  const person: PersonProfile = ws.kind === "pessoal" ? (ws.profile ?? seedPerson) : seedPerson;
+  const demo = demoSeedEnabled();
+  const hasData = raw && typeof raw === "object" && Object.keys(raw).length > 0;
+  const company: CompanyProfile = ws.kind === "empresa" ? normalizeProfile(hasData ? raw : demo ? seedCompany : blank, demo ? seedCompany : blank) : blank;
+  const blankPerson: PersonProfile = { id: ws.id, name: ws.name, kind: "pessoa" };
+  const person: PersonProfile = ws.kind === "pessoal" ? (ws.profile && Object.keys(ws.profile).length > 0 ? { ...blankPerson, ...ws.profile } : demo ? seedPerson : blankPerson) : demo ? seedPerson : blankPerson;
 
   return {
     workspaceName: ws.name,
