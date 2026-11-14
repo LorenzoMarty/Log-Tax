@@ -244,3 +244,16 @@ describe("ChatPanel", () => {
     expect(screen.getByRole("button", { name: "Resposta útil" })).toBeInTheDocument();
   });
 });
+
+describe("question that arrives from the home screen", () => {
+  it("is sent once on arrival and removed from the address bar", async () => {
+    const fetchMock = reply({ text: "Você paga R$ 42.800.", pendingConfirmations: [], dashboard: sampleDashboard });
+    vi.stubGlobal("fetch", fetchMock);
+    window.history.replaceState(null, "", "/workspace/ws1?pergunta=quero+entender");
+    render(<ChatPanel workspaceId="ws1" initialMessages={[]} initialDashboard={{ ...sampleDashboard, widgets: [] }} initialPrompt="quero entender meus impostos" />);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).message).toBe("quero entender meus impostos");
+    expect(window.location.search).toBe("");
+    expect(await screen.findByText("Você paga R$ 42.800.")).toBeInTheDocument();
+  });
+});
