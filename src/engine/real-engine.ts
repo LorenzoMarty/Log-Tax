@@ -1,5 +1,6 @@
 import { IRPF_ANNUAL, IRPF_ANNUAL_TABLE, IRPF_MONTHLY, type IrpfAnnualRules, type IrpfAnnualTable } from "./data/irpf";
 import { IRPF_INVESTMENT_RULES } from "./data/irpf-investments";
+import { selectiveTax } from "./selective-tax";
 import { REFORM_PHASES, REFORM_REDUCTIONS } from "./data/reform";
 import { SIMPLES_RULES, type SimplesRules } from "./data/simples";
 import { DISCLAIMER } from "./mock-engine";
@@ -452,7 +453,15 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
     };
   }
 
-  const diagnoseCompany = (p: CompanyProfile): EngineResult<Diagnosis> => withPayroll(p, withIss(p, withIcms(p, diagnoseRegime(p))));
+  /** A company in the Imposto Seletivo list sees the notice next to its diagnosis (#104); nothing is added to the total. */
+  function withSelectiveNotice(p: CompanyProfile, result: EngineResult<Diagnosis>): EngineResult<Diagnosis> {
+    if (result.status !== "ok") return result;
+    const notice = selectiveTax(competence, p.cnaes ?? []);
+    if (notice.status !== "ok") return result;
+    return { status: "ok", value: { ...result.value, assumptions: [...result.value.assumptions, notice.value.message] } };
+  }
+
+  const diagnoseCompany = (p: CompanyProfile): EngineResult<Diagnosis> => withSelectiveNotice(p, withPayroll(p, withIss(p, withIcms(p, diagnoseRegime(p)))));
 
   const diagnoseRegime = (p: CompanyProfile): EngineResult<Diagnosis> =>
     p.regime === "simples" ? diagnoseSimples(p) : p.regime === "mei" ? diagnoseMei(p) : p.regime === "presumido" ? diagnosePresumido(p) : p.regime === "real" ? diagnoseReal(p) : notCovered("esse regime");
