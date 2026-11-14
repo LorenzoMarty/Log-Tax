@@ -15,6 +15,14 @@ class DbError(Exception):
         self.status = status
 
 
+class TooManyRequestsError(Exception):
+    """A budget was spent: the client must wait `retry_after` seconds."""
+
+    def __init__(self, retry_after: int) -> None:
+        super().__init__(f"too many requests, retry after {retry_after}s")
+        self.retry_after = retry_after
+
+
 class ErrorBody(BaseModel):
     code: str
     message: str
@@ -55,6 +63,14 @@ def install_error_handlers(app: FastAPI) -> None:
         response = error_response(exc.status_code, code, message)
         if exc.headers:
             response.headers.update(exc.headers)
+        return response
+
+    @app.exception_handler(TooManyRequestsError)
+    async def _too_many(_: Request, exc: TooManyRequestsError) -> JSONResponse:
+        response = error_response(
+            429, "too_many_requests", f"Muitas tentativas em pouco tempo. Tente de novo em {exc.retry_after} s."
+        )
+        response.headers["Retry-After"] = str(exc.retry_after)
         return response
 
     @app.exception_handler(DbError)
