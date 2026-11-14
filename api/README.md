@@ -21,6 +21,13 @@ poetry run lint-imports
 poetry run pytest          # coverage must stay at 85% or more
 ```
 
+## Contract and client
+
+`api/openapi.json` is the contract (`poetry run python -m scripts.export_openapi` rewrites it; a test and CI fail when it is
+out of date). The front-end types come from it: `npm run api:types` writes `src/api/schema.d.ts`, and `src/api/client.ts`
+(`apiGet`, `apiPost`) is typed on top. The browser calls `/api/v1/*` on the Next.js origin; `src/lib/api-proxy.ts` adds the
+user's bearer token and streams the answer back (no CORS, the session cookie never reaches this API).
+
 ## Layout
 
 | Folder | What lives there |

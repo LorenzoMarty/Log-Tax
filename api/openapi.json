@@ -1,0 +1,3083 @@
+{
+  "components": {
+    "schemas": {
+      "CalcStep": {
+        "description": "One line of the calculation memory: what was computed, how, and which rule (with its source) says so.",
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "string"
+          },
+          "formula": {
+            "title": "Formula",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "ruleId": {
+            "title": "Ruleid",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "tax": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tax"
+          }
+        },
+        "required": [
+          "label",
+          "formula",
+          "amount",
+          "ruleId",
+          "source"
+        ],
+        "title": "CalcStep",
+        "type": "object"
+      },
+      "ChangelogEntry": {
+        "properties": {
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "requiresValidation": {
+            "title": "Requiresvalidation",
+            "type": "boolean"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "validFrom": {
+            "title": "Validfrom",
+            "type": "string"
+          },
+          "validUntil": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Validuntil"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "validFrom",
+          "validUntil",
+          "source",
+          "requiresValidation",
+          "confidence"
+        ],
+        "title": "ChangelogEntry",
+        "type": "object"
+      },
+      "CompanyFields": {
+        "additionalProperties": false,
+        "description": "Fields the user can set through the chat. Same limits as the TypeScript schema.",
+        "properties": {
+          "activity": {
+            "anyOf": [
+              {
+                "enum": [
+                  "comercio",
+                  "servico"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activity"
+          },
+          "anexo": {
+            "anyOf": [
+              {
+                "enum": [
+                  "I",
+                  "II",
+                  "III",
+                  "IV",
+                  "V"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anexo"
+          },
+          "cnaes": {
+            "anyOf": [
+              {
+                "items": {
+                  "pattern": "^\\d{7}$",
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cnaes"
+          },
+          "cnpj": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cnpj"
+          },
+          "employees": {
+            "anyOf": [
+              {
+                "maximum": 1000000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Employees"
+          },
+          "fap": {
+            "anyOf": [
+              {
+                "maximum": 2.0,
+                "minimum": 0.5,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fap"
+          },
+          "fatorR": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fatorr"
+          },
+          "issRate": {
+            "anyOf": [
+              {
+                "maximum": 0.05,
+                "minimum": 0.02,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issrate"
+          },
+          "meiActivity": {
+            "anyOf": [
+              {
+                "enum": [
+                  "comercio",
+                  "servico",
+                  "comercio_servico",
+                  "transporte_cargas"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meiactivity"
+          },
+          "monthlyPurchases": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthlypurchases"
+          },
+          "monthlyRevenue": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthlyrevenue"
+          },
+          "municipio": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Municipio"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "openedAt": {
+            "anyOf": [
+              {
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Openedat"
+          },
+          "profitMargin": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": -1.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profitmargin"
+          },
+          "ratGrade": {
+            "anyOf": [
+              {
+                "enum": [
+                  1,
+                  2,
+                  3
+                ],
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ratgrade"
+          },
+          "regime": {
+            "anyOf": [
+              {
+                "enum": [
+                  "presumido",
+                  "real",
+                  "simples",
+                  "mei"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regime"
+          },
+          "series": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/MonthlyEntryIn"
+                },
+                "maxItems": 120,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Series"
+          },
+          "substituicaoTributaria": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Substituicaotributaria"
+          },
+          "taxLossBalance": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Taxlossbalance"
+          },
+          "terceirosRate": {
+            "anyOf": [
+              {
+                "maximum": 0.15,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terceirosrate"
+          },
+          "uf": {
+            "anyOf": [
+              {
+                "enum": [
+                  "AC",
+                  "AL",
+                  "AP",
+                  "AM",
+                  "BA",
+                  "CE",
+                  "DF",
+                  "ES",
+                  "GO",
+                  "MA",
+                  "MT",
+                  "MS",
+                  "MG",
+                  "PA",
+                  "PB",
+                  "PR",
+                  "PE",
+                  "PI",
+                  "RJ",
+                  "RN",
+                  "RS",
+                  "RO",
+                  "RR",
+                  "SC",
+                  "SP",
+                  "SE",
+                  "TO"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uf"
+          }
+        },
+        "title": "CompanyFields",
+        "type": "object"
+      },
+      "CompanyIn": {
+        "additionalProperties": false,
+        "description": "A company for one calculation: the regime and the activity are required, everything else is optional.",
+        "properties": {
+          "activity": {
+            "enum": [
+              "comercio",
+              "servico"
+            ],
+            "title": "Activity",
+            "type": "string"
+          },
+          "anexo": {
+            "anyOf": [
+              {
+                "enum": [
+                  "I",
+                  "II",
+                  "III",
+                  "IV",
+                  "V"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anexo"
+          },
+          "cnaes": {
+            "anyOf": [
+              {
+                "items": {
+                  "pattern": "^\\d{7}$",
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cnaes"
+          },
+          "cnpj": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cnpj"
+          },
+          "employees": {
+            "anyOf": [
+              {
+                "maximum": 1000000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Employees"
+          },
+          "fap": {
+            "anyOf": [
+              {
+                "maximum": 2.0,
+                "minimum": 0.5,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fap"
+          },
+          "fatorR": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fatorr"
+          },
+          "issRate": {
+            "anyOf": [
+              {
+                "maximum": 0.05,
+                "minimum": 0.02,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issrate"
+          },
+          "meiActivity": {
+            "anyOf": [
+              {
+                "enum": [
+                  "comercio",
+                  "servico",
+                  "comercio_servico",
+                  "transporte_cargas"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meiactivity"
+          },
+          "monthlyPurchases": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthlypurchases"
+          },
+          "monthlyRevenue": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthlyrevenue"
+          },
+          "municipio": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Municipio"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "openedAt": {
+            "anyOf": [
+              {
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Openedat"
+          },
+          "profitMargin": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": -1.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profitmargin"
+          },
+          "ratGrade": {
+            "anyOf": [
+              {
+                "enum": [
+                  1,
+                  2,
+                  3
+                ],
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ratgrade"
+          },
+          "regime": {
+            "enum": [
+              "presumido",
+              "real",
+              "simples",
+              "mei"
+            ],
+            "title": "Regime",
+            "type": "string"
+          },
+          "series": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/MonthlyEntryIn"
+                },
+                "maxItems": 120,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Series"
+          },
+          "substituicaoTributaria": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Substituicaotributaria"
+          },
+          "taxLossBalance": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Taxlossbalance"
+          },
+          "terceirosRate": {
+            "anyOf": [
+              {
+                "maximum": 0.15,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terceirosrate"
+          },
+          "uf": {
+            "anyOf": [
+              {
+                "enum": [
+                  "AC",
+                  "AL",
+                  "AP",
+                  "AM",
+                  "BA",
+                  "CE",
+                  "DF",
+                  "ES",
+                  "GO",
+                  "MA",
+                  "MT",
+                  "MS",
+                  "MG",
+                  "PA",
+                  "PB",
+                  "PR",
+                  "PE",
+                  "PI",
+                  "RJ",
+                  "RN",
+                  "RS",
+                  "RO",
+                  "RR",
+                  "SC",
+                  "SP",
+                  "SE",
+                  "TO"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uf"
+          }
+        },
+        "required": [
+          "regime",
+          "activity"
+        ],
+        "title": "CompanyIn",
+        "type": "object"
+      },
+      "Comparison": {
+        "properties": {
+          "delta": {
+            "title": "Delta",
+            "type": "string"
+          },
+          "deltaPct": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deltapct"
+          },
+          "fromMonth": {
+            "title": "Frommonth",
+            "type": "string"
+          },
+          "fromTotal": {
+            "title": "Fromtotal",
+            "type": "string"
+          },
+          "toMonth": {
+            "title": "Tomonth",
+            "type": "string"
+          },
+          "toTotal": {
+            "title": "Tototal",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fromMonth",
+          "toMonth",
+          "fromTotal",
+          "toTotal",
+          "delta",
+          "deltaPct"
+        ],
+        "title": "Comparison",
+        "type": "object"
+      },
+      "Confidence": {
+        "enum": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "type": "string"
+      },
+      "Deadline": {
+        "properties": {
+          "competence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Competence"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "string"
+          },
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "requiresValidation": {
+            "title": "Requiresvalidation",
+            "type": "boolean"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "date",
+          "source",
+          "confidence",
+          "requiresValidation"
+        ],
+        "title": "Deadline",
+        "type": "object"
+      },
+      "DeadlineList": {
+        "properties": {
+          "deadlines": {
+            "items": {
+              "$ref": "#/components/schemas/Deadline"
+            },
+            "title": "Deadlines",
+            "type": "array"
+          },
+          "holidayScope": {
+            "default": "nacional",
+            "title": "Holidayscope",
+            "type": "string"
+          },
+          "notCovered": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notcovered",
+            "type": "array"
+          }
+        },
+        "required": [
+          "deadlines",
+          "notCovered"
+        ],
+        "title": "DeadlineList",
+        "type": "object"
+      },
+      "DeadlinesIn": {
+        "additionalProperties": false,
+        "properties": {
+          "from": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From"
+          },
+          "horizonDays": {
+            "default": 60,
+            "maximum": 365.0,
+            "minimum": 1.0,
+            "title": "Horizondays",
+            "type": "integer"
+          },
+          "regime": {
+            "enum": [
+              "presumido",
+              "real",
+              "simples",
+              "mei"
+            ],
+            "title": "Regime",
+            "type": "string"
+          }
+        },
+        "required": [
+          "regime"
+        ],
+        "title": "DeadlinesIn",
+        "type": "object"
+      },
+      "DiagnoseIn": {
+        "additionalProperties": false,
+        "properties": {
+          "company": {
+            "$ref": "#/components/schemas/CompanyIn"
+          },
+          "competence": {
+            "anyOf": [
+              {
+                "examples": [
+                  "2026-03"
+                ],
+                "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Competence"
+          }
+        },
+        "required": [
+          "company"
+        ],
+        "title": "DiagnoseIn",
+        "type": "object"
+      },
+      "Diagnosis": {
+        "properties": {
+          "annualTotal": {
+            "title": "Annualtotal",
+            "type": "string"
+          },
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/TaxLine"
+            },
+            "title": "Breakdown",
+            "type": "array"
+          },
+          "disclaimer": {
+            "title": "Disclaimer",
+            "type": "string"
+          },
+          "effectiveRate": {
+            "title": "Effectiverate",
+            "type": "string"
+          },
+          "monthlyRevenue": {
+            "title": "Monthlyrevenue",
+            "type": "string"
+          },
+          "monthlyTotal": {
+            "title": "Monthlytotal",
+            "type": "string"
+          },
+          "rulesUsed": {
+            "items": {
+              "$ref": "#/components/schemas/RuleRef"
+            },
+            "title": "Rulesused",
+            "type": "array"
+          },
+          "rulesVersion": {
+            "title": "Rulesversion",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/CalcStep"
+            },
+            "title": "Steps",
+            "type": "array"
+          }
+        },
+        "required": [
+          "monthlyRevenue",
+          "monthlyTotal",
+          "annualTotal",
+          "effectiveRate",
+          "breakdown",
+          "assumptions",
+          "disclaimer",
+          "rulesVersion"
+        ],
+        "title": "Diagnosis",
+        "type": "object"
+      },
+      "Envelope_Diagnosis_": {
+        "discriminator": {
+          "mapping": {
+            "insufficient_data": "#/components/schemas/InsufficientDataOut",
+            "none_found": "#/components/schemas/NoneFoundOut",
+            "not_applicable": "#/components/schemas/NotApplicableOut",
+            "ok": "#/components/schemas/OkOut_Diagnosis_"
+          },
+          "propertyName": "status"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/OkOut_Diagnosis_"
+          },
+          {
+            "$ref": "#/components/schemas/InsufficientDataOut"
+          },
+          {
+            "$ref": "#/components/schemas/NotApplicableOut"
+          },
+          {
+            "$ref": "#/components/schemas/NoneFoundOut"
+          }
+        ]
+      },
+      "Envelope_OpportunitySet_": {
+        "discriminator": {
+          "mapping": {
+            "insufficient_data": "#/components/schemas/InsufficientDataOut",
+            "none_found": "#/components/schemas/NoneFoundOut",
+            "not_applicable": "#/components/schemas/NotApplicableOut",
+            "ok": "#/components/schemas/OkOut_OpportunitySet_"
+          },
+          "propertyName": "status"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/OkOut_OpportunitySet_"
+          },
+          {
+            "$ref": "#/components/schemas/InsufficientDataOut"
+          },
+          {
+            "$ref": "#/components/schemas/NotApplicableOut"
+          },
+          {
+            "$ref": "#/components/schemas/NoneFoundOut"
+          }
+        ]
+      },
+      "Envelope_PersonDiagnosis_": {
+        "discriminator": {
+          "mapping": {
+            "insufficient_data": "#/components/schemas/InsufficientDataOut",
+            "none_found": "#/components/schemas/NoneFoundOut",
+            "not_applicable": "#/components/schemas/NotApplicableOut",
+            "ok": "#/components/schemas/OkOut_PersonDiagnosis_"
+          },
+          "propertyName": "status"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/OkOut_PersonDiagnosis_"
+          },
+          {
+            "$ref": "#/components/schemas/InsufficientDataOut"
+          },
+          {
+            "$ref": "#/components/schemas/NotApplicableOut"
+          },
+          {
+            "$ref": "#/components/schemas/NoneFoundOut"
+          }
+        ]
+      },
+      "Envelope_ReformImpact_": {
+        "discriminator": {
+          "mapping": {
+            "insufficient_data": "#/components/schemas/InsufficientDataOut",
+            "none_found": "#/components/schemas/NoneFoundOut",
+            "not_applicable": "#/components/schemas/NotApplicableOut",
+            "ok": "#/components/schemas/OkOut_ReformImpact_"
+          },
+          "propertyName": "status"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/OkOut_ReformImpact_"
+          },
+          {
+            "$ref": "#/components/schemas/InsufficientDataOut"
+          },
+          {
+            "$ref": "#/components/schemas/NotApplicableOut"
+          },
+          {
+            "$ref": "#/components/schemas/NoneFoundOut"
+          }
+        ]
+      },
+      "Envelope_Simulation_": {
+        "discriminator": {
+          "mapping": {
+            "insufficient_data": "#/components/schemas/InsufficientDataOut",
+            "none_found": "#/components/schemas/NoneFoundOut",
+            "not_applicable": "#/components/schemas/NotApplicableOut",
+            "ok": "#/components/schemas/OkOut_Simulation_"
+          },
+          "propertyName": "status"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/OkOut_Simulation_"
+          },
+          {
+            "$ref": "#/components/schemas/InsufficientDataOut"
+          },
+          {
+            "$ref": "#/components/schemas/NotApplicableOut"
+          },
+          {
+            "$ref": "#/components/schemas/NoneFoundOut"
+          }
+        ]
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HistoryIn": {
+        "additionalProperties": false,
+        "properties": {
+          "company": {
+            "$ref": "#/components/schemas/CompanyIn"
+          },
+          "compareWith": {
+            "anyOf": [
+              {
+                "examples": [
+                  "2026-03"
+                ],
+                "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comparewith"
+          },
+          "months": {
+            "default": 12,
+            "maximum": 24.0,
+            "minimum": 1.0,
+            "title": "Months",
+            "type": "integer"
+          },
+          "to": {
+            "examples": [
+              "2026-03"
+            ],
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+            "title": "To",
+            "type": "string"
+          }
+        },
+        "required": [
+          "company",
+          "to"
+        ],
+        "title": "HistoryIn",
+        "type": "object"
+      },
+      "HistoryPoint": {
+        "properties": {
+          "effectiveRate": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effectiverate"
+          },
+          "month": {
+            "title": "Month",
+            "type": "string"
+          },
+          "monthlyTotal": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthlytotal"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "month",
+          "status"
+        ],
+        "title": "HistoryPoint",
+        "type": "object"
+      },
+      "InsufficientDataOut": {
+        "properties": {
+          "missing": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing",
+            "type": "array"
+          },
+          "status": {
+            "const": "insufficient_data",
+            "default": "insufficient_data",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "missing"
+        ],
+        "title": "InsufficientDataOut",
+        "type": "object"
+      },
+      "IrScenario": {
+        "properties": {
+          "balance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Balance"
+          },
+          "deductions": {
+            "title": "Deductions",
+            "type": "string"
+          },
+          "model": {
+            "$ref": "#/components/schemas/Model"
+          },
+          "tax": {
+            "title": "Tax",
+            "type": "string"
+          },
+          "taxableBase": {
+            "title": "Taxablebase",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model",
+          "deductions",
+          "taxableBase",
+          "tax",
+          "balance"
+        ],
+        "title": "IrScenario",
+        "type": "object"
+      },
+      "Me": {
+        "properties": {
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "email"
+        ],
+        "title": "Me",
+        "type": "object"
+      },
+      "Model": {
+        "enum": [
+          "simplificada",
+          "completa"
+        ],
+        "type": "string"
+      },
+      "MonthlyEntryIn": {
+        "additionalProperties": false,
+        "description": "One month of the company's numbers. Revenue is split by kind: Simples annexes and ICMS/ISS depend on it.",
+        "properties": {
+          "month": {
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+            "title": "Month",
+            "type": "string"
+          },
+          "payroll": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payroll"
+          },
+          "proLabore": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prolabore"
+          },
+          "purchases": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Purchases"
+          },
+          "revenue": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Revenue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "month"
+        ],
+        "title": "MonthlyEntryIn",
+        "type": "object"
+      },
+      "Municipio": {
+        "additionalProperties": false,
+        "properties": {
+          "ibge": {
+            "anyOf": [
+              {
+                "pattern": "^\\d{7}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ibge"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 2,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "Municipio",
+        "type": "object"
+      },
+      "NoneFoundOut": {
+        "properties": {
+          "status": {
+            "const": "none_found",
+            "default": "none_found",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "title": "NoneFoundOut",
+        "type": "object"
+      },
+      "NotApplicableOut": {
+        "properties": {
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "status": {
+            "const": "not_applicable",
+            "default": "not_applicable",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "NotApplicableOut",
+        "type": "object"
+      },
+      "OkOut_Diagnosis_": {
+        "properties": {
+          "status": {
+            "const": "ok",
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/Diagnosis"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "OkOut[Diagnosis]",
+        "type": "object"
+      },
+      "OkOut_OpportunitySet_": {
+        "properties": {
+          "status": {
+            "const": "ok",
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/OpportunitySet"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "OkOut[OpportunitySet]",
+        "type": "object"
+      },
+      "OkOut_PersonDiagnosis_": {
+        "properties": {
+          "status": {
+            "const": "ok",
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/PersonDiagnosis"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "OkOut[PersonDiagnosis]",
+        "type": "object"
+      },
+      "OkOut_ReformImpact_": {
+        "properties": {
+          "status": {
+            "const": "ok",
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/ReformImpact"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "OkOut[ReformImpact]",
+        "type": "object"
+      },
+      "OkOut_Simulation_": {
+        "properties": {
+          "status": {
+            "const": "ok",
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/Simulation"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "OkOut[Simulation]",
+        "type": "object"
+      },
+      "Opportunity": {
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "missing": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Missing"
+          },
+          "monthlySavings": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthlysavings"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "requiresValidation": {
+            "default": true,
+            "title": "Requiresvalidation",
+            "type": "boolean"
+          },
+          "ruleId": {
+            "title": "Ruleid",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "found",
+              "insufficient_data",
+              "not_applicable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "ruleId"
+        ],
+        "title": "Opportunity",
+        "type": "object"
+      },
+      "OpportunitySet": {
+        "properties": {
+          "annualSavings": {
+            "title": "Annualsavings",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Opportunity"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items",
+          "annualSavings"
+        ],
+        "title": "OpportunitySet",
+        "type": "object"
+      },
+      "PersonDiagnosis": {
+        "properties": {
+          "annualGrossIncome": {
+            "title": "Annualgrossincome",
+            "type": "string"
+          },
+          "annualSavings": {
+            "title": "Annualsavings",
+            "type": "string"
+          },
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "best": {
+            "$ref": "#/components/schemas/Model"
+          },
+          "complete": {
+            "$ref": "#/components/schemas/IrScenario"
+          },
+          "disclaimer": {
+            "title": "Disclaimer",
+            "type": "string"
+          },
+          "rulesUsed": {
+            "items": {
+              "$ref": "#/components/schemas/RuleRef"
+            },
+            "title": "Rulesused",
+            "type": "array"
+          },
+          "rulesVersion": {
+            "title": "Rulesversion",
+            "type": "string"
+          },
+          "simplified": {
+            "$ref": "#/components/schemas/IrScenario"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/CalcStep"
+            },
+            "title": "Steps",
+            "type": "array"
+          }
+        },
+        "required": [
+          "annualGrossIncome",
+          "simplified",
+          "complete",
+          "best",
+          "annualSavings",
+          "assumptions",
+          "disclaimer",
+          "rulesVersion"
+        ],
+        "title": "PersonDiagnosis",
+        "type": "object"
+      },
+      "PersonIn": {
+        "additionalProperties": false,
+        "properties": {
+          "annualGrossIncome": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annualgrossincome"
+          },
+          "dependents": {
+            "anyOf": [
+              {
+                "maximum": 50.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dependents"
+          },
+          "educationExpenses": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Educationexpenses"
+          },
+          "healthExpenses": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Healthexpenses"
+          },
+          "inssPaid": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Insspaid"
+          },
+          "privatePension": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Privatepension"
+          },
+          "taxWithheld": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Taxwithheld"
+          }
+        },
+        "title": "PersonIn",
+        "type": "object"
+      },
+      "PersonRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "competence": {
+            "anyOf": [
+              {
+                "examples": [
+                  "2026-03"
+                ],
+                "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Competence"
+          },
+          "person": {
+            "$ref": "#/components/schemas/PersonIn"
+          }
+        },
+        "required": [
+          "person"
+        ],
+        "title": "PersonRequest",
+        "type": "object"
+      },
+      "ReformImpact": {
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "todayCents": {
+            "title": "Todaycents",
+            "type": "integer"
+          },
+          "years": {
+            "items": {
+              "$ref": "#/components/schemas/ReformYear"
+            },
+            "title": "Years",
+            "type": "array"
+          }
+        },
+        "required": [
+          "todayCents",
+          "years",
+          "assumptions"
+        ],
+        "title": "ReformImpact",
+        "type": "object"
+      },
+      "ReformImpactIn": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "anyOf": [
+              {
+                "enum": [
+                  "geral",
+                  "saude",
+                  "educacao",
+                  "medicamentos",
+                  "dispositivos_medicos",
+                  "acessibilidade",
+                  "cesta_basica",
+                  "profissional_liberal"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category"
+          },
+          "cbsReferenceRate": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cbsreferencerate"
+          },
+          "company": {
+            "$ref": "#/components/schemas/CompanyIn"
+          },
+          "competence": {
+            "anyOf": [
+              {
+                "examples": [
+                  "2026-03"
+                ],
+                "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Competence"
+          },
+          "ibsReferenceRate": {
+            "anyOf": [
+              {
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ibsreferencerate"
+          }
+        },
+        "required": [
+          "company"
+        ],
+        "title": "ReformImpactIn",
+        "type": "object"
+      },
+      "ReformYear": {
+        "properties": {
+          "deltaCents": {
+            "title": "Deltacents",
+            "type": "integer"
+          },
+          "legacyCents": {
+            "title": "Legacycents",
+            "type": "integer"
+          },
+          "reformCents": {
+            "title": "Reformcents",
+            "type": "integer"
+          },
+          "totalCents": {
+            "title": "Totalcents",
+            "type": "integer"
+          },
+          "year": {
+            "title": "Year",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "year",
+          "legacyCents",
+          "reformCents",
+          "totalCents",
+          "deltaCents"
+        ],
+        "title": "ReformYear",
+        "type": "object"
+      },
+      "Revenue": {
+        "additionalProperties": false,
+        "properties": {
+          "comercio": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comercio"
+          },
+          "exportacao": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exportacao"
+          },
+          "industria": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Industria"
+          },
+          "servico": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Servico"
+          }
+        },
+        "title": "Revenue",
+        "type": "object"
+      },
+      "RuleRef": {
+        "description": "What a result says about each rule it used, so any number traces back to a law and a date.",
+        "properties": {
+          "confidence": {
+            "$ref": "#/components/schemas/Confidence"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "requiresValidation": {
+            "title": "Requiresvalidation",
+            "type": "boolean"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "validFrom": {
+            "title": "Validfrom",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "validFrom",
+          "source",
+          "requiresValidation",
+          "confidence"
+        ],
+        "title": "RuleRef",
+        "type": "object"
+      },
+      "RuleStatus": {
+        "properties": {
+          "endsAt": {
+            "title": "Endsat",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "validUntil": {
+            "title": "Validuntil",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "validUntil",
+          "endsAt"
+        ],
+        "title": "RuleStatus",
+        "type": "object"
+      },
+      "RulesOut": {
+        "properties": {
+          "changelog": {
+            "items": {
+              "$ref": "#/components/schemas/ChangelogEntry"
+            },
+            "title": "Changelog",
+            "type": "array"
+          },
+          "expiring": {
+            "items": {
+              "$ref": "#/components/schemas/RuleStatus"
+            },
+            "title": "Expiring",
+            "type": "array"
+          },
+          "lapsed": {
+            "items": {
+              "$ref": "#/components/schemas/RuleStatus"
+            },
+            "title": "Lapsed",
+            "type": "array"
+          }
+        },
+        "required": [
+          "changelog",
+          "expiring",
+          "lapsed"
+        ],
+        "title": "RulesOut",
+        "type": "object"
+      },
+      "SimulateIn": {
+        "additionalProperties": false,
+        "properties": {
+          "company": {
+            "$ref": "#/components/schemas/CompanyIn"
+          },
+          "competence": {
+            "anyOf": [
+              {
+                "examples": [
+                  "2026-03"
+                ],
+                "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Competence"
+          },
+          "overrides": {
+            "$ref": "#/components/schemas/CompanyFields",
+            "description": "Fields of the company that change in the scenario"
+          }
+        },
+        "required": [
+          "company",
+          "overrides"
+        ],
+        "title": "SimulateIn",
+        "type": "object"
+      },
+      "Simulation": {
+        "properties": {
+          "current": {
+            "$ref": "#/components/schemas/Diagnosis"
+          },
+          "scenario": {
+            "$ref": "#/components/schemas/Diagnosis"
+          }
+        },
+        "required": [
+          "current",
+          "scenario"
+        ],
+        "title": "Simulation",
+        "type": "object"
+      },
+      "TaxHistory": {
+        "properties": {
+          "comparison": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Comparison"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "gaps": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gaps"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/HistoryPoint"
+            },
+            "title": "Points",
+            "type": "array"
+          }
+        },
+        "required": [
+          "points"
+        ],
+        "title": "TaxHistory",
+        "type": "object"
+      },
+      "TaxLine": {
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "tax": {
+            "title": "Tax",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tax",
+          "label",
+          "amount"
+        ],
+        "title": "TaxLine",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "Vital": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "enum": [
+              "LCP",
+              "INP",
+              "CLS",
+              "FCP",
+              "TTFB"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "navigationType": {
+            "anyOf": [
+              {
+                "maxLength": 30,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Navigationtype"
+          },
+          "path": {
+            "maxLength": 120,
+            "title": "Path",
+            "type": "string"
+          },
+          "rating": {
+            "enum": [
+              "good",
+              "needs-improvement",
+              "poor"
+            ],
+            "title": "Rating",
+            "type": "string"
+          },
+          "value": {
+            "maximum": 600000.0,
+            "minimum": 0.0,
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "value",
+          "rating",
+          "path"
+        ],
+        "title": "Vital",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "Log Tax API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/health": {
+      "get": {
+        "description": "Uptime probe: 200 when the database answers, 503 otherwise. Public on purpose; it reveals nothing else.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "ops"
+        ]
+      }
+    },
+    "/v1/engine/deadlines": {
+      "post": {
+        "description": "Upcoming federal obligations of the regime, with the business-day rule and what is not covered.",
+        "operationId": "deadlines_v1_engine_deadlines_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeadlinesIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeadlineList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Deadlines",
+        "tags": [
+          "engine"
+        ]
+      }
+    },
+    "/v1/engine/diagnose": {
+      "post": {
+        "description": "What the company pays in the competence month, by tax, with the rules used and the calculation memory.",
+        "operationId": "diagnose_v1_engine_diagnose_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DiagnoseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_Diagnosis_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Diagnose",
+        "tags": [
+          "engine"
+        ]
+      }
+    },
+    "/v1/engine/history": {
+      "post": {
+        "description": "Monthly tax computed with the rules in force each month; only months with recorded data, never an estimate.",
+        "operationId": "history_v1_engine_history_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HistoryIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxHistory"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "History",
+        "tags": [
+          "engine"
+        ]
+      }
+    },
+    "/v1/engine/opportunities": {
+      "post": {
+        "description": "Legal savings found for the company, each with its premises; nothing is shown without them.",
+        "operationId": "opportunities_v1_engine_opportunities_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DiagnoseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_OpportunitySet_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Opportunities",
+        "tags": [
+          "engine"
+        ]
+      }
+    },
+    "/v1/engine/person": {
+      "post": {
+        "description": "Annual IRPF of a person in the simplified and the complete model, and which one is better.",
+        "operationId": "person_v1_engine_person_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PersonRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_PersonDiagnosis_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Person",
+        "tags": [
+          "engine"
+        ]
+      }
+    },
+    "/v1/engine/reform-impact": {
+      "post": {
+        "description": "The company's yearly load today against each year of the IBS/CBS transition. Reference rates are informed.",
+        "operationId": "reform_impact_route_v1_engine_reform_impact_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReformImpactIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_ReformImpact_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reform Impact Route",
+        "tags": [
+          "engine"
+        ]
+      }
+    },
+    "/v1/engine/rules": {
+      "get": {
+        "description": "Every version of every rule with its source and validation state, and the rules that ended or are about to.",
+        "operationId": "rules_v1_engine_rules_get",
+        "parameters": [
+          {
+            "description": "Month used to look for rules about to expire",
+            "in": "query",
+            "name": "today",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "examples": [
+                    "2026-03"
+                  ],
+                  "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Month used to look for rules about to expire",
+              "title": "Today"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RulesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Rules",
+        "tags": [
+          "engine"
+        ]
+      }
+    },
+    "/v1/engine/simulate": {
+      "post": {
+        "description": "Today against a scenario: `overrides` are the company fields that change.",
+        "operationId": "simulate_v1_engine_simulate_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_Simulation_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Simulate",
+        "tags": [
+          "engine"
+        ]
+      }
+    },
+    "/v1/me": {
+      "get": {
+        "description": "Who the API thinks the caller is. Also the cheapest way for the front-end to check its token.",
+        "operationId": "me_v1_me_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Me",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/ping": {
+      "get": {
+        "operationId": "ping_v1_ping_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Ping V1 Ping Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Ping",
+        "tags": [
+          "ops"
+        ]
+      }
+    },
+    "/v1/vitals": {
+      "post": {
+        "description": "Receives one Web Vital from a real visit and logs it (CLS is sent times 1000). Public and tiny: no user data accepted.",
+        "operationId": "vitals_v1_vitals_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Vital"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Vitals",
+        "tags": [
+          "ops"
+        ]
+      }
+    }
+  }
+}

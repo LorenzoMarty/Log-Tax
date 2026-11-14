@@ -6,7 +6,7 @@ from functools import lru_cache
 from typing import Annotated, Any
 
 import jwt
-from fastapi import Depends, Header, HTTPException
+from fastapi import Depends, Header, HTTPException, Request
 from jwt import PyJWKClient
 
 from app.core.config import Settings, get_settings
@@ -70,6 +70,8 @@ def authenticate(authorization: str | None, settings: Settings) -> Principal:
 
 
 async def current_user(
-    authorization: Annotated[str | None, Header()] = None, settings: Settings = Depends(get_settings)
+    request: Request, authorization: Annotated[str | None, Header()] = None, settings: Settings = Depends(get_settings)
 ) -> Principal:
-    return authenticate(authorization, settings)
+    principal = authenticate(authorization, settings)
+    request.state.user_id = str(principal.user_id)  # for the request log: an opaque id, never the token
+    return principal
