@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Widget } from "@/dashboard/types";
 import { AgentList } from "@/agents/agent-list";
 import { AlertBar } from "@/alerts/alert-bar";
@@ -64,7 +64,7 @@ async function readStream(res: Response, onProgress: (text: string) => void) {
   return result as Record<string, never>;
 }
 
-export function ChatPanel(props: { workspaceId: string; initialMessages: DisplayMessage[]; initialDashboard: Dashboard; initialAlerts?: AlertStatus[]; agentId?: string; initialAgents?: Agent[]; workspaceKind?: SpaceProgress["kind"] }) {
+export function ChatPanel(props: { workspaceId: string; initialMessages: DisplayMessage[]; initialDashboard: Dashboard; initialAlerts?: AlertStatus[]; agentId?: string; initialAgents?: Agent[]; workspaceKind?: SpaceProgress["kind"]; initialPrompt?: string }) {
   const [messages, setMessages] = useState(props.initialMessages);
   const [dashboard, setDashboard] = useState(props.initialDashboard);
   const [alerts, setAlerts] = useState(props.initialAlerts ?? []);
@@ -139,6 +139,18 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
     setPending([]);
     setTopic(null);
   }
+
+  // A question typed on the home screen arrives in the URL: send it once, then take it out of the address bar.
+  const sentInitial = useRef(false);
+  useEffect(() => {
+    if (!props.initialPrompt || sentInitial.current) return;
+    sentInitial.current = true;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("pergunta");
+    window.history.replaceState(null, "", url);
+    void send(props.initialPrompt);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on arrival
+  }, []);
 
   // Follow-ups after the AI answers (#119); not in a specialised AI's conversation, whose tools are scoped down.
   const suggestions =

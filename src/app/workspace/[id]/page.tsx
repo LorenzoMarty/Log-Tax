@@ -26,10 +26,10 @@ export default async function WorkspaceChatPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ ia?: string; msg?: string }>;
+  searchParams: Promise<{ ia?: string; msg?: string; pergunta?: string }>;
 }) {
   const { id } = await params;
-  const { ia, msg } = await searchParams;
+  const { ia, msg, pergunta } = await searchParams;
   if (!UUID.test(id) || (ia && !UUID.test(ia))) notFound();
 
   const supabase = await createClient();
@@ -109,6 +109,7 @@ export default async function WorkspaceChatPage({
             initialDashboard={state.dashboard}
             initialAlerts={alerts}
             workspaceKind={state.kind}
+            initialPrompt={pergunta?.slice(0, 1000)}
           />
           <SharePanel workspaceId={id} defaultOpen={Boolean(notice)} members={(members ?? []) as MemberRow[]} invites={(invites ?? []) as InviteRow[]} />
           {documentsPanel}

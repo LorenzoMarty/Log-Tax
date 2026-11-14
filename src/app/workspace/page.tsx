@@ -6,7 +6,8 @@ import { acceptInvite, declineInvite } from "@/sharing/actions";
 import { MESSAGES } from "@/sharing/messages";
 import { ROLE_LABEL, type Role } from "@/sharing/schema";
 import { deleteMyAccount } from "@/account/actions";
-import { createDefaultWorkspaces, signOut } from "./actions";
+import { askFromHome, createDefaultWorkspaces, signOut } from "./actions";
+import { HOME_QUESTION_MAX } from "./intent";
 
 export const metadata = { title: "Seus espaços" };
 
@@ -38,7 +39,14 @@ export default async function WorkspacePage({ searchParams }: { searchParams: Pr
           </Button>
         </form>
       </header>
-      <h1 className="lg-display">Seus espaços</h1>
+      <h1 className="lg-display">O que você precisa resolver?</h1>
+      <form action={askFromHome} className="flex gap-2">
+        <Input name="pergunta" aria-label="Sua pergunta" placeholder="Quero entender meus impostos..." maxLength={HOME_QUESTION_MAX} required className="min-w-0 flex-1" />
+        <Button type="submit" variant="primary">
+          Perguntar
+        </Button>
+      </form>
+      <h2 className="lg-heading-1">Seus espaços</h2>
 
       {notice && (
         <p role="status" className={`rounded-[var(--radius-md)] px-4 py-3 text-sm ${notice.ok ? "bg-brand-tint text-brand-ink" : "bg-danger-tint text-danger-ink"}`}>
