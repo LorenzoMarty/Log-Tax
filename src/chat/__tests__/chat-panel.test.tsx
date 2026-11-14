@@ -163,4 +163,31 @@ describe("ChatPanel", () => {
     const link = await screen.findByRole("link", { name: "abrir o espaço" });
     expect(link).toHaveAttribute("href", "/workspace/0a1b2c3d-0000-4000-8000-123456789abc");
   });
+
+  it("asking about a block sends it as context, shows the chip, and is operable by keyboard", async () => {
+    const fetchMock = reply({ text: "ICMS é o imposto estadual.", pendingConfirmations: [], dashboard: sampleDashboard });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<ChatPanel workspaceId="ws1" initialMessages={[]} initialDashboard={sampleDashboard} />);
+    const first = sampleDashboard.widgets[0];
+    const ask = screen.getByRole("button", { name: `Perguntar sobre ${first.title}` });
+    ask.focus();
+    expect(ask).toHaveFocus();
+    fireEvent.click(ask);
+    expect(screen.getByRole("status")).toHaveTextContent(first.title);
+    expect(screen.getByLabelText("Mensagem")).toHaveFocus();
+    send("por quê?");
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const sent = JSON.parse(fetchMock.mock.calls[0][1].body).message as string;
+    expect(sent).toContain(`bloco "${first.title}"`);
+    expect(sent.endsWith("por quê?")).toBe(true);
+    expect(await screen.findByText(`Sobre "${first.title}": por quê?`)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Remover o bloco da pergunta" })).not.toBeInTheDocument();
+  });
+
+  it("the chosen block can be removed before sending", () => {
+    render(<ChatPanel workspaceId="ws1" initialMessages={[]} initialDashboard={sampleDashboard} />);
+    fireEvent.click(screen.getByRole("button", { name: `Perguntar sobre ${sampleDashboard.widgets[0].title}` }));
+    fireEvent.click(screen.getByRole("button", { name: "Remover o bloco da pergunta" }));
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
 });

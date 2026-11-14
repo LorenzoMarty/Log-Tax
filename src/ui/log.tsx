@@ -1,6 +1,6 @@
 // Componentes do design system "Log", portados do bundle para React tipado.
 // Estilos em src/styles/log.css (classes lg-*); valores em src/styles/log-tokens.css.
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, ComponentPropsWithRef, ReactNode } from "react";
 
 const cx = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
 
@@ -61,7 +61,7 @@ export function Button({ variant = "soft", size = "md", icon, className, childre
   );
 }
 
-type InputProps = InputHTMLAttributes<HTMLInputElement> & { label?: string; icon?: IconName; hint?: string; error?: string };
+type InputProps = ComponentPropsWithRef<"input"> & { label?: string; icon?: IconName; hint?: string; error?: string };
 
 /** Campo afundado. Com `label`, passe também `id`. */
 export function Input({ label, icon, hint, error, className, ...rest }: InputProps) {

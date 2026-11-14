@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import type { Widget } from "@/dashboard/types";
 import { AgentList } from "@/agents/agent-list";
 import { AlertBar } from "@/alerts/alert-bar";
 import type { AlertStatus } from "@/alerts/evaluate";
@@ -67,12 +68,15 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
   const [error, setError] = useState("");
   const [progress, setProgress] = useState("");
   const abort = useRef<AbortController | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  // The block the user chose with "Perguntar sobre isto": it goes with the next message as context.
+  const [topic, setTopic] = useState<Widget | null>(null);
 
-  async function send(message: string, approve?: string[]) {
+  async function send(message: string, approve?: string[], display = message) {
     setBusy(true);
     setError("");
     setPending([]);
-    setMessages((m) => [...m, { role: "user", text: message }]);
+    setMessages((m) => [...m, { role: "user", text: display }]);
     const controller = new AbortController();
     abort.current = controller;
     try {
@@ -110,7 +114,10 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
     const text = draft.trim();
     if (!text || busy) return;
     setDraft("");
-    void send(text);
+    if (topic) {
+      setTopic(null);
+      void send(`[Contexto: o usuário está perguntando sobre o bloco "${topic.title}" do painel. Dados do bloco: ${JSON.stringify(topic).slice(0, 800)}] ${text}`, undefined, `Sobre "${topic.title}": ${text}`);
+    } else void send(text);
   }
 
   return (
@@ -119,7 +126,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
       <AlertBar alerts={alerts} />
       <div className="grid items-start gap-6 lg:grid-cols-[1fr_380px]">
         <div className="order-2 min-w-0 lg:order-none">
-          <DashboardView dashboard={dashboard} loading={busy} />
+          <DashboardView dashboard={dashboard} loading={busy} onAsk={(w) => { setTopic(w); inputRef.current?.focus(); }} />
         </div>
       <Panel label="Conversa com a IA" className="order-1 min-w-0 lg:order-none lg:sticky lg:top-6">
         <div role="log" aria-label="Mensagens da conversa" aria-live="polite" tabIndex={0} className="flex max-h-[28rem] flex-col gap-3 overflow-y-auto p-1">
@@ -155,8 +162,16 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
             {error}
           </p>
         )}
+        {topic && (
+          <p role="status" className="flex items-center justify-between gap-2 rounded-[var(--radius-sm)] bg-brand-tint px-3 py-2 text-sm text-brand-ink">
+            <span>Perguntando sobre: <strong>{topic.title}</strong></span>
+            <Button type="button" variant="ghost" size="sm" aria-label="Remover o bloco da pergunta" onClick={() => setTopic(null)}>
+              Remover
+            </Button>
+          </p>
+        )}
         <form onSubmit={submit} className="flex gap-2">
-          <Input aria-label="Mensagem" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Quero entender meus impostos..." className="min-w-0 flex-1" />
+          <Input ref={inputRef} aria-label="Mensagem" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Quero entender meus impostos..." className="min-w-0 flex-1" />
           {busy ? (
             <Button type="button" variant="ghost" onClick={() => abort.current?.abort()}>
               Parar
