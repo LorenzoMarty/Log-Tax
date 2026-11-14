@@ -9,6 +9,7 @@ rule data says otherwise. Percentages never round before the multiplication. To 
 """
 
 import math
+from collections.abc import Sequence
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Literal
 
@@ -88,23 +89,27 @@ def sum_cents(parts: list[Cents]) -> Cents:
     return assert_cents(sum(parts))
 
 
-def allocate(total: Cents, weights: list[int | float]) -> list[Cents]:
+def allocate(total: Cents, weights: Sequence[int | float | Decimal]) -> list[Cents]:
     """Splits `total` cents in proportion to `weights` so the parts add up to the total exactly (largest remainder).
 
-    Use it whenever one amount is shown in several pieces: the pieces must never leave a residue.
+    Use it whenever one amount is shown in several pieces: the pieces must never leave a residue. The weights go through
+    IEEE doubles with a plain left-to-right sum, exactly as the TypeScript engine does, so both engines split alike.
     """
     assert_cents(total)
-    weight_sum = sum(weights)
-    if any(w < 0 for w in weights) or weight_sum <= 0:
+    values = [float(w) for w in weights]
+    weight_sum = 0.0
+    for v in values:
+        weight_sum += v  # not math.fsum / sum(): those would not match JavaScript's plain accumulation
+    if any(v < 0 for v in values) or weight_sum <= 0:
         raise ValueError("money: weights must be non-negative with a positive sum")
     sign = -1 if total < 0 else 1
     absolute = abs(total)
-    scaled = [rate_ppm(w / weight_sum) for w in weights]
+    scaled = [rate_ppm(v / weight_sum) for v in values]
     ppm_total = sum(scaled)
     exact = [(absolute * s) // ppm_total for s in scaled]
     remainders = [(absolute * s) % ppm_total for s in scaled]
     left = absolute - sum(exact)
-    order = sorted(range(len(weights)), key=lambda i: (-remainders[i], i))
+    order = sorted(range(len(values)), key=lambda i: (-remainders[i], i))
     parts = list(exact)
     for i in order:
         if left <= 0:
