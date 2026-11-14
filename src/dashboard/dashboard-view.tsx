@@ -40,7 +40,7 @@ export function DashboardView({ dashboard, loading = false, onAsk }: { dashboard
             <div key={w.id} className={`lg-widget-enter ${SPAN[w.size]}`} style={{ viewTransitionName: widgetTransitionName(w.id) }}>
               <WidgetView widget={w} compact={compact} showDisclaimer={ESTIMATE_KINDS.includes(w.kind)} />
               {onAsk && (
-                <Button type="button" variant="ghost" size="sm" aria-label={`Perguntar sobre ${w.title}`} onClick={() => onAsk(w)}>
+                <Button type="button" variant="ghost" size="sm" aria-label={`Perguntar sobre isto: ${w.title}`} onClick={() => onAsk(w)}>
                   Perguntar sobre isto
                 </Button>
               )}

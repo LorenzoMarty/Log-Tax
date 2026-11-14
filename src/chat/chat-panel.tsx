@@ -18,11 +18,17 @@ import type { DisplayMessage } from "./workspace-state";
 
 const REPORT_PATH = /(?<![\w.:/-])(\/workspace\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?:\/relatorio)?)(?![\w/-])/g;
 
+/** Rebuilds the link from its parts (a literal prefix + the encoded id) instead of reusing the model's text as a URL. */
+function workspaceHref(path: string): string {
+  const id = path.split("/")[2] ?? "";
+  return `/workspace/${encodeURIComponent(id)}${path.endsWith("/relatorio") ? "/relatorio" : ""}`;
+}
+
 /** The AI answers in plain text; a report path becomes a link to the printable page. Nothing else is linkified. */
 function withReportLinks(text: string): React.ReactNode[] {
   return text.split(REPORT_PATH).map((part, i) =>
     i % 2 === 1 ? (
-      <a key={i} href={part} className="underline">
+      <a key={i} href={workspaceHref(part)} className="underline">
         {part.endsWith("/relatorio") ? "abrir o relatório" : "abrir o espaço"}
       </a>
     ) : (

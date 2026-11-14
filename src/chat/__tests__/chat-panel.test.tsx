@@ -169,7 +169,7 @@ describe("ChatPanel", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(<ChatPanel workspaceId="ws1" initialMessages={[]} initialDashboard={sampleDashboard} />);
     const first = sampleDashboard.widgets[0];
-    const ask = screen.getByRole("button", { name: `Perguntar sobre ${first.title}` });
+    const ask = screen.getByRole("button", { name: `Perguntar sobre isto: ${first.title}` });
     ask.focus();
     expect(ask).toHaveFocus();
     fireEvent.click(ask);
@@ -186,7 +186,7 @@ describe("ChatPanel", () => {
 
   it("the chosen block can be removed before sending", () => {
     render(<ChatPanel workspaceId="ws1" initialMessages={[]} initialDashboard={sampleDashboard} />);
-    fireEvent.click(screen.getByRole("button", { name: `Perguntar sobre ${sampleDashboard.widgets[0].title}` }));
+    fireEvent.click(screen.getByRole("button", { name: `Perguntar sobre isto: ${sampleDashboard.widgets[0].title}` }));
     fireEvent.click(screen.getByRole("button", { name: "Remover o bloco da pergunta" }));
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
