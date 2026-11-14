@@ -86,7 +86,18 @@ export interface ChatStore {
   removeMemory(id: string): boolean;
 }
 
+/** The user's workspaces, for the tools that create, rename and remove them. RLS decides what each call may touch. */
+export interface WorkspaceAdmin {
+  list(): Promise<{ id: string; name: string; kind: "empresa" | "pessoal" }[]>;
+  create(name: string, kind: "empresa" | "pessoal"): Promise<{ id: string; name: string; kind: "empresa" | "pessoal" }>;
+  rename(id: string, name: string): Promise<boolean>;
+  /** False when nothing was removed (not found or not the owner). */
+  remove(id: string): Promise<boolean>;
+}
+
 export interface ToolContext {
+  /** Absent in contexts that only edit one workspace (tests, agents' stand-ins). */
+  workspaces?: WorkspaceAdmin;
   scope: Scope;
   store: ChatStore;
   engine: TaxEngine;

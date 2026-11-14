@@ -155,4 +155,12 @@ describe("ChatPanel", () => {
     expect(await screen.findByText(/Parei\./)).toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
+
+  it("turns a new workspace path into a link to open it", async () => {
+    vi.stubGlobal("fetch", reply({ text: "Criei. Abra em /workspace/0a1b2c3d-0000-4000-8000-123456789abc agora.", pendingConfirmations: [], dashboard: sampleDashboard }));
+    setup();
+    send("crie um espaço");
+    const link = await screen.findByRole("link", { name: "abrir o espaço" });
+    expect(link).toHaveAttribute("href", "/workspace/0a1b2c3d-0000-4000-8000-123456789abc");
+  });
 });

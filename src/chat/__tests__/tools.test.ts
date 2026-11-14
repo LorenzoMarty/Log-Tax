@@ -13,10 +13,10 @@ beforeEach(() => {
 });
 
 describe("registry", () => {
-  it("exposes the 21 tools with JSON-schema parameters", () => {
-    expect(TOOL_NAMES).toHaveLength(21);
+  it("exposes the 25 tools with JSON-schema parameters", () => {
+    expect(TOOL_NAMES).toHaveLength(25);
     const specs = toolSpecs(ctx.scope);
-    expect(specs).toHaveLength(21);
+    expect(specs).toHaveLength(25);
     for (const s of specs) expect(s.parameters).toMatchObject({ type: "object" });
   });
 
@@ -316,5 +316,56 @@ describe("long-term memory tools", () => {
     for (let i = 0; i < 30; i++) await call("remember_fact", { text: `fato ${i}` });
     expect((await call("remember_fact", { text: "mais um" })).status).toBe("error");
     expect((await call("remember_fact", { text: "x".repeat(301) })).status).toBe("error");
+  });
+});
+
+describe("workspace tools", () => {
+  const fake = (initial: { id: string; name: string; kind: "empresa" | "pessoal" }[] = []) => {
+    const rows = [...initial];
+    return {
+      rows,
+      admin: {
+        list: async () => rows,
+        create: async (name: string, kind: "empresa" | "pessoal") => { const w = { id: `00000000-0000-4000-8000-${String(rows.length + 1).padStart(12, "0")}`, name, kind }; rows.push(w); return w; },
+        rename: async (id: string, name: string) => { const w = rows.find((r) => r.id === id); if (w) w.name = name; return !!w; },
+        remove: async (id: string) => { const i = rows.findIndex((r) => r.id === id); if (i >= 0) rows.splice(i, 1); return i >= 0; },
+      },
+    };
+  };
+  const OTHER = "11111111-1111-4111-8111-111111111111";
+
+  it("creates a second company and hands back the path to open it", async () => {
+    const { admin, rows } = fake();
+    const r = await call("create_workspace", { name: "Segunda Empresa", kind: "empresa" }, { ...ctx, workspaces: admin });
+    expect(r).toMatchObject({ status: "ok", data: { name: "Segunda Empresa", url: expect.stringMatching(/^\/workspace\/[0-9a-f-]{36}$/) } });
+    expect(rows).toHaveLength(1);
+  });
+
+  it("lists, marks the current space, and renames", async () => {
+    const { admin } = fake([{ id: OTHER, name: "Antiga", kind: "empresa" }]);
+    const c = { ...ctx, workspaces: admin };
+    expect(await call("list_workspaces", {}, c)).toMatchObject({ status: "ok", data: [{ id: OTHER, atual: false }] });
+    expect((await call("rename_workspace", { id: OTHER, name: "Nova" }, c)).status).toBe("ok");
+    expect((await call("rename_workspace", { id: "22222222-2222-4222-8222-222222222222", name: "X" }, c)).status).toBe("error");
+  });
+
+  it("removing needs the user's confirmation, never the current space, and nothing without a workspace admin", async () => {
+    const { admin, rows } = fake([{ id: OTHER, name: "Antiga", kind: "empresa" }]);
+    const c = { ...ctx, workspaces: admin };
+    const first = await call("remove_workspace", { id: OTHER }, c);
+    expect(first.status).toBe("confirmation_required");
+    expect(rows).toHaveLength(1);
+    const key = (first as { key: string }).key;
+    expect((await call("remove_workspace", { id: OTHER }, { ...c, approvals: new Set([key]) })).status).toBe("ok");
+    expect(rows).toHaveLength(0);
+    const self = approvalKey("remove_workspace", { id: "ws1" });
+    expect((await call("remove_workspace", { id: "ws1" }, { ...c, scope: { workspaceId: "ws1" } as never, approvals: new Set([self]) })).status).toBe("error");
+    expect((await call("list_workspaces")).status).toBe("error");
+  });
+
+  it("caps the number of spaces", async () => {
+    const full = Array.from({ length: 10 }, (_, i) => ({ id: `00000000-0000-4000-8000-${String(i).padStart(12, "0")}`, name: `E${i}`, kind: "empresa" as const }));
+    const { admin } = fake(full);
+    expect((await call("create_workspace", { name: "Mais uma", kind: "empresa" }, { ...ctx, workspaces: admin })).status).toBe("error");
   });
 });

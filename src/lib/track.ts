@@ -23,6 +23,7 @@ export const EVENT_OF_TOOL: Record<string, ProductEvent> = {
   run_simulation: "simulated",
   create_alert: "alert_created",
   create_agent: "agent_created",
+  create_workspace: "workspace_created",
 };
 
 /** Records a step. The database drops it unless the person opted in, so callers never check consent. */

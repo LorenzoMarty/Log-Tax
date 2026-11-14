@@ -15,14 +15,14 @@ import { RequestExamples } from "./request-examples";
 import type { Agent } from "./types";
 import type { DisplayMessage } from "./workspace-state";
 
-const REPORT_PATH = /(?<![\w.:/-])(\/workspace\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/relatorio)(?![\w/-])/g;
+const REPORT_PATH = /(?<![\w.:/-])(\/workspace\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?:\/relatorio)?)(?![\w/-])/g;
 
 /** The AI answers in plain text; a report path becomes a link to the printable page. Nothing else is linkified. */
 function withReportLinks(text: string): React.ReactNode[] {
   return text.split(REPORT_PATH).map((part, i) =>
     i % 2 === 1 ? (
       <a key={i} href={part} className="underline">
-        abrir o relatório
+        {part.endsWith("/relatorio") ? "abrir o relatório" : "abrir o espaço"}
       </a>
     ) : (
       part

@@ -8,7 +8,7 @@ import { createMemoryStore } from "./memory-store";
 import { runTurn, type PendingConfirmation } from "./orchestrator";
 import { buildSystemPrompt } from "./system-prompt";
 import { isDestructive } from "./tools";
-import type { Agent, LlmClient } from "./types";
+import type { Agent, LlmClient, WorkspaceAdmin } from "./types";
 import { loadWorkspaceState, saveWorkspaceState, type DisplayMessage } from "./workspace-state";
 
 /** Thrown when a member who is not the owner tries to chat: the AI writes into the owner's workspace. */
@@ -28,6 +28,34 @@ export interface ChatReply {
   messages: DisplayMessage[];
   /** Model tokens spent on this turn. */
   usage: { input: number; output: number };
+}
+
+/** Workspace administration through the caller's session: RLS lets only the owner rename or remove. */
+export function workspaceAdmin(sb: SupabaseClient): WorkspaceAdmin {
+  const kindOf = (k: string) => (k === "pessoal" ? "pessoal" : "empresa") as "empresa" | "pessoal";
+  return {
+    async list() {
+      const { data: auth } = await sb.auth.getUser();
+      const { data, error } = await sb.from("workspaces").select("id, name, kind").eq("owner_id", auth.user?.id ?? "").order("created_at");
+      if (error) throw new Error(`workspaces: ${error.message}`);
+      return (data ?? []).map((w) => ({ id: w.id, name: w.name, kind: kindOf(w.kind) }));
+    },
+    async create(name, kind) {
+      const { data, error } = await sb.from("workspaces").insert({ name, kind, profile: {} }).select("id, name, kind").single();
+      if (error) throw new Error(`workspaces: ${error.message}`);
+      return { id: data.id, name: data.name, kind: kindOf(data.kind) };
+    },
+    async rename(id, name) {
+      const { data, error } = await sb.from("workspaces").update({ name }).eq("id", id).select("id");
+      if (error) throw new Error(`workspaces: ${error.message}`);
+      return (data ?? []).length > 0;
+    },
+    async remove(id) {
+      const { data, error } = await sb.from("workspaces").delete().eq("id", id).select("id");
+      if (error) throw new Error(`workspaces: ${error.message}`);
+      return (data ?? []).length > 0;
+    },
+  };
 }
 
 /**
@@ -52,6 +80,7 @@ export async function handleChat(
     ctx: {
       scope: { workspaceId: input.workspaceId, workspaceName: state.workspaceName, kind: state.kind, agentId: agent?.id, allowedTools: agent?.tools },
       store,
+      workspaces: workspaceAdmin(sb),
       engine: mockEngine,
       // Approvals come from the user's click on the client, never from the model.
       approvals: new Set(input.approve ?? []),
