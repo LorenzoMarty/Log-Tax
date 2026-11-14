@@ -1,0 +1,31 @@
+name: AI evaluation
+# Weekly, and on demand before changing OPENAI_MODEL or the system prompt. Needs the OPENAI_API_KEY repository secret.
+on:
+  schedule:
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+    inputs:
+      model:
+        description: "OPENAI_MODEL to evaluate (empty = the default)"
+        required: false
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Run the evaluation
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ inputs.model }}
+        run: npx vitest run --config vitest.live.config.mts src/chat/__tests__/eval.live.test.ts
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: eval-reports
+          path: eval-reports/
+          retention-days: 30
