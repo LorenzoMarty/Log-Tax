@@ -1,4 +1,4 @@
-import { ESTIMATE_KINDS, type Dashboard, type WidgetSize } from "./types";
+import { ESTIMATE_KINDS, type Dashboard, type Widget, type WidgetSize } from "./types";
 import { widgetTransitionName } from "./motion";
 import { WidgetView } from "./widgets";
 
@@ -19,7 +19,8 @@ function WidgetSkeleton() {
   );
 }
 
-export function DashboardView({ dashboard, loading = false }: { dashboard: Dashboard; loading?: boolean }) {
+/** `onAsk` adds a "Perguntar sobre isto" button to every block: the chat uses the chosen block as context. */
+export function DashboardView({ dashboard, loading = false, onAsk }: { dashboard: Dashboard; loading?: boolean; onAsk?: (widget: Widget) => void }) {
   const compact = dashboard.density === "compact";
   const gap = compact ? "var(--space-2)" : "var(--space-4)";
   return (
@@ -37,6 +38,11 @@ export function DashboardView({ dashboard, loading = false }: { dashboard: Dashb
           {dashboard.widgets.map((w) => (
             <div key={w.id} className={`lg-widget-enter ${SPAN[w.size]}`} style={{ viewTransitionName: widgetTransitionName(w.id) }}>
               <WidgetView widget={w} compact={compact} showDisclaimer={ESTIMATE_KINDS.includes(w.kind)} />
+              {onAsk && (
+                <button type="button" aria-label={`Perguntar sobre isto: ${w.title}`} onClick={() => onAsk(w)} className="mt-1 text-sm font-medium text-ink underline underline-offset-2">
+                  Perguntar sobre isto
+                </button>
+              )}
             </div>
           ))}
           {loading && <WidgetSkeleton />}
