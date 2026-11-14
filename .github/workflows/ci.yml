@@ -66,6 +66,8 @@ jobs:
       # next dev, not next start: the scripted LLM is refused when NODE_ENV=production (by design).
       - name: Browser journeys and accessibility (axe)
         run: npx playwright test
+      - name: Empty spaces in production mode (no demo seed)
+        run: E2E_NO_SEED=1 npx playwright test
       - uses: actions/upload-artifact@v7
         if: failure()
         with:

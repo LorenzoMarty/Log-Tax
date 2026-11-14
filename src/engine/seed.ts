@@ -1,5 +1,8 @@
 import type { CompanyProfile, PersonProfile } from "./types";
 
+/** The fictional example company and person only exist in demonstration mode (LOG_TAX_DEMO_SEED=1); real spaces start empty. */
+export const demoSeedEnabled = (): boolean => process.env.LOG_TAX_DEMO_SEED === "1";
+
 /** Fictional trading company used by the demo. */
 export const seedCompany: CompanyProfile = {
   id: "seed-company",
