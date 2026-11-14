@@ -13,10 +13,10 @@ beforeEach(() => {
 });
 
 describe("registry", () => {
-  it("exposes the 26 tools with JSON-schema parameters", () => {
-    expect(TOOL_NAMES).toHaveLength(26);
+  it("exposes the 27 tools with JSON-schema parameters", () => {
+    expect(TOOL_NAMES).toHaveLength(27);
     const specs = toolSpecs(ctx.scope);
-    expect(specs).toHaveLength(26);
+    expect(specs).toHaveLength(27);
     for (const s of specs) expect(s.parameters).toMatchObject({ type: "object" });
   });
 
