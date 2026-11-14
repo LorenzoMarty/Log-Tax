@@ -33,13 +33,14 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "S", "N", "C4", "RUF"]
-ignore = ["S101"]
+ignore = ["S101", "RUF001"]  # RUF001: the engine writes "−" and "×" in the memory of calculation, as the TS one
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S105", "S106", "N817"]
+"app/engine/real_engine.py" = ["E501"]  # long pt-BR messages and formulas, ported verbatim from the TypeScript engine
 
 [tool.mypy]
 strict = true

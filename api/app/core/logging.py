@@ -31,6 +31,8 @@ def configure_logging(level: str = "INFO") -> None:
     root = logging.getLogger()
     root.handlers = [handler]
     root.setLevel(level.upper())
+    # The HTTP client logs every request URL at INFO; ours carry user ids and filters, so keep it quiet.
+    logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
 log = logging.getLogger("logtax")

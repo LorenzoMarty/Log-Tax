@@ -95,7 +95,7 @@ export const OBLIGATIONS: Obligation[] = [
 export const NOT_COVERED = ["DARF de IRPJ e CSLL", "EFD-Contribuições", "EFD ICMS/IPI e guias de ICMS por UF", "ISS por município", "ECF e ECD", "eSocial e GPS/DAE"];
 
 /** National holidays: Lei 662/1949 (with Lei 10.607/2002) and Lei 14.759/2023 (20/11). Movable feasts are not legal holidays. */
-const NATIONAL_HOLIDAYS = ["01-01", "04-21", "05-01", "09-07", "11-02", "11-15", "12-25", "11-20"];
+export const NATIONAL_HOLIDAYS = ["01-01", "04-21", "05-01", "09-07", "11-02", "11-15", "12-25", "11-20"];
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 const utc = (y: number, m: number, d: number) => new Date(Date.UTC(y, m - 1, d, 12));

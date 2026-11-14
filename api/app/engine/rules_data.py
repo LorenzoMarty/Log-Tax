@@ -24,14 +24,30 @@ def _normalized(raw: bytes) -> str:
     return raw.decode("utf-8").replace("\r\n", "\n")
 
 
-def load_rule_versions(data_dir: Path = DATA_DIR) -> list[RuleVersion[dict[str, Any]]]:
+def _load_document(data_dir: Path) -> dict[str, Any]:
     text = _normalized((data_dir / "rules.json").read_bytes())
     manifest = json.loads((data_dir / "rules.manifest.json").read_text(encoding="utf-8"))
     if hashlib.sha256(text.encode("utf-8")).hexdigest() != manifest["sha256"]:
         raise RulesDataError("rules.json does not match rules.manifest.json (re-export the rules from TypeScript)")
-    document = json.loads(text, parse_float=Decimal)
+    document: dict[str, Any] = json.loads(text, parse_float=Decimal)
     if len(document["rules"]) != manifest["count"]:
         raise RulesDataError("rules.json has a different number of rules than the manifest")
+    return document
+
+
+def load_constants(data_dir: Path = DATA_DIR) -> dict[str, Any]:
+    """Fixed legal constants that are not versioned rules (interstate ICMS rates, the UFs that get 7%)."""
+    constants: dict[str, Any] = _load_document(data_dir)["constants"]
+    return constants
+
+
+@lru_cache
+def default_constants() -> dict[str, Any]:
+    return load_constants()
+
+
+def load_rule_versions(data_dir: Path = DATA_DIR) -> list[RuleVersion[dict[str, Any]]]:
+    document = _load_document(data_dir)
     return [
         RuleVersion(
             id=r["id"],

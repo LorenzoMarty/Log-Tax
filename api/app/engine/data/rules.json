@@ -1,5 +1,142 @@
 {
   "version": 1,
+  "constants": {
+    "icmsInterstate": {
+      "imported": 0.04,
+      "southSoutheastToOthers": 0.07,
+      "general": 0.12
+    },
+    "icmsSouthSoutheastExceptEs": [
+      "PR",
+      "SC",
+      "RS",
+      "SP",
+      "RJ",
+      "MG"
+    ],
+    "calendar": {
+      "obligations": [
+        {
+          "id": "das",
+          "label": "DAS do Simples Nacional",
+          "regimes": [
+            "simples"
+          ],
+          "when": {
+            "kind": "monthly",
+            "day": 20
+          },
+          "shift": "next-business-day",
+          "source": "Receita Federal, Simples Nacional (vencimento do DAS no dia 20 do mês seguinte): https://www8.receita.fazenda.gov.br/simplesnacional/noticias/NoticiaCompleta.aspx?id=a7fff48b-2a23-4bb5-a30c-e616e6f5c79e ; Resolução CGSN 140/2018",
+          "confidence": "medium",
+          "requiresValidation": true,
+          "notes": "Dia 20 do mês seguinte; sem expediente bancário, passa para o próximo dia útil (Perguntas e Respostas do Simples Nacional). Prorrogações extraordinárias por resolução do CGSN não são previstas aqui."
+        },
+        {
+          "id": "das-mei",
+          "label": "DAS-MEI",
+          "regimes": [
+            "mei"
+          ],
+          "when": {
+            "kind": "monthly",
+            "day": 20
+          },
+          "shift": "next-business-day",
+          "source": "Receita Federal, Manual do PGMEI: https://www8.receita.fazenda.gov.br/simplesnacional/arquivos/manual/manual_pgmei_2018.pdf",
+          "confidence": "medium",
+          "requiresValidation": true
+        },
+        {
+          "id": "dasn-simei",
+          "label": "DASN-SIMEI (declaração anual do MEI)",
+          "regimes": [
+            "mei"
+          ],
+          "when": {
+            "kind": "annual",
+            "month": 5,
+            "day": 31
+          },
+          "shift": "none",
+          "source": "Receita Federal, Perguntas e Respostas MEI e Simei (Res. CGSN 140/2018, art. 109): https://www8.receita.fazenda.gov.br/simplesnacional/arquivos/manual/perguntaomei.pdf",
+          "confidence": "medium",
+          "requiresValidation": true,
+          "notes": "Último dia de maio; a Receita informa que o prazo não é antecipado nem prorrogado quando cai em dia não útil."
+        },
+        {
+          "id": "defis",
+          "label": "DEFIS (declaração anual do Simples Nacional)",
+          "regimes": [
+            "simples"
+          ],
+          "when": {
+            "kind": "annual",
+            "month": 3,
+            "day": 31
+          },
+          "shift": "none",
+          "source": "Receita Federal, Perguntas e Respostas do Simples Nacional: https://www8.receita.fazenda.gov.br/simplesnacional/arquivos/manual/perguntaosn.pdf",
+          "confidence": "low",
+          "requiresValidation": true,
+          "notes": "31 de março do ano seguinte. Não achei regra oficial para dia não útil; mantida a data sem deslocamento."
+        },
+        {
+          "id": "dctfweb",
+          "label": "DCTFWeb",
+          "regimes": [
+            "presumido",
+            "real"
+          ],
+          "when": {
+            "kind": "monthly",
+            "day": 15
+          },
+          "shift": "next-business-day",
+          "source": "IN RFB 2.005/2021 (dia 15 do mês seguinte) e IN RFB 2.162/2023 (primeiro dia útil após o dia 15): https://normas.receita.fazenda.gov.br/sijut2consulta/link.action?idAto=115131",
+          "confidence": "low",
+          "requiresValidation": true,
+          "notes": "Uma página de serviços do governo cita o último dia útil do mês seguinte para períodos desde 2025; a notícia de abril/2026 da Fazenda mantém o dia 15. Confirmar com contador (#98)."
+        },
+        {
+          "id": "dirpf",
+          "label": "Declaração do Imposto de Renda (DIRPF)",
+          "regimes": [],
+          "when": {
+            "kind": "annual",
+            "month": 5,
+            "day": 29,
+            "years": [
+              2026
+            ]
+          },
+          "shift": "none",
+          "source": "Receita Federal, prazo da DIRPF 2026 (23/03 a 29/05): https://www.gov.br/receitafederal/pt-br/assuntos/noticias/2026/marco/receita-comeca-a-receber-declaracoes-do-irpf-no-dia-23-de-marco-prazo-de-entrega-se-encerra-em-29-de-maio",
+          "confidence": "high",
+          "requiresValidation": false,
+          "notes": "Só o calendário de 2026 está publicado; os demais anos ficam sem data até a Receita divulgar."
+        }
+      ],
+      "notCovered": [
+        "DARF de IRPJ e CSLL",
+        "EFD-Contribuições",
+        "EFD ICMS/IPI e guias de ICMS por UF",
+        "ISS por município",
+        "ECF e ECD",
+        "eSocial e GPS/DAE"
+      ],
+      "nationalHolidays": [
+        "01-01",
+        "04-21",
+        "05-01",
+        "09-07",
+        "11-02",
+        "11-15",
+        "12-25",
+        "11-20"
+      ]
+    }
+  },
   "rules": [
     {
       "id": "folha-encargos",
