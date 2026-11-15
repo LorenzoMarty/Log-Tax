@@ -2,6 +2,7 @@ import { upcomingDeadlines } from "@/engine/calendar";
 import { taxHistory } from "@/engine/history";
 import { DEFAULT_RULEBOOK } from "@/engine/real-engine";
 import { reformImpact } from "@/engine/reform-impact";
+import { splitPaymentImpact } from "@/engine/split-payment";
 import { z } from "zod";
 import type { Widget } from "@/dashboard/types";
 import type { ToolContext, ToolOutcome, ToolSpec, Scope } from "./types";
@@ -61,6 +62,24 @@ const need = <T>(value: T | undefined, message: string): T => {
   if (value === undefined) throw new ToolError(message);
   return value;
 };
+
+const brl = (cents: number) => (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+/**
+ * The split payment cash block (#106): signed working-capital change plus the assumptions behind it.
+ * Example: `cashImpactWidget(1_733_333, 20, ["..."])` -> kpi "+R$ 17.333,33".
+ */
+export function cashImpactWidget(cents: number, floatDays: number, assumptions: string[]): Widget {
+  const effect = cents >= 0 ? `libera caixa (${floatDays} dias a menos financiando o imposto)` : `consome caixa (${-floatDays} dias de prazo perdidos)`;
+  return {
+    id: "split-payment-caixa",
+    kind: "kpi",
+    title: "Impacto no caixa (split payment)",
+    size: "md",
+    value: `${cents >= 0 ? "+" : "-"}${brl(Math.abs(cents))}`,
+    caption: `Estimativa: ${effect}. Premissas: ${assumptions.join(" ")}`,
+  };
+}
 
 const TOOLS: Tool[] = [
   defineTool({
@@ -170,6 +189,23 @@ const TOOLS: Tool[] = [
     run(ctx, a) {
       const company = ctx.store.getCompany();
       return reformImpact(DEFAULT_RULEBOOK, company, () => ctx.engine.diagnose(company), a);
+    },
+  }),
+  defineTool({
+    // #106: split payment moves when the tax leaves the account, so the block shows the cash effect, not the tax burden.
+    name: "add_cash_impact_block",
+    kinds: ["empresa"],
+    description:
+      "Cria no painel o bloco \"Impacto no caixa\" do split payment (IBS/CBS retidos quando o cliente paga), com as premissas. Precisa do IBS+CBS mensal (use get_reform_impact ou o valor do usuário), do prazo médio de recebimento e do prazo atual de recolhimento, em dias. Não invente esses números.",
+    schema: z.strictObject({ monthlyTax: z.number().min(0), receiveDays: z.int().min(0).max(365), taxDueDays: z.int().min(0).max(365) }),
+    engine: true,
+    run(ctx, a) {
+      const r = splitPaymentImpact(a);
+      if (r.status !== "ok") return r;
+      const widget = cashImpactWidget(r.value.workingCapitalCents, r.value.floatDays, r.value.assumptions);
+      ctx.store.dispatch({ type: "remove", id: widget.id });
+      ctx.store.dispatch({ type: "add", widget });
+      return r;
     },
   }),
   defineTool({
