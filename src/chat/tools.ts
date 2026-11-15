@@ -73,6 +73,8 @@ export function benefitSunsetWidgets(s: BenefitSunset): Widget[] {
     { id: "beneficio-cronograma", kind: "line", title: "Benefício fiscal de ICMS/ISS até 2033", size: "md", data: s.years.map((y) => ({ label: String(y.year), value: y.valueCents / 100 })) },
     { id: "beneficio-alerta", kind: "text", title: "Fim do benefício fiscal", size: "md", body: s.alert },
   ];
+}
+
 const brl = (cents: number) => (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 /**
