@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createRealEngine, mockEngine } from "@/engine";
-import { approvalKey, benefitSunsetWidgets, invokeTool, TOOL_NAMES, toolSpecs } from "../tools";
+import { approvalKey, benefitSunsetWidgets, cashImpactWidget, invokeTool, TOOL_NAMES, toolSpecs } from "../tools";
 import { createMemoryStore } from "../memory-store";
 import type { ToolContext } from "../types";
 
@@ -13,10 +13,10 @@ beforeEach(() => {
 });
 
 describe("registry", () => {
-  it("exposes the 27 tools with JSON-schema parameters", () => {
-    expect(TOOL_NAMES).toHaveLength(27);
+  it("exposes the 28 tools with JSON-schema parameters", () => {
+    expect(TOOL_NAMES).toHaveLength(28);
     const specs = toolSpecs(ctx.scope);
-    expect(specs).toHaveLength(27);
+    expect(specs).toHaveLength(28);
     for (const s of specs) expect(s.parameters).toMatchObject({ type: "object" });
   });
 
@@ -406,5 +406,27 @@ describe("benefit sunset block (#107)", () => {
   it("maps every year to a point in reais", () => {
     const [line] = benefitSunsetWidgets({ years: [{ year: 2030, remainingShare: 0.8, valueCents: 12_345 }], alert: "a" });
     expect(line).toMatchObject({ data: [{ label: "2030", value: 123.45 }] });
+  });
+});
+
+describe("cash impact block (#106)", () => {
+  it("adds one kpi with the value and the assumptions, replacing it on a second call", async () => {
+    await call("add_cash_impact_block", { monthlyTax: 26000, receiveDays: 45, taxDueDays: 25 });
+    const r = await call("add_cash_impact_block", { monthlyTax: 26000, receiveDays: 45, taxDueDays: 25 });
+    expect(r.status).toBe("ok");
+    const blocks = ctx.store.getDashboard().widgets.filter((w) => w.id === "split-payment-caixa");
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]).toMatchObject({ kind: "kpi", value: "+R$\u00a017.333,33" });
+    expect(blocks[0]).toHaveProperty("caption", expect.stringContaining("Premissas: Mês comercial de 30 dias"));
+  });
+
+  it("shows a cash loss when the customer pays before the tax was due", () => {
+    const w = cashImpactWidget(-500_000, -10, ["x"]);
+    expect(w).toMatchObject({ value: "-R$\u00a05.000,00", caption: "Estimativa: consome caixa (10 dias de prazo perdidos). Premissas: x" });
+  });
+
+  it("refuses negative inputs without touching the dashboard", async () => {
+    expect((await call("add_cash_impact_block", { monthlyTax: -1, receiveDays: 1, taxDueDays: 1 })).status).toBe("error");
+    expect(widgetIds()).not.toContain("split-payment-caixa");
   });
 });
