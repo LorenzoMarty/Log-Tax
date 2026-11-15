@@ -376,6 +376,22 @@
             ],
             "title": "Substituicaotributaria"
           },
+          "taxBenefitAnnual": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Taxbenefitannual"
+          },
           "taxLossBalance": {
             "anyOf": [
               {
@@ -718,6 +734,22 @@
               }
             ],
             "title": "Substituicaotributaria"
+          },
+          "taxBenefitAnnual": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Taxbenefitannual"
           },
           "taxLossBalance": {
             "anyOf": [

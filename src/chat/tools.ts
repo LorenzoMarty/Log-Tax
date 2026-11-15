@@ -2,6 +2,7 @@ import { upcomingDeadlines } from "@/engine/calendar";
 import { taxHistory } from "@/engine/history";
 import { DEFAULT_RULEBOOK } from "@/engine/real-engine";
 import { reformImpact } from "@/engine/reform-impact";
+import { benefitSunset, type BenefitSunset } from "@/engine/benefit-sunset";
 import { z } from "zod";
 import type { Widget } from "@/dashboard/types";
 import type { ToolContext, ToolOutcome, ToolSpec, Scope } from "./types";
@@ -61,6 +62,17 @@ const need = <T>(value: T | undefined, message: string): T => {
   if (value === undefined) throw new ToolError(message);
   return value;
 };
+
+/**
+ * The benefit sunset blocks (#107): yearly value left as a line, and the alert with its assumption as text.
+ * Example: `benefitSunsetWidgets(benefitSunset(book, 100_000))` -> line 2026..2033 + text alert.
+ */
+export function benefitSunsetWidgets(s: BenefitSunset): Widget[] {
+  return [
+    { id: "beneficio-cronograma", kind: "line", title: "Benefício fiscal de ICMS/ISS até 2033", size: "md", data: s.years.map((y) => ({ label: String(y.year), value: y.valueCents / 100 })) },
+    { id: "beneficio-alerta", kind: "text", title: "Fim do benefício fiscal", size: "md", body: s.alert },
+  ];
+}
 
 const TOOLS: Tool[] = [
   defineTool({
@@ -170,6 +182,24 @@ const TOOLS: Tool[] = [
     run(ctx, a) {
       const company = ctx.store.getCompany();
       return reformImpact(DEFAULT_RULEBOOK, company, () => ctx.engine.diagnose(company), a);
+    },
+  }),
+  defineTool({
+    // #107: ICMS/ISS benefits shrink with the old taxes (2029-2033); a company that uses one sees the schedule and the alert.
+    name: "add_benefit_sunset_block",
+    kinds: ["empresa"],
+    description:
+      "Cria no painel o cronograma de redução do benefício fiscal de ICMS/ISS da empresa até 2033, com o alerta. Usa o valor anual do benefício salvo no perfil (taxBenefitAnnual); sem ele, pergunte ao usuário e salve com save_company_data. Não invente o valor.",
+    schema: none,
+    engine: true,
+    run(ctx) {
+      const annual = need(ctx.store.getCompany().taxBenefitAnnual, "Falta o valor anual do benefício fiscal de ICMS/ISS no perfil (taxBenefitAnnual). Pergunte ao usuário.");
+      const sunset = benefitSunset(DEFAULT_RULEBOOK, annual);
+      for (const widget of benefitSunsetWidgets(sunset)) {
+        ctx.store.dispatch({ type: "remove", id: widget.id });
+        ctx.store.dispatch({ type: "add", widget });
+      }
+      return sunset;
     },
   }),
   defineTool({
