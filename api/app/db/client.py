@@ -1,6 +1,7 @@
 """Data access with the *user's* session: each call carries the caller's JWT, so RLS decides what is visible."""
 
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Any
 
 import httpx
@@ -51,8 +52,15 @@ class UserDb:
         return await self._send("POST", f"/rest/v1/rpc/{name}", json=args or {})
 
 
+@asynccontextmanager
+async def open_db(principal: Principal, settings: Settings) -> AsyncIterator[UserDb]:
+    """A `UserDb` for this caller, closed when the block ends. Streaming routes use it so the client outlives the dependency."""
+    async with httpx.AsyncClient(base_url=settings.supabase_url.rstrip("/"), timeout=15) as http:
+        yield UserDb(http, principal.token, settings.supabase_anon_key)
+
+
 async def user_db(
     principal: Principal = Depends(current_user), settings: Settings = Depends(get_settings)
 ) -> AsyncIterator[UserDb]:
-    async with httpx.AsyncClient(base_url=settings.supabase_url.rstrip("/"), timeout=15) as http:
-        yield UserDb(http, principal.token, settings.supabase_anon_key)
+    async with open_db(principal, settings) as db:
+        yield db
