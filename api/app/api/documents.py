@@ -17,6 +17,7 @@ from fastapi.responses import JSONResponse, RedirectResponse, Response
 from app.core.audit import audit
 from app.core.config import Settings, get_settings
 from app.core.errors import DbError, error_response
+from app.core.plans import ensure_can_add_document
 from app.core.rate_limit import rate_limited
 from app.db.client import UserDb, user_db
 from app.documents.checks import quota_bytes, scan_bytes, signature_matches
@@ -90,6 +91,7 @@ async def upload(
     if await scan_bytes(data, settings) == "infected":
         return error_response(422, "infected", "O arquivo foi recusado porque parece conter um vírus.")
 
+    await ensure_can_add_document(db, ws)
     used = sum(int(r.get("size_bytes") or 0) for r in await db.select("documents", select="size_bytes", workspace_id=f"eq.{ws}"))
     quota = quota_bytes(settings)
     if used + len(data) > quota:

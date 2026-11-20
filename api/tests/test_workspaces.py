@@ -36,6 +36,17 @@ def audited(db: FakeDb) -> list[tuple[str, str | None]]:
     return [(c[1]["p_action"], c[1]["p_target"]) for c in db.rpc_calls if c[0] == "audit_record"]
 
 
+def test_the_free_plan_stops_at_three_spaces_and_pro_does_not(signed_in: TestClient, db: FakeDb) -> None:
+    for _ in range(3):
+        assert signed_in.post("/v1/workspaces", json={"name": "Espaço", "kind": "empresa"}).status_code == 201
+    blocked = signed_in.post("/v1/workspaces", json={"name": "Quarto", "kind": "empresa"})
+    assert blocked.status_code == 402 and blocked.json()["error"]["code"] == "plan_limit"
+    assert "até 3 espaços" in blocked.json()["error"]["message"] and "upgrade" in blocked.json()["error"]["message"]
+    assert len(db.tables["workspaces"]) == 3
+    db.seed("user_plans", user_id=USER, plan="pro")
+    assert signed_in.post("/v1/workspaces", json={"name": "Quarto", "kind": "empresa"}).status_code == 201
+
+
 def test_every_route_needs_a_signed_in_user(anonymous: TestClient) -> None:
     for method, path in [("POST", "/v1/workspaces"), ("POST", "/v1/workspaces/defaults"), ("POST", "/v1/home/ask"), ("POST", "/v1/ratings"),
                          ("DELETE", f"/v1/workspaces/{WS}/conversation"), ("DELETE", f"/v1/documents/{WS}?workspace_id={WS}")]:  # fmt: skip

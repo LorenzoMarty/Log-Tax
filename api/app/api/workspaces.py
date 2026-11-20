@@ -22,6 +22,7 @@ from app.core.audit import audit, track
 from app.core.auth import Principal, current_user
 from app.core.config import Settings, get_settings
 from app.core.errors import DbError, error_response
+from app.core.plans import ensure_can_create_workspaces
 from app.db.client import UserDb, user_db
 from app.documents.storage import BUCKET
 from app.engine.seed import seed_company, seed_person
@@ -67,6 +68,7 @@ class AskIn(_In):
 async def create_workspace(
     body: CreateIn, principal: Principal = Depends(current_user), db: UserDb = Depends(user_db)
 ) -> Response:
+    await ensure_can_create_workspaces(db, str(principal.user_id))
     created = await DbWorkspaceAdmin(db, str(principal.user_id)).create(body.name, body.kind)
     await track(db, "workspace_created")
     return JSONResponse(created, status_code=201)
@@ -104,6 +106,7 @@ async def ask_from_home(
     if found:
         workspace_id = found[0]["id"]
     else:
+        await ensure_can_create_workspaces(db, str(principal.user_id))
         [created] = await db.insert("workspaces", {"name": NAMES[kind], "kind": kind, "profile": _profile(kind, settings)})
         workspace_id = created["id"]
         await track(db, "workspace_created")
