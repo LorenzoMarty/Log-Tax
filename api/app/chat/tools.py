@@ -22,6 +22,8 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, TypeAdapte
 from pydantic.alias_generators import to_camel
 from pydantic_core import to_jsonable_python
 
+from app.chat.agent_templates import AGENT_TEMPLATES
+from app.chat.agent_templates import BY_ID as TEMPLATE_BY_ID
 from app.chat.dashboard import Widget, validate_widget
 from app.chat.store import Kind, Scope, ToolContext
 from app.chat.types import ToolOutcome, ToolSpec
@@ -325,6 +327,10 @@ class CreateAgentArgs(_Args):
     name: str = Field(min_length=1)
     objective: str = Field(min_length=1)
     tools: list[str]
+
+
+class FromTemplateArgs(_Args):
+    template_id: str
 
 
 class AgentPatch(_Args):
@@ -839,6 +845,29 @@ async def _delete_alert(ctx: ToolContext, a: IdArgs) -> Any:
 async def _create_agent(ctx: ToolContext, a: CreateAgentArgs) -> Any:
     _check_agent_tools(ctx.scope, a.tools)
     return await ctx.store.add_agent(a.model_dump())
+
+
+@_tool(
+    "list_agent_templates",
+    "Lista os modelos prontos de IA (id, nome, objetivo, ferramentas e uma primeira pergunta sugerida).",
+    NoArgs,
+    read_only=True,
+)
+async def _list_agent_templates(ctx: ToolContext, a: NoArgs) -> Any:
+    return AGENT_TEMPLATES
+
+
+@_tool(
+    "create_agent_from_template",
+    "Cria uma IA especializada a partir de um modelo pronto (use o id de list_agent_templates).",
+    FromTemplateArgs,
+)
+async def _create_agent_from_template(ctx: ToolContext, a: FromTemplateArgs) -> Any:
+    t = TEMPLATE_BY_ID.get(a.template_id)
+    if t is None:
+        raise ToolError(f'Modelo "{a.template_id}" não encontrado.')
+    _check_agent_tools(ctx.scope, t["tools"])
+    return await ctx.store.add_agent({"name": t["name"], "objective": t["objective"], "tools": list(t["tools"])})
 
 
 @_tool("update_agent", "Altera nome, objetivo ou ferramentas de uma IA especializada.", UpdateAgentArgs)
