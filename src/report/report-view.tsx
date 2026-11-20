@@ -29,7 +29,25 @@ function Table({ head, rows }: NonNullable<ReportSection["table"]>) {
 }
 
 /** A4-friendly report: the controls carry `print:hidden` and the sections avoid splitting across pages. */
-export function ReportView({ report, backHref }: { report: Report; backHref?: string }) {
+/**
+ * Spreadsheet downloads of the report's tables (#149), served by the API through the same-origin proxy (`/api/v1`).
+ * Example: `<ExportLinks workspaceId="..." />` -> "Baixar CSV" and "Baixar XLSX".
+ */
+function ExportLinks({ workspaceId }: { workspaceId: string }) {
+  const href = (format: "csv" | "xlsx") => `/api/v1/workspaces/${workspaceId}/report/export?format=${format}`;
+  return (
+    <span className="flex gap-2">
+      <a href={href("csv")} download className="lg-btn lg-btn-soft lg-btn-sm">
+        Baixar CSV
+      </a>
+      <a href={href("xlsx")} download className="lg-btn lg-btn-soft lg-btn-sm">
+        Baixar XLSX
+      </a>
+    </span>
+  );
+}
+
+export function ReportView({ report, backHref, workspaceId }: { report: Report; backHref?: string; workspaceId?: string }) {
   const warning = (
     <p className="rounded-xl border border-neutral-300 bg-neutral-50 px-4 py-2 text-sm print:border-neutral-400">
       <strong>{report.disclaimer}</strong> Os valores são estimativas ilustrativas e não substituem a análise de um profissional.
@@ -45,7 +63,10 @@ export function ReportView({ report, backHref }: { report: Report; backHref?: st
         ) : (
           <span />
         )}
-        <PrintButton />
+        <span className="flex flex-wrap gap-2">
+          {workspaceId ? <ExportLinks workspaceId={workspaceId} /> : null}
+          <PrintButton />
+        </span>
       </div>
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">{report.title}</h1>

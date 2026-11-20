@@ -37,5 +37,5 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
     engine: mockEngine,
     generatedAt: new Date(),
   });
-  return <ReportView report={report} backHref={`/workspace/${id}`} />;
+  return <ReportView report={report} backHref={`/workspace/${id}`} workspaceId={id} />;
 }

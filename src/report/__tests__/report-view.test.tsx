@@ -72,4 +72,15 @@ describe("ReportView", () => {
     render(<ReportView report={buildReport(input)} />);
     expect(within(screen.getByRole("region", { name: "Impostos" })).getByRole("note")).toHaveAttribute("data-seal", "ilustrativo");
   });
+
+  it("offers CSV and XLSX downloads of the workspace report through the API proxy (#149)", () => {
+    render(<ReportView report={buildReport(input)} workspaceId="ws-1" />);
+    expect(screen.getByRole("link", { name: "Baixar CSV" })).toHaveAttribute("href", "/api/v1/workspaces/ws-1/report/export?format=csv");
+    expect(screen.getByRole("link", { name: "Baixar XLSX" })).toHaveAttribute("href", "/api/v1/workspaces/ws-1/report/export?format=xlsx");
+  });
+
+  it("has no download links without a workspace (shared report)", () => {
+    render(<ReportView report={buildReport(input)} />);
+    expect(screen.queryByRole("link", { name: /Baixar/ })).toBeNull();
+  });
 });
