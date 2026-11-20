@@ -748,7 +748,11 @@ export interface paths {
         delete: operations["delete_comment_v1_workspaces__workspace_id__comments__comment_id__delete"];
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Resolve Comment
+         * @description Marks a comment as resolved (or reopens it). RLS lets only whoever may comment, and only these two columns.
+         */
+        patch: operations["resolve_comment_v1_workspaces__workspace_id__comments__comment_id__patch"];
         trace?: never;
     };
     "/v1/workspaces/{workspace_id}/conversation": {
@@ -992,6 +996,8 @@ export interface components {
         CommentIn: {
             /** Body */
             body: string;
+            /** Parentid */
+            parentId?: string | null;
             /**
              * Widgetid
              * @default
@@ -1623,6 +1629,11 @@ export interface components {
             totalCents: number;
             /** Year */
             year: number;
+        };
+        /** ResolveIn */
+        ResolveIn: {
+            /** Resolved */
+            resolved: boolean;
         };
         /** Revenue */
         Revenue: {
@@ -3065,6 +3076,42 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resolve_comment_v1_workspaces__workspace_id__comments__comment_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+                comment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResolveIn"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             204: {

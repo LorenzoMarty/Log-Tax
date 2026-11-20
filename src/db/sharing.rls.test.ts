@@ -141,6 +141,21 @@ describe("commenter", () => {
     expect(await names(stranger, "comments")).toBe(0);
   });
 
+  it("replies, resolves, and the owner gets a notice (#155)", async () => {
+    const root = (await owner.client.from("comments").insert({ workspace_id: ws, body: "Pergunta" }).select().single()).data!;
+    const reply = await contador.client.from("comments").insert({ workspace_id: ws, body: "Resposta", parent_id: root.id }).select().single();
+    expect(reply.error).toBeNull();
+    // the notice for the reply exists and the owner reads it
+    const notices = await owner.client.from("alert_events").select("text").eq("comment_id", reply.data!.id);
+    expect(notices.data).toEqual([{ text: `Nova resposta de ${contador.email}` }]);
+    // whoever may comment resolves; the text stays untouched; a reader cannot
+    expect((await contador.client.from("comments").update({ resolved_at: new Date().toISOString(), resolved_by: contador.id }).eq("id", root.id).select()).data).toHaveLength(1);
+    expect((await contador.client.from("comments").update({ body: "editado" }).eq("id", root.id)).error).not.toBeNull();
+    expect((await contador.client.from("comments").update({ resolved_by: owner.id }).eq("id", root.id).select()).data ?? []).toHaveLength(0);
+    expect((await leitor.client.from("comments").update({ resolved_at: null }).eq("id", root.id).select()).data ?? []).toHaveLength(0);
+    await owner.client.from("comments").delete().eq("id", root.id); // cascades to the reply
+  });
+
   it("deletes only its own comments (the owner can delete any)", async () => {
     const mine = (await contador.client.from("comments").select().eq("author_id", contador.id)).data![0];
     await leitor.client.from("comments").delete().eq("id", mine.id);

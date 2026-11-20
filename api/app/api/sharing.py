@@ -7,6 +7,7 @@ Sessions and MFA stay in Supabase Auth, in the front-end.
 
 import re
 import uuid
+from datetime import UTC, datetime
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends
@@ -45,6 +46,11 @@ class InviteIn(_In):
 class CommentIn(_In):
     body: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
     widget_id: Annotated[str, StringConstraints(strip_whitespace=True, max_length=80)] = ""
+    parent_id: uuid.UUID | None = None
+
+
+class ResolveIn(_In):
+    resolved: bool
 
 
 class ConsentIn(_In):
@@ -132,11 +138,41 @@ async def leave_workspace(
 async def add_comment(workspace_id: uuid.UUID, body: CommentIn, db: UserDb = Depends(user_db)) -> Response:
     try:
         [comment] = await db.insert(
-            "comments", {"workspace_id": str(workspace_id), "body": body.body, "widget_id": body.widget_id or None}
+            "comments",
+            {
+                "workspace_id": str(workspace_id),
+                "body": body.body,
+                "widget_id": body.widget_id or None,
+                "parent_id": str(body.parent_id) if body.parent_id else None,
+            },
         )
     except DbError:
         return _forbidden()
     return JSONResponse({"id": comment["id"]}, status_code=201)
+
+
+@router.patch("/v1/workspaces/{workspace_id}/comments/{comment_id}", status_code=204, response_model=None)
+async def resolve_comment(
+    workspace_id: uuid.UUID,
+    comment_id: uuid.UUID,
+    body: ResolveIn,
+    principal: Principal = Depends(current_user),
+    db: UserDb = Depends(user_db),
+) -> Response:
+    """Marks a comment as resolved (or reopens it). RLS lets only whoever may comment, and only these two columns."""
+    values = (
+        {"resolved_at": datetime.now(UTC).isoformat(), "resolved_by": str(principal.user_id)}
+        if body.resolved
+        else {
+            "resolved_at": None,
+            "resolved_by": None,
+        }
+    )
+    try:
+        rows = await db.update("comments", values, id=f"eq.{comment_id}", workspace_id=f"eq.{workspace_id}")
+    except DbError:
+        return _forbidden()
+    return Response(status_code=204 if rows else 403)
 
 
 @router.delete("/v1/workspaces/{workspace_id}/comments/{comment_id}", status_code=204, response_model=None)

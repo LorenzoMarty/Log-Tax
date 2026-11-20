@@ -168,6 +168,21 @@ def test_comments_are_trimmed_validated_and_deleted_only_in_their_workspace(sign
     assert signed_in.delete(f"/v1/workspaces/{ws}/comments/{first}").status_code == 204 and len(db.tables["comments"]) == 1
 
 
+def test_comments_take_a_parent_and_can_be_resolved_and_reopened(signed_in: TestClient, db: FakeDb) -> None:
+    ws = workspace(db)
+    root = signed_in.post(f"/v1/workspaces/{ws}/comments", json={"body": "dúvida"}).json()["id"]
+    assert signed_in.post(f"/v1/workspaces/{ws}/comments", json={"body": "resposta", "parentId": root}).status_code == 201
+    assert db.tables["comments"][1]["parent_id"] == root
+    assert signed_in.post(f"/v1/workspaces/{ws}/comments", json={"body": "x", "parentId": "nope"}).status_code == 422
+    assert signed_in.patch(f"/v1/workspaces/{ws}/comments/{root}", json={"resolved": True}).status_code == 204
+    assert db.tables["comments"][0]["resolved_by"] == USER and db.tables["comments"][0]["resolved_at"]
+    assert signed_in.patch(f"/v1/workspaces/{ws}/comments/{root}", json={"resolved": False}).status_code == 204
+    assert db.tables["comments"][0]["resolved_at"] is None
+    other = db.seed("workspaces", name="x", kind="empresa", owner_id="x")["id"]
+    assert signed_in.patch(f"/v1/workspaces/{other}/comments/{root}", json={"resolved": True}).status_code == 403
+    assert signed_in.patch(f"/v1/workspaces/{ws}/comments/{root}", json={}).status_code == 422
+
+
 # ---- consents ----
 def test_consents_are_read_and_decided_per_purpose_with_the_current_wording_version(signed_in: TestClient, db: FakeDb) -> None:
     db.rpcs["has_consent"] = lambda a: a["p_purpose"] == "analytics"
