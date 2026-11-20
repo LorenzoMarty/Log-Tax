@@ -33,8 +33,13 @@ class UserDb:
     async def select(self, table: str, **params: str) -> list[dict[str, Any]]:
         return await self._rows("GET", f"/rest/v1/{table}", params=params)
 
-    async def insert(self, table: str, row: dict[str, Any]) -> list[dict[str, Any]]:
+    async def insert(self, table: str, row: dict[str, Any] | list[dict[str, Any]]) -> list[dict[str, Any]]:
         return await self._rows("POST", f"/rest/v1/{table}", json=row, headers=_RETURN)
+
+    async def upsert(self, table: str, row: dict[str, Any], on_conflict: str) -> list[dict[str, Any]]:
+        """Insert, or update the row that has the same `on_conflict` columns (comma separated)."""
+        prefer = {"Prefer": "return=representation,resolution=merge-duplicates"}
+        return await self._rows("POST", f"/rest/v1/{table}", params={"on_conflict": on_conflict}, json=row, headers=prefer)
 
     async def update(self, table: str, values: dict[str, Any], **filters: str) -> list[dict[str, Any]]:
         return await self._rows("PATCH", f"/rest/v1/{table}", params=filters, json=values, headers=_RETURN)

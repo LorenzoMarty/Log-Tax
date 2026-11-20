@@ -26,6 +26,13 @@ class Settings(BaseSettings):
     openai_model: str = Field(default="", validation_alias="OPENAI_MODEL")
     # "scripted" = deterministic stand-in for e2e/demos; ignored (OpenAI is used) when environment is production.
     llm: str = Field(default="", validation_alias="LOG_TAX_LLM")
+    # "1" = a workspace with no data starts from the fictional demo company (e2e and demos); empty = it starts blank.
+    demo_seed: str = Field(default="", validation_alias="LOG_TAX_DEMO_SEED")
+    # Model tokens a user may spend per day (0 or invalid = the default).
+    chat_daily_tokens: int = Field(default=200_000, validation_alias="CHAT_DAILY_TOKENS")
+    # AES-256-GCM key (32 bytes, base64) for identifiers at rest (CNPJ), and its id. Old keys stay as DATA_ENCRYPTION_KEY_<ID>.
+    data_encryption_key: str = Field(default="", validation_alias="DATA_ENCRYPTION_KEY")
+    data_encryption_key_id: str = Field(default="k1", validation_alias="DATA_ENCRYPTION_KEY_ID")
 
 
 @lru_cache
