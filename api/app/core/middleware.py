@@ -10,6 +10,8 @@ from app.core.logging import log, request_id_var
 
 # What the JSON endpoints may receive. Uploads (documents) raise this on their own routes.
 MAX_BODY_BYTES = 1_000_000
+UPLOAD_PATH = "/v1/documents"
+UPLOAD_BODY_BYTES = 11 * 1024 * 1024  # the route's own limit is 10 MB for the file, plus the form around it
 
 SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
@@ -31,7 +33,8 @@ async def request_context(request: Request, call_next: Callable[[Request], Await
     response: Response | None = None
     try:
         declared = request.headers.get("content-length")
-        if declared and declared.isdigit() and int(declared) > MAX_BODY_BYTES:
+        limit = UPLOAD_BODY_BYTES if request.method == "POST" and request.url.path == UPLOAD_PATH else MAX_BODY_BYTES
+        if declared and declared.isdigit() and int(declared) > limit:
             body = ErrorResponse(
                 error=ErrorBody(code="payload_too_large", message="O envio é grande demais.", request_id=request_id)
             )

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import chat, engine, health, me, vitals
+from app.api import chat, documents, engine, health, me, vitals
 from app.core.config import get_settings
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging
@@ -26,6 +26,7 @@ def create_app() -> FastAPI:
     app.include_router(vitals.router)
     app.include_router(engine.router)
     app.include_router(chat.router)
+    app.include_router(documents.router)
     return app
 
 
