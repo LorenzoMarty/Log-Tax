@@ -1,6 +1,7 @@
 import { deleteDocument } from "./actions";
 import { DOC_LABEL, formatExtracted, type DocType } from "./classify";
 import { MISSING_LABEL, type StoredExtraction } from "./storage";
+import { Preview } from "./preview";
 import { UploadForm } from "./upload-form";
 
 export interface DocumentRow {
@@ -14,27 +15,6 @@ export interface DocumentRow {
 }
 
 const kb = (n: number | null) => (n === null ? "" : n < 1024 * 100 ? `${Math.max(1, Math.round(n / 1024))} KB` : `${(n / 1048576).toFixed(1).replace(".", ",")} MB`);
-
-/**
- * Original file next to the extracted fields, in the browser's own viewer (#165). Only PDF and images: XML and text
- * are already shown as fields. Closed `<details>` plus `loading="lazy"` defers the signed URL until the user opens it.
- * Example: `<Preview id="..." name="nota.pdf" mime="application/pdf" />`.
- */
-export function Preview({ id, name, mime }: { id: string; name: string; mime: string | null | undefined }) {
-  const src = `/api/documents/${id}?inline=1`;
-  if (mime !== "application/pdf" && !mime?.startsWith("image/")) return null;
-  return (
-    <details className="mt-1 text-xs">
-      <summary className="cursor-pointer underline">Ver original</summary>
-      {mime === "application/pdf" ? (
-        <iframe src={src} loading="lazy" title={`Original: ${name}`} className="mt-2 h-[70vh] w-full rounded-xl border border-line bg-surface" />
-      ) : (
-        // eslint-disable-next-line @next/next/no-img-element -- signed URL from storage, not a static asset
-        <img src={src} loading="lazy" alt={`Original: ${name}`} className="mt-2 max-h-[70vh] w-auto rounded-xl border border-line" />
-      )}
-    </details>
-  );
-}
 
 /** Documents of a workspace: the owner uploads and deletes, members only read and download. */
 export function DocumentsPanel({ workspaceId, documents, canEdit }: { workspaceId: string; documents: DocumentRow[]; canEdit: boolean }) {
