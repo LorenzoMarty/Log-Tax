@@ -47,6 +47,7 @@ class ChatStore(Protocol):
     async def remove_alert(self, alert_id: str) -> bool: ...
     async def add_agent(self, agent: dict[str, Any]) -> Agent: ...
     async def update_agent(self, agent_id: str, patch: dict[str, Any]) -> Agent | None: ...
+    async def remove_agent(self, agent_id: str) -> bool: ...
     async def list_agents(self) -> list[Agent]: ...
     async def list_memories(self) -> list[Memory]: ...
     async def add_memory(self, text: str) -> Memory: ...
@@ -100,6 +101,7 @@ class MemoryStore:
     removed_memory_ids: list[str] = field(default_factory=list)
     assets: list[Asset] = field(default_factory=list)
     removed_asset_ids: list[str] = field(default_factory=list)
+    removed_agent_ids: list[str] = field(default_factory=list)
     touched_asset_ids: set[str] = field(default_factory=set)
     estate: Estate | None = None
     estate_changed: bool = False
@@ -174,6 +176,14 @@ class MemoryStore:
         if agent is not None:
             agent.update(patch)  # type: ignore[typeddict-item]
         return agent
+
+    async def remove_agent(self, agent_id: str) -> bool:
+        before = len(self.agents)
+        self.agents = [a for a in self.agents if a["id"] != agent_id]
+        if len(self.agents) == before:
+            return False
+        self.removed_agent_ids.append(agent_id)
+        return True
 
     async def list_agents(self) -> list[Agent]:
         return self.agents

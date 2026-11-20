@@ -255,6 +255,9 @@ async def save_workspace_state(
         elif heir["id"] in store.touched_heir_ids:
             await db.update("heirs", values, id=f"eq.{heir['id']}")
 
+    gone_agents = [i for i in store.removed_agent_ids if is_persisted(i)]
+    if gone_agents:
+        await db.delete("agents", id=f"in.({','.join(gone_agents)})", workspace_id=f"eq.{workspace_id}")
     saved: list[Agent] = []
     for agent in store.agents:
         values = {"name": agent["name"], "objective": agent["objective"], "config": {"tools": agent["tools"]}}

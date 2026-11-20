@@ -1063,6 +1063,18 @@ async def _update_agent(ctx: ToolContext, a: UpdateAgentArgs) -> Any:
     return _need(await ctx.store.update_agent(a.id, a.patch.model_dump(exclude_unset=True)), f'IA "{a.id}" não encontrada.')
 
 
+@_tool(
+    "delete_agent",
+    "Exclui uma IA especializada e a conversa dela (use o id de uma IA existente). Exige confirmação do usuário.",
+    IdArgs,
+    destructive=True,
+)
+async def _delete_agent(ctx: ToolContext, a: IdArgs) -> Any:
+    if not await ctx.store.remove_agent(a.id):
+        raise ToolError(f'IA "{a.id}" não encontrada.')
+    return {"removed": a.id}
+
+
 BY_NAME = {t.name: t for t in TOOLS}
 TOOL_NAMES = [t.name for t in TOOLS]
 ENGINE_TOOLS = frozenset(t.name for t in TOOLS if t.engine)

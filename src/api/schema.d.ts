@@ -735,6 +735,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/workspaces/{workspace_id}/agents/{agent_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Agent */
+        delete: operations["delete_agent_v1_workspaces__workspace_id__agents__agent_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Agent */
+        patch: operations["update_agent_v1_workspaces__workspace_id__agents__agent_id__patch"];
+        trace?: never;
+    };
     "/v1/workspaces/{workspace_id}/alert-events": {
         parameters: {
             query?: never;
@@ -1156,6 +1174,15 @@ export interface components {
             users: number;
             /** Workspaces */
             workspaces: number;
+        };
+        /** AgentPatchIn */
+        AgentPatchIn: {
+            /** Name */
+            name?: string | null;
+            /** Objective */
+            objective?: string | null;
+            /** Tools */
+            tools?: string[] | null;
         };
         /** AgentTemplateOut */
         AgentTemplateOut: {
@@ -3379,6 +3406,76 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_agent_v1_workspaces__workspace_id__agents__agent_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_agent_v1_workspaces__workspace_id__agents__agent_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+                agent_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgentPatchIn"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
