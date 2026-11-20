@@ -352,3 +352,18 @@ def test_the_free_plan_stops_at_twenty_documents_per_space(signed_in: TestClient
     assert "20 documentos" in blocked.json()["error"]["message"]
     db.seed("user_plans", user_id=USER, plan="pro")
     assert upload(signed_in, ws, "y.txt", b"y", "text/plain").status_code == 201
+
+
+def test_an_upload_triggers_the_event_alerts_with_the_document_id_and_type(
+    signed_in: TestClient, db: FakeDb, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[tuple[Any, ...]] = []
+
+    async def spy(settings: Settings, *args: Any) -> None:
+        calls.append(args)
+
+    monkeypatch.setattr("app.api.documents.notify_event", spy)
+    ws = workspace(db)
+    res = upload(signed_in, ws)
+    assert res.status_code == 201
+    assert calls == [(ws, "document_uploaded", res.json()["id"], "Documento enviado: nota.xml", "nota_fiscal")]

@@ -28,6 +28,7 @@ from app.chat.dashboard import Widget, validate_widget
 from app.chat.store import Kind, Scope, ToolContext
 from app.chat.types import ToolOutcome, ToolSpec
 from app.core.br_ids import normalize_cnpj
+from app.documents.classify import DOC_LABEL
 from app.documents.search import cited_for_model
 from app.engine.calendar import upcoming_deadlines
 from app.engine.company_schema import CompanyFields, apply_fields, inconsistencies, merge_series
@@ -335,15 +336,30 @@ class StyleArgs(_Args):
 
 
 class AlertArgs(_Args):
-    metric: Literal["monthlyTotal", "effectiveRate", "annualSavings", "daysToDeadline"]
-    operator: Literal["gt", "lt", "within"]
-    threshold: float
+    """A numeric rule (`metric` + `operator` + `threshold`) or an event rule (`event`, optionally narrowed to a document type)."""
+
+    metric: Literal["monthlyTotal", "effectiveRate", "annualSavings", "daysToDeadline"] | None = None
+    operator: Literal["gt", "lt", "within"] | None = None
+    threshold: float | None = None
+    event: Literal["document_uploaded"] | None = None
+    doc_type: str | None = None
 
     @model_validator(mode="after")
     def _operator_fits_the_metric(self) -> "AlertArgs":
+        numeric = (self.metric, self.operator, self.threshold)
+        if self.event:
+            if any(v is not None for v in numeric):
+                raise ValueError("um alerta é por evento ou por limite numérico, não os dois")
+            if self.doc_type is not None and self.doc_type not in DOC_LABEL:
+                raise ValueError("tipo de documento desconhecido: " + ", ".join(DOC_LABEL))
+            return self
+        if self.doc_type is not None:
+            raise ValueError("o tipo de documento só vale para alertas por evento")
+        if any(v is None for v in numeric):
+            raise ValueError("informe metric, operator e threshold, ou então um event")
         if (self.metric == "daysToDeadline") != (self.operator == "within"):
             raise ValueError("daysToDeadline usa o operador within, e within só serve para daysToDeadline")
-        if self.metric == "daysToDeadline" and not 0 <= self.threshold <= 60:
+        if self.metric == "daysToDeadline" and not 0 <= (self.threshold or 0) <= 60:
             raise ValueError("o prazo vai de 0 a 60 dias")
         return self
 
@@ -938,12 +954,14 @@ async def _dashboard_set_style(ctx: ToolContext, a: StyleArgs) -> Any:
     "create_alert",
     "Cria um alerta: avisa quando a métrica ficar acima (gt) ou abaixo (lt) do limite. effectiveRate é fração (0.15 = 15%). "
     'Para avisar N dias antes de um vencimento (ex.: "me avise 10 dias antes dos impostos") use metric daysToDeadline, '
-    "operator within e threshold N (0 a 60): dispara quando a próxima obrigação estiver a N dias ou menos.",
+    "operator within e threshold N (0 a 60): dispara quando a próxima obrigação estiver a N dias ou menos. "
+    'Para avisar quando um documento for enviado (ex.: "me avise quando subirem uma nota fiscal") use event document_uploaded '
+    "(sem metric/operator/threshold) e, se quiser, docType com o tipo do documento.",
     AlertArgs,
     kinds=("empresa",),
 )
 async def _create_alert(ctx: ToolContext, a: AlertArgs) -> Any:
-    return await ctx.store.add_alert(a.model_dump(mode="json", by_alias=True))
+    return await ctx.store.add_alert(a.model_dump(mode="json", by_alias=True, exclude_none=True))
 
 
 @_tool(

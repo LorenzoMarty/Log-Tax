@@ -67,7 +67,7 @@ def evaluate_alerts(
 ) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for alert in alerts:
-        if not alert.get("active", True):
+        if not alert.get("active", True) or "event" in alert["rule"]:  # event rules fire on the event, not on a metric
             continue
         rule = alert["rule"]
         metric, operator = rule["metric"], rule["operator"]

@@ -35,6 +35,7 @@ from app.documents.storage import (
     safe_file_name,
     to_stored,
 )
+from app.tasks.event_alerts import notify_event
 
 router = APIRouter(tags=["documents"])
 DUPLICATE = "Este documento já foi enviado ({name}). Não guardei uma segunda cópia para não contar os valores em dobro."
@@ -151,6 +152,9 @@ async def upload(
             return _duplicate(file.filename)
         return error_response(500, "register_failed", "Não consegui registrar o documento.")
     await audit(db, ws, "document_uploaded", file.filename)
+    await notify_event(
+        settings, ws, "document_uploaded", doc_id, f"Documento enviado: {file.filename[:200]}", classification.type
+    )
     return JSONResponse({"id": doc_id, "type": classification.type}, status_code=201)
 
 
