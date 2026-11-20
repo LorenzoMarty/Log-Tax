@@ -57,10 +57,12 @@ class UserDb:
         )
         return res.status_code < 400
 
-    async def storage_remove(self, bucket: str, paths: list[str]) -> list[str]:
-        """The paths actually removed (the policy lets only the owner)."""
+    async def storage_remove(self, bucket: str, paths: list[str], strict: bool = False) -> list[str]:
+        """The paths actually removed (the policy lets only the owner). `strict` raises when the call itself failed."""
         res = await self._http.request("DELETE", f"/storage/v1/object/{bucket}", json={"prefixes": paths}, headers=self._headers)
         if res.status_code >= 400:
+            if strict:
+                raise DbError(res.status_code, res.text[:200])
             return []
         return [item["name"] for item in res.json()]
 

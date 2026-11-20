@@ -35,6 +35,8 @@ class FakeDb:
             op, _, value = spec.partition(".")
             if op == "eq" and str(row.get(column)) != value:
                 return False
+            if op == "lt" and not str(row.get(column)) < value:  # ISO dates compare as text
+                return False
             if op == "in" and str(row.get(column)) not in value.strip("()").split(","):
                 return False
         return True
@@ -84,7 +86,7 @@ class FakeDb:
         self.storage[f"{bucket}/{path}"] = data
         return True
 
-    async def storage_remove(self, bucket: str, paths: list[str]) -> list[str]:
+    async def storage_remove(self, bucket: str, paths: list[str], strict: bool = False) -> list[str]:
         gone = [p for p in paths if self.storage.pop(f"{bucket}/{p}", None) is not None]
         return gone
 

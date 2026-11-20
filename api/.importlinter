@@ -31,3 +31,6 @@ source_modules =
     app.db
 forbidden_modules =
     app.tasks.system
+# The cron route is the one HTTP door to the system tasks: it answers only to the scheduler's secret.
+ignore_imports =
+    app.api.cron -> app.tasks.jobs

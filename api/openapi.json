@@ -2609,6 +2609,54 @@
         ]
       }
     },
+    "/v1/cron/run": {
+      "get": {
+        "description": "Enqueues the recurring jobs, then runs what is due. Called by the external scheduler (Vercel Cron sends the secret).",
+        "operationId": "run_v1_cron_run_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run",
+        "tags": [
+          "cron"
+        ]
+      }
+    },
     "/v1/documents": {
       "post": {
         "operationId": "upload_v1_documents_post",

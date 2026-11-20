@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     data_encryption_key: str = Field(default="", validation_alias="DATA_ENCRYPTION_KEY")
     data_encryption_key_id: str = Field(default="k1", validation_alias="DATA_ENCRYPTION_KEY_ID")
     # Optional malware scanner for uploads (POST bytes, answers {"infected": boolean}) and the per-workspace document quota.
+    cron_secret: str = Field(default="", validation_alias="CRON_SECRET")
     virus_scan_url: str = Field(default="", validation_alias="VIRUS_SCAN_URL")
     document_quota_bytes: int = Field(default=0, validation_alias="DOCUMENT_QUOTA_BYTES")
 
