@@ -32,6 +32,7 @@ from app.documents.search import cited_for_model
 from app.engine.calendar import upcoming_deadlines
 from app.engine.company_schema import CompanyFields, apply_fields, inconsistencies, merge_series
 from app.engine.history import tax_history
+from app.engine.itcmd import ItcmdInput, compute_itcmd
 from app.engine.reform_impact import reform_impact
 from app.engine.result import EngineResult, InsufficientData, NoneFound, NotApplicable, Ok
 from app.engine.split_payment import split_payment_impact
@@ -39,6 +40,7 @@ from app.engine.split_payment import split_payment_impact
 MAX_WORKSPACES = 10
 MAX_MEMORIES = 30
 MAX_ASSETS = 200
+MAX_HEIRS = 50
 AssetKind = Literal["imovel", "veiculo", "investimento", "participacao", "bem", "divida"]
 _MONTH = Annotated[str, StringConstraints(pattern=r"^\d{4}-(0[1-9]|1[0-2])$")]
 
@@ -268,6 +270,29 @@ class AssetPatch(_Args, _NonEmpty):
 class UpdateAssetArgs(_Args):
     id: str = Field(min_length=1)
     patch: AssetPatch
+
+
+class SetEstateArgs(_Args):
+    deceased_name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)] | None = None
+    died_at: date | None = None
+    uf: Annotated[str, StringConstraints(strip_whitespace=True, to_upper=True, pattern=r"^[A-Za-z]{2}$")] | None = None
+
+
+class AddHeirArgs(_Args):
+    name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
+    share: float = Field(gt=0, le=100)
+    relationship: Annotated[str, StringConstraints(strip_whitespace=True, max_length=60)] | None = None
+
+
+class HeirPatch(_Args, _NonEmpty):
+    name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)] | None = None
+    share: float | None = Field(default=None, gt=0, le=100)
+    relationship: Annotated[str, StringConstraints(strip_whitespace=True, max_length=60)] | None = None
+
+
+class UpdateHeirArgs(_Args):
+    id: str = Field(min_length=1)
+    patch: HeirPatch
 
 
 class ExplainArgs(_Args):
@@ -660,6 +685,122 @@ async def _remove_asset(ctx: ToolContext, a: IdArgs) -> Any:
     if not await ctx.store.remove_asset(a.id):
         raise ToolError(f'Bem "{a.id}" não encontrado.')
     return {"removed": a.id}
+
+
+# ---- inventory (espólio, herdeiros) ----
+def _pct(value: Any) -> Decimal:
+    return Decimal(str(value)).quantize(Decimal("0.01"), ROUND_HALF_UP)
+
+
+def _shares_total(heirs: list[dict[str, Any]], skip_id: str | None = None, extra: Decimal = Decimal(0)) -> Decimal:
+    return sum((Decimal(h["share"]) for h in heirs if h["id"] != skip_id), extra)
+
+
+def _check_shares(total: Decimal) -> None:
+    if total > 100:
+        raise ToolError(f"Os quinhões passariam de 100% (ficariam em {total}%). Ajuste os outros herdeiros antes.")
+
+
+@_tool(
+    "set_estate",
+    "Registra ou altera o espólio (inventário): deceasedName (nome do falecido), diedAt (data do óbito, AAAA-MM-DD) e uf (estado do inventário, 2 letras, usado no ITCMD). Trate o usuário com acolhimento: ele pode estar de luto. Só registre o que o USUÁRIO disse.",
+    SetEstateArgs,
+    kinds=("pessoal",),
+)  # fmt: skip
+async def _set_estate(ctx: ToolContext, a: SetEstateArgs) -> Any:
+    patch = {k: v for k, v in a.model_dump(exclude_unset=True).items() if v is not None}
+    if not patch:
+        raise ToolError("Informe ao menos o nome do falecido, a data do óbito ou a UF.")
+    if (died := patch.get("died_at")) is not None:
+        if died > date.today():
+            raise ToolError("A data do óbito não pode estar no futuro.")
+        patch["died_at"] = died.isoformat()
+    if await ctx.store.get_estate() is None and not {"deceased_name", "died_at"} <= patch.keys():
+        raise ToolError("Para abrir o espólio preciso do nome do falecido e da data do óbito.")
+    return await ctx.store.set_estate(patch)
+
+
+@_tool(
+    "add_heir",
+    'Cadastra um herdeiro com seu quinhão: name, share (percentual da herança, ex.: 50 para 50%) e relationship (parentesco, opcional). Os quinhões de todos os herdeiros precisam somar 100%. Só cadastre o que o USUÁRIO disse.',
+    AddHeirArgs,
+    kinds=("pessoal",),
+)  # fmt: skip
+async def _add_heir(ctx: ToolContext, a: AddHeirArgs) -> Any:
+    heirs = await ctx.store.list_heirs()
+    if len(heirs) >= MAX_HEIRS:
+        raise ToolError(f"Já há {MAX_HEIRS} herdeiros. Remova algum antes de cadastrar outro.")
+    share = _pct(a.share)
+    _check_shares(_shares_total(heirs, extra=share))
+    return await ctx.store.add_heir({"name": a.name, "relationship": a.relationship or None, "share": str(share)})
+
+
+@_tool(
+    "update_heir",
+    "Altera nome, parentesco ou quinhão de um herdeiro (use o id de get_inventory).",
+    UpdateHeirArgs,
+    kinds=("pessoal",),
+)
+async def _update_heir(ctx: ToolContext, a: UpdateHeirArgs) -> Any:
+    patch = a.patch.model_dump(exclude_unset=True)
+    if patch.get("share") is not None:
+        patch["share"] = str(_pct(patch["share"]))
+        _check_shares(_shares_total(await ctx.store.list_heirs(), skip_id=a.id, extra=Decimal(patch["share"])))
+    return _need(await ctx.store.update_heir(a.id, patch), f'Herdeiro "{a.id}" não encontrado.')
+
+
+@_tool(
+    "remove_heir",
+    "Remove um herdeiro (use o id de get_inventory). Exige confirmação do usuário.",
+    IdArgs,
+    destructive=True,
+    kinds=("pessoal",),
+)
+async def _remove_heir(ctx: ToolContext, a: IdArgs) -> Any:
+    if not await ctx.store.remove_heir(a.id):
+        raise ToolError(f'Herdeiro "{a.id}" não encontrado.')
+    return {"removed": a.id}
+
+
+@_tool(
+    "get_inventory",
+    "Resume o inventário: falecido, bens, dívidas (itens do patrimônio com tipo divida), patrimônio líquido, herdeiros com quinhão e valor de cada um, ITCMD estimado (se a UF foi informada) e o que ainda falta ou está errado (pendencias).",
+    NoArgs,
+    read_only=True,
+    engine=True,
+    kinds=("pessoal",),
+)  # fmt: skip
+async def _get_inventory(ctx: ToolContext, a: NoArgs) -> Any:
+    estate, heirs, items = await ctx.store.get_estate(), await ctx.store.list_heirs(), await ctx.store.list_assets()
+    bens = sum((Decimal(i["value"]) for i in items if i["kind"] != "divida"), Decimal(0))
+    dividas = sum((Decimal(i["value"]) for i in items if i["kind"] == "divida"), Decimal(0))
+    net = bens - dividas
+    total = _shares_total(heirs)
+    pending = []
+    if estate is None:
+        pending.append("Falta informar o nome do falecido e a data do óbito (set_estate).")
+    if not items:
+        pending.append("Nenhum bem ou dívida cadastrado ainda (add_asset).")
+    if not heirs:
+        pending.append("Nenhum herdeiro cadastrado ainda (add_heir).")
+    elif total != 100:
+        pending.append(f"Os quinhões somam {total}% e precisam somar 100%.")
+    if net < 0:
+        pending.append("As dívidas superam os bens: confirme os valores com um advogado ou contador antes de partilhar.")
+    out: dict[str, Any] = {
+        "estate": estate,
+        "assets": [i for i in items if i["kind"] != "divida"],
+        "debts": [i for i in items if i["kind"] == "divida"],
+        "totalAssets": str(bens),
+        "totalDebts": str(dividas),
+        "netEstate": str(net),
+        "heirs": [{**h, "amount": str(_pct(max(net, Decimal(0)) * Decimal(h["share"]) / 100))} for h in heirs],
+        "sharesTotal": str(total),
+        "pendencias": pending,
+    }
+    if estate and estate.get("uf") and net > 0:
+        out["itcmd"] = _env(compute_itcmd(ctx.engine.book, ctx.engine.competence, ItcmdInput(estate["uf"], "heranca", net)))
+    return out
 
 
 # ---- workspaces ----

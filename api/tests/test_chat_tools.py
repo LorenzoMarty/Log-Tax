@@ -84,7 +84,7 @@ async def call(reg: ToolRegistry, name: str, args: Any = None, untrusted: bool =
 
 # ---- catalogue and schemas ----
 def test_every_tool_has_a_clean_json_schema_and_the_flags_are_consistent() -> None:
-    assert len(TOOL_NAMES) == len(set(TOOL_NAMES)) == 38
+    assert len(TOOL_NAMES) == len(set(TOOL_NAMES)) == 43
     for t in TOOLS:
         schema = tool_parameters(t)
         text = json.dumps(schema)
@@ -106,7 +106,7 @@ def test_specs_follow_the_workspace_kind_and_the_agent_allow_list() -> None:
     assert not {"get_tax_diagnosis", "run_simulation", "create_alert"} & set(names("pessoal"))
     assert "get_tax_diagnosis" in names("empresa") and not {"get_ir_diagnosis", "save_person_data"} & set(names("empresa"))
     assert names("empresa", ("get_tax_diagnosis", "get_ir_diagnosis")) == ["get_tax_diagnosis"]
-    assert len(names(None)) == 38
+    assert len(names(None)) == 43
 
 
 async def test_unknown_wrong_kind_and_not_allowed_tools_are_refused_at_runtime() -> None:
@@ -502,3 +502,41 @@ async def test_asset_tools_add_list_update_and_remove_after_confirmation() -> No
     assert (await call(empresa, "list_assets"))["status"] == "refused"
     store.assets = [{"id": str(i)} for i in range(200)]
     assert "200 itens" in (await call(reg, "add_asset", {"kind": "bem", "description": "x", "value": 1}))["message"]
+
+
+async def test_inventory_tools_build_an_estate_with_two_assets_and_three_heirs() -> None:
+    reg, store = make(Scope(WS, kind="pessoal"), competence="2026-11")
+    assert is_destructive("remove_heir")
+    assert "Falta informar" in (await call(reg, "get_inventory"))["data"]["pendencias"][0]
+    assert (await call(reg, "set_estate", {"uf": "SP"}))["status"] == "error"  # opening needs name and date
+    assert (await call(reg, "set_estate", {"deceasedName": "Maria", "diedAt": "2999-01-01"}))["status"] == "error"
+    assert (await call(reg, "set_estate", {"deceasedName": "Maria", "diedAt": "2026-05-01", "uf": "sp"}))["status"] == "ok"
+    await call(reg, "add_asset", {"kind": "imovel", "description": "Casa", "value": 600000})
+    await call(reg, "add_asset", {"kind": "veiculo", "description": "Carro", "value": 100000})
+    await call(reg, "add_asset", {"kind": "divida", "description": "Financiamento", "value": 100000})
+    first = (await call(reg, "add_heir", {"name": "João", "share": 50, "relationship": "filho"}))["data"]
+    second = (await call(reg, "add_heir", {"name": "Ana", "share": 30}))["data"]
+    over = await call(reg, "add_heir", {"name": "Zé", "share": 30})
+    assert over["status"] == "error" and "100%" in over["message"]
+    partial = (await call(reg, "get_inventory"))["data"]
+    assert partial["pendencias"] == ["Os quinhões somam 80.00% e precisam somar 100%."]
+    await call(reg, "add_heir", {"name": "Zé", "share": 20})
+    bad = await call(reg, "update_heir", {"id": second["id"], "patch": {"share": 60}})
+    assert (
+        bad["status"] == "error"
+        and (await call(reg, "update_heir", {"id": first["id"], "patch": {"share": 50}}))["status"] == "ok"
+    )
+    assert (await call(reg, "update_heir", {"id": "nope", "patch": {"name": "x"}}))["status"] == "error"
+    inv = (await call(reg, "get_inventory"))["data"]
+    assert inv["pendencias"] == [] and inv["totalAssets"] == "700000.00" and inv["netEstate"] == "600000.00"
+    assert [h["amount"] for h in inv["heirs"]] == ["300000.00", "180000.00", "120000.00"]
+    assert inv["estate"]["uf"] == "SP" and inv["itcmd"]["status"] in {"ok", "not_applicable"}
+    asked = await call(reg, "remove_heir", {"id": first["id"]})
+    assert asked["status"] == "confirmation_required" and len(store.heirs) == 3
+    approved, _ = make(Scope(WS, kind="pessoal"), approvals=frozenset({asked["key"]}), store=store)
+    assert (await call(approved, "remove_heir", {"id": first["id"]}))["status"] == "ok" and len(store.heirs) == 2
+    assert (await call(approved, "remove_heir", {"id": first["id"]}))["status"] == "error"
+    empresa, _ = make(Scope(WS, kind="empresa"))
+    assert (await call(empresa, "get_inventory"))["status"] == "refused"
+    store.heirs = [{"id": str(i), "share": "0.01"} for i in range(50)]
+    assert "50 herdeiros" in (await call(reg, "add_heir", {"name": "x", "share": 1}))["message"]
