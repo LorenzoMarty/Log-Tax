@@ -37,5 +37,10 @@ user's bearer token and streams the answer back (no CORS, the session cookie nev
 | `app/engine` | the tax engine: pure code, never imports `chat`, `db` or `api` |
 | `app/chat` | the assistant: orchestrator, tools, OpenAI client |
 | `app/db` | access to Supabase through the user's session (RLS) |
+| `app/documents` | upload checks (real file type, malware, quota), NF-e reading (`defusedxml`), duplicates |
+| `app/report`, `app/account` | the report data and the LGPD export |
+| `app/tasks` | the only code that uses the service-role key: cron jobs and account erasure |
+
+Architecture, decisions, environment variables, deploy/rollback and the threat review: [`docs/backend-fastapi.md`](../docs/backend-fastapi.md).
 
 Boundaries are enforced by `import-linter` (`.importlinter`). Money is always integer cents or `Decimal`, never `float`.
