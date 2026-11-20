@@ -5,7 +5,7 @@ as is; widgets are validated against `WIDGET` before they reach the reducer.
 """
 
 from dataclasses import dataclass, field
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, cast
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
@@ -102,10 +102,10 @@ class Text(_Widget):
     body: str
 
 
-type Widget = Annotated[
+Widget = Annotated[
     Kpi | Bar | Line | Breakdown | Opportunities | Deadlines | Compare | Checklist | Text, Field(discriminator="kind")
 ]
-WIDGET: TypeAdapter[Any] = TypeAdapter(Widget)  # type: ignore[arg-type]
+WIDGET: TypeAdapter[Any] = TypeAdapter(cast(Any, Widget))
 
 
 def validate_widget(raw: Any) -> dict[str, Any]:
