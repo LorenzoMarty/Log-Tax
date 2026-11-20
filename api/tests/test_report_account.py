@@ -46,16 +46,9 @@ def section(r: dict[str, Any], sid: str) -> dict[str, Any]:
 def test_the_company_report_has_every_section_in_reading_order_and_the_disclaimer() -> None:
     r = report()
     assert [s["id"] for s in r["sections"]] == [
-        "resumo",
-        "impostos",
-        "oportunidades",
-        "economia",
-        "premissas",
-        "memoria",
-        "validar",
-        "documentos",
-        "alertas",
-    ]
+        "resumo", "dados", "impostos", "evolucao", "oportunidades", "economia", "riscos", "alertas", "documentos",
+        "pendencias", "premissas", "memoria", "recomendacoes", "validar",
+    ]  # fmt: skip
     assert r["title"] == "Relatório tributário" and r["subtitle"] == "Minha Empresa · gerado em 08/11/2026"
     assert r["disclaimer"] == "Estimativa ilustrativa: valide com um contador antes de decidir."
 
@@ -147,7 +140,7 @@ def test_a_regime_the_engine_cannot_diagnose_is_explained_not_computed() -> None
 
 def test_the_calculation_memory_is_a_section_with_exact_amounts() -> None:
     assert memoria_section(None) == [] and memoria_section([]) == []
-    steps = report()["sections"][5]
+    steps = section(report(), "memoria")
     assert steps["id"] == "memoria" and steps["table"]["head"] == ["Passo", "Como foi calculado", "Valor", "Fonte"]
     assert all(row[2].startswith("R$ ") and "," in row[2] for row in steps["table"]["rows"])
 
@@ -156,7 +149,10 @@ def test_the_calculation_memory_is_a_section_with_exact_amounts() -> None:
 def test_the_personal_report_has_its_own_sections_and_the_refund_side_by_side() -> None:
     engine = RealEngine("2025-06")  # the 2026 IRPF table is not confirmed yet: the engine refuses it
     r = report("pessoal", engine=engine)
-    assert [s["id"] for s in r["sections"]] == ["resumo", "impostos", "economia", "premissas", "memoria", "validar", "documentos"]
+    assert [s["id"] for s in r["sections"]] == [
+        "resumo", "dados", "impostos", "evolucao", "oportunidades", "economia", "riscos", "documentos", "pendencias",
+        "premissas", "memoria", "recomendacoes", "validar",
+    ]  # fmt: skip
     assert (
         r["title"] == "Relatório de Imposto de Renda"
         and section(r, "resumo")["paragraphs"][0] == "Minha Empresa — pessoa física."
@@ -413,3 +409,34 @@ def test_the_delete_route_wants_the_email_typed_and_answers_204(
     platform.fail_user = True
     failed = signed_in.request("DELETE", "/v1/account", json={"confirm": "a@example.com"})
     assert failed.status_code == 500 and failed.json()["error"]["code"] == "deletion_failed"
+
+
+# ---- the sections of PRD §21 (#146) ----
+def test_every_prd_section_is_present_for_company_and_person_even_without_data() -> None:
+    prd = {"resumo", "dados", "impostos", "evolucao", "oportunidades", "economia", "riscos", "documentos", "pendencias", "premissas", "recomendacoes", "validar"}  # fmt: skip
+    for r in (
+        report(),
+        report("pessoal", engine=RealEngine("2025-06")),
+        report(company=replace(seed_company(), regime="simples")),
+    ):
+        ids = {s["id"] for s in r["sections"]}
+        assert prd <= ids
+        assert all(s.get("paragraphs") or s.get("items") or s.get("table") for s in r["sections"])
+
+
+def test_the_missing_data_shows_up_as_such_in_data_evolution_pending_and_recommendations() -> None:
+    r = report(company=replace(seed_company(), regime="simples", monthly_revenue=None, uf=None))
+    assert ["UF", "não informado"] in section(r, "dados")["table"]["rows"]
+    assert "Sem histórico" in section(r, "evolucao")["paragraphs"][0]
+    assert any("Faltam dados" in i for i in section(r, "pendencias")["items"])
+    assert any(i.startswith("Informar") for i in section(r, "recomendacoes")["items"])
+    assert any("não calculados" in i for i in section(r, "riscos")["items"])
+    p = report("pessoal", engine=RealEngine("2025-06"), person=replace(seed_person(), tax_withheld=None))
+    assert ["Imposto retido na fonte", "não informado"] in section(p, "dados")["table"]["rows"]
+    assert "ano" in section(p, "evolucao")["paragraphs"][0]
+    assert any("retido" in i for i in section(p, "pendencias")["items"])
+
+
+def test_the_risks_list_rules_that_are_not_high_confidence() -> None:
+    items = section(report(), "riscos")["items"]
+    assert items[-1].startswith("Todas as regras") and all("confiança" in i or i == items[-1] for i in items)
