@@ -15,6 +15,7 @@ from app.core.config import Settings
 from app.core.logging import log
 from app.db.client import UserDb
 from app.engine.real_engine import RealEngine
+from app.tasks.agent_jobs import run_proactive_agents
 from app.tasks.alert_jobs import evaluate_all_alerts
 from app.tasks.system import service_client
 
@@ -83,12 +84,18 @@ async def _alerts(job: Job, db: UserDb) -> None:
     await evaluate_all_alerts(db)
 
 
+async def _proactive_agents(job: Job, db: UserDb) -> None:
+    """One notice per scheduled agent per period (see `agent_jobs`)."""
+    await run_proactive_agents(db)
+
+
 # Job types the platform knows. New features register theirs here (document reading, syncs, proactive agents).
 HANDLERS: dict[str, Handler] = {
     "housekeeping.purge_rate_limits": _purge_rate_limits,
     "engine.rules_check": _rules_check,
     "retention.purge": _retention,
     "alerts.evaluate": _alerts,
+    "agents.proactive": _proactive_agents,
 }
 
 # Recurring jobs: each gets one job per period, keyed by the period, so a double tick creates nothing extra.
@@ -97,6 +104,7 @@ RECURRING: list[tuple[str, Literal["hour", "day"]]] = [
     ("retention.purge", "day"),
     ("engine.rules_check", "day"),
     ("alerts.evaluate", "hour"),
+    ("agents.proactive", "hour"),  # hourly so a run skipped for budget is retried; one notice per period regardless
 ]
 
 
