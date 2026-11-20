@@ -5,6 +5,7 @@ from app.api import (
     account,
     alert_events,
     chat,
+    company_lookup,
     cron,
     documents,
     engine,
@@ -37,6 +38,7 @@ def create_app() -> FastAPI:
     install_error_handlers(app)
     app.include_router(health.router)
     app.include_router(me.router)
+    app.include_router(company_lookup.router)
     app.include_router(vitals.router)
     app.include_router(engine.router)
     app.include_router(chat.router)

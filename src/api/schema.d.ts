@@ -98,6 +98,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/company/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lookup */
+        get: operations["lookup_v1_company_lookup_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/consents": {
         parameters: {
             query?: never;
@@ -1066,6 +1083,27 @@ export interface components {
         Envelope_PersonDiagnosis_: components["schemas"]["OkOut_PersonDiagnosis_"] | components["schemas"]["InsufficientDataOut"] | components["schemas"]["NotApplicableOut"] | components["schemas"]["NoneFoundOut"];
         Envelope_ReformImpact_: components["schemas"]["OkOut_ReformImpact_"] | components["schemas"]["InsufficientDataOut"] | components["schemas"]["NotApplicableOut"] | components["schemas"]["NoneFoundOut"];
         Envelope_Simulation_: components["schemas"]["OkOut_Simulation_"] | components["schemas"]["InsufficientDataOut"] | components["schemas"]["NotApplicableOut"] | components["schemas"]["NoneFoundOut"];
+        /** Found */
+        Found: {
+            /** Cnaes */
+            cnaes: string[];
+            /** Ibge */
+            ibge: string | null;
+            /** Mei */
+            mei: boolean | null;
+            /** Municipio */
+            municipio: string;
+            /** Name */
+            name: string;
+            /** Openedat */
+            openedAt: string | null;
+            /** Simples */
+            simples: boolean | null;
+            /** Situation */
+            situation: string;
+            /** Uf */
+            uf: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -1131,6 +1169,17 @@ export interface components {
             tax: string;
             /** Taxablebase */
             taxableBase: string;
+        };
+        /** Lookup */
+        Lookup: {
+            company?: components["schemas"]["Found"] | null;
+            /** Message */
+            message?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "found" | "not_found" | "unavailable";
         };
         /** Me */
         Me: {
@@ -1606,6 +1655,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lookup_v1_company_lookup_get: {
+        parameters: {
+            query: {
+                cnpj: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Lookup"];
                 };
             };
             /** @description Validation Error */
