@@ -1428,6 +1428,90 @@
           }
         ]
       },
+      "Found": {
+        "properties": {
+          "cnaes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cnaes",
+            "type": "array"
+          },
+          "ibge": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ibge"
+          },
+          "mei": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mei"
+          },
+          "municipio": {
+            "title": "Municipio",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "openedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Openedat"
+          },
+          "simples": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Simples"
+          },
+          "situation": {
+            "title": "Situation",
+            "type": "string"
+          },
+          "uf": {
+            "title": "Uf",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "cnaes",
+          "uf",
+          "municipio",
+          "ibge",
+          "openedAt",
+          "situation",
+          "simples",
+          "mei"
+        ],
+        "title": "Found",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1619,6 +1703,45 @@
           "balance"
         ],
         "title": "IrScenario",
+        "type": "object"
+      },
+      "Lookup": {
+        "properties": {
+          "company": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Found"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "status": {
+            "enum": [
+              "found",
+              "not_found",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "Lookup",
         "type": "object"
       },
       "Me": {
@@ -2967,6 +3090,65 @@
         "summary": "Chat",
         "tags": [
           "chat"
+        ]
+      }
+    },
+    "/v1/company/lookup": {
+      "get": {
+        "operationId": "lookup_v1_company_lookup_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cnpj",
+            "required": true,
+            "schema": {
+              "maxLength": 30,
+              "title": "Cnpj",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Lookup"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Lookup",
+        "tags": [
+          "company"
         ]
       }
     },
