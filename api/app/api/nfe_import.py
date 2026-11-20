@@ -6,6 +6,7 @@ from everything recorded, then written into the profile series: idempotent, neve
 """
 
 import uuid
+from collections.abc import Callable
 from dataclasses import replace
 from decimal import Decimal
 from typing import Annotated, Any
@@ -20,7 +21,8 @@ from app.core.crypto import decrypt_field, encrypt_field
 from app.core.errors import error_response
 from app.core.rate_limit import rate_limited
 from app.db.client import UserDb, user_db
-from app.documents.nfe_batch import MAX_TOTAL_BYTES, BatchError, parse_batch
+from app.documents.nfe_batch import MAX_TOTAL_BYTES, BatchError, BatchResult, parse_batch
+from app.documents.sped import parse_sped
 from app.engine.company_schema import merge_series, normalize_profile
 from app.engine.types import CompanyProfile, MonthlyEntry
 
@@ -40,6 +42,30 @@ async def import_batch(
     db: UserDb = Depends(user_db),
     _rate: None = Depends(rate_limited("documents")),
 ) -> Response:
+    return await _import(workspace_id, file, confirm, settings, db, parse_batch)
+
+
+@router.post("/v1/documents/sped", response_model=None)
+async def import_sped(
+    workspace_id: Annotated[uuid.UUID, Form(alias="workspaceId")],
+    file: Annotated[UploadFile, File()],
+    confirm: Annotated[bool, Form()] = False,
+    settings: Settings = Depends(get_settings),
+    db: UserDb = Depends(user_db),
+    _rate: None = Depends(rate_limited("documents")),
+) -> Response:
+    """SPED EFD (#173): same preview-then-confirm flow and the same idempotency key (access key) as the NF-e batch."""
+    return await _import(workspace_id, file, confirm, settings, db, parse_sped)
+
+
+async def _import(
+    workspace_id: uuid.UUID,
+    file: UploadFile,
+    confirm: bool,
+    settings: Settings,
+    db: UserDb,
+    parse: Callable[[bytes, str, set[str] | None], BatchResult],
+) -> Response:
     ws = str(workspace_id)
     if await db.rpc("my_role", {"ws": ws}) != "owner":
         return error_response(403, "forbidden", "Só quem é dono do espaço importa notas.")
@@ -57,7 +83,7 @@ async def import_batch(
         return error_response(413, "file_too_large", "O ZIP passa do limite. Envie em partes.")
     known = {str(r["nfe_key"]) for r in await db.select("nfe_imports", select="nfe_key", workspace_id=f"eq.{ws}")}
     try:
-        result = parse_batch(data, company_cnpj, known)
+        result = parse(data, company_cnpj, known)
     except BatchError as exc:
         return error_response(400, "invalid_archive", str(exc))
 

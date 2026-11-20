@@ -54,6 +54,31 @@
         "title": "Body_import_batch_v1_documents_nfe_batch_post",
         "type": "object"
       },
+      "Body_import_sped_v1_documents_sped_post": {
+        "properties": {
+          "confirm": {
+            "default": false,
+            "title": "Confirm",
+            "type": "boolean"
+          },
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          },
+          "workspaceId": {
+            "format": "uuid",
+            "title": "Workspaceid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workspaceId",
+          "file"
+        ],
+        "title": "Body_import_sped_v1_documents_sped_post",
+        "type": "object"
+      },
       "Body_upload_v1_documents_post": {
         "properties": {
           "consent": {
@@ -3911,6 +3936,64 @@
           }
         },
         "summary": "Search",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/v1/documents/sped": {
+      "post": {
+        "description": "SPED EFD (#173): same preview-then-confirm flow and the same idempotency key (access key) as the NF-e batch.",
+        "operationId": "import_sped_v1_documents_sped_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_sped_v1_documents_sped_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Import Sped",
         "tags": [
           "documents"
         ]
