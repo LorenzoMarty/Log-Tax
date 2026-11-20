@@ -55,7 +55,9 @@ def test_fields_that_cannot_be_read_are_reported_never_invented() -> None:
 def test_everything_else_is_typed_by_name_with_low_confidence_and_an_honest_note(name: str, mime: str, expected: str) -> None:
     c = classify_document(name, mime)
     assert c.type == expected and c.confidence == "baixa" and c.extracted == {} and "ilustrativa" in c.notes[-1]
-    assert ("Não reconheci" if mime == "text/plain" else "PDF e imagem") in c.notes[0]
+    assert (
+        "Não reconheci" if mime == "text/plain" else "Não consegui ler" if mime == "application/pdf" else "PDF e imagem"
+    ) in c.notes[0]
 
 
 def test_readable_files_that_are_not_an_nfe_say_so() -> None:
@@ -308,3 +310,26 @@ def test_the_download_is_a_fresh_short_lived_signed_url(signed_in: TestClient, d
     db.storage.clear()  # the policy refuses (or the file is gone): the same answer, no detail
     assert signed_in.get(f"/v1/documents/{doc_id}/download", follow_redirects=False).status_code == 404
     assert signed_in.get("/v1/documents/not-a-uuid/download").status_code == 422
+
+
+def test_a_pdf_is_read_through_its_text_layer_and_low_confidence_fields_are_stored_for_confirmation(
+    signed_in: TestClient, db: FakeDb
+) -> None:
+    from tests.test_extract import make_pdf
+
+    lines = ["Documento de Arrecadacao do Simples Nacional - DAS", "CNPJ: 11.222.333/0001-82", "Periodo de Apuracao: 03/2026",
+             "Data de Vencimento: 20/04/2026", "Valor Total do Documento: 1.234,56"]  # fmt: skip
+    r = upload(signed_in, workspace(db), name="guia.pdf", content=make_pdf(lines), mime="application/pdf")
+    assert r.status_code == 201 and r.json()["type"] == "das"
+    stored = db.tables["documents"][0]["extracted"]
+    assert stored["fields"]["valor_total"] == "1234.56" and stored["toConfirm"] == ["cnpj"]
+    assert stored["fieldConfidence"]["valor_total"] == "alta" and is_encrypted(stored["fields"]["cnpj"])
+
+
+def test_a_scanned_pdf_without_text_is_kept_and_says_it_could_not_be_read(signed_in: TestClient, db: FakeDb) -> None:
+    from tests.test_extract import make_pdf
+
+    r = upload(signed_in, workspace(db), name="nota.pdf", content=make_pdf(["x"]), mime="application/pdf")
+    assert r.status_code == 201
+    stored = db.tables["documents"][0]["extracted"]
+    assert stored["fields"] == {} and "Não consegui ler o texto" in stored["notes"][0] and "fieldConfidence" not in stored

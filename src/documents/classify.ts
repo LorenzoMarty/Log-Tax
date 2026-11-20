@@ -1,10 +1,27 @@
-export type DocType = "nota_fiscal" | "informe_rendimentos" | "comprovante_despesa" | "declaracao" | "outro";
+export type DocType =
+  | "nota_fiscal"
+  | "informe_rendimentos"
+  | "comprovante_despesa"
+  | "declaracao"
+  | "das"
+  | "darf"
+  | "holerite"
+  | "nfse"
+  | "cte"
+  | "extrato"
+  | "outro";
 
 export const DOC_LABEL: Record<DocType, string> = {
   nota_fiscal: "Nota fiscal",
   informe_rendimentos: "Informe de rendimentos",
   comprovante_despesa: "Comprovante de despesa",
   declaracao: "Declaração",
+  das: "DAS (Simples Nacional)",
+  darf: "DARF",
+  holerite: "Holerite",
+  nfse: "NFS-e (nota de serviço)",
+  cte: "CT-e (conhecimento de transporte)",
+  extrato: "Extrato",
   outro: "Outro",
 };
 
