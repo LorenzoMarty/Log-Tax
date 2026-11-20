@@ -1,7 +1,21 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import account, alert_events, chat, cron, documents, engine, health, me, report, sharing, vitals, workspaces
+from app.api import (
+    account,
+    alert_events,
+    chat,
+    cron,
+    documents,
+    engine,
+    health,
+    me,
+    nfe_import,
+    report,
+    sharing,
+    vitals,
+    workspaces,
+)
 from app.core.config import get_settings
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging
@@ -27,6 +41,7 @@ def create_app() -> FastAPI:
     app.include_router(engine.router)
     app.include_router(chat.router)
     app.include_router(documents.router)
+    app.include_router(nfe_import.router)
     app.include_router(cron.router)
     app.include_router(account.router)
     app.include_router(report.router)
