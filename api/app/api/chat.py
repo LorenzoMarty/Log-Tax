@@ -16,7 +16,7 @@ from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from pydantic.alias_generators import to_camel
 
-from app.chat.budget import BUDGET_EXHAUSTED, daily_token_limit, record_tokens, tokens_left
+from app.chat.budget import BUDGET_EXHAUSTED, record_tokens, tokens_left
 from app.chat.handle_chat import ChatReply, ReadOnlyError, handle_chat
 from app.chat.llm_factory import get_llm
 from app.chat.orchestrator import TurnCancelledError
@@ -25,6 +25,7 @@ from app.core.auth import Principal, current_user
 from app.core.config import Settings, get_settings
 from app.core.errors import error_response
 from app.core.logging import log
+from app.core.plans import plan_daily_tokens, plan_limits
 from app.core.rate_limit import rate_limited
 from app.db.client import UserDb, open_db
 
@@ -96,7 +97,7 @@ async def chat(
 
     # Out of budget: say so clearly and never call the model.
     async with open_db(principal, settings) as db:
-        if await tokens_left(db, daily_token_limit(settings)) <= 0:
+        if await tokens_left(db, plan_daily_tokens(settings, await plan_limits(db))) <= 0:
             return error_response(429, "budget_exhausted", BUDGET_EXHAUSTED)
 
     if NDJSON in request.headers.get("accept", ""):

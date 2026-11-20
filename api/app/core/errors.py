@@ -23,6 +23,14 @@ class TooManyRequestsError(Exception):
         self.retry_after = retry_after
 
 
+class PlanLimitError(Exception):
+    """The caller's plan does not allow this: answered as 402 with a message that points to the upgrade."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+        self.message = message
+
+
 class ErrorBody(BaseModel):
     code: str
     message: str
@@ -72,6 +80,10 @@ def install_error_handlers(app: FastAPI) -> None:
         )
         response.headers["Retry-After"] = str(exc.retry_after)
         return response
+
+    @app.exception_handler(PlanLimitError)
+    async def _plan_limit(_: Request, exc: PlanLimitError) -> JSONResponse:
+        return error_response(402, "plan_limit", exc.message)
 
     @app.exception_handler(DbError)
     async def _db(_: Request, exc: DbError) -> JSONResponse:

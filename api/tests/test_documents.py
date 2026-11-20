@@ -335,3 +335,14 @@ def test_a_scanned_pdf_without_text_is_kept_and_says_it_could_not_be_read(signed
     assert r.status_code == 201
     stored = db.tables["documents"][0]["extracted"]
     assert stored["fields"] == {} and "Não consegui ler o texto" in stored["notes"][0] and "fieldConfidence" not in stored
+
+
+def test_the_free_plan_stops_at_twenty_documents_per_space(signed_in: TestClient, db: FakeDb) -> None:
+    ws = workspace(db)
+    for i in range(20):
+        db.seed("documents", workspace_id=ws, size_bytes=1, name=f"d{i}.pdf")
+    blocked = upload(signed_in, ws, "x.txt", b"x", "text/plain")
+    assert blocked.status_code == 402 and blocked.json()["error"]["code"] == "plan_limit"
+    assert "20 documentos" in blocked.json()["error"]["message"]
+    db.seed("user_plans", user_id=USER, plan="pro")
+    assert upload(signed_in, ws, "y.txt", b"y", "text/plain").status_code == 201

@@ -127,6 +127,16 @@ def test_the_rate_limit_and_the_daily_budget_stop_the_call_before_the_model(
     assert limited.status_code == 429 and limited.headers["retry-after"] == "30" and "conversations" not in db.tables
 
 
+def test_a_pro_plan_gets_a_bigger_daily_token_budget(signed_in: TestClient, db: FakeDb) -> None:
+    ws = workspace(db)
+    limits: list[int] = []
+    db.rpcs["token_budget_left"] = lambda a: limits.append(a["p_limit"]) or a["p_limit"]
+    post(signed_in, ws)
+    db.seed("user_plans", user_id=USER, plan="pro")
+    post(signed_in, ws)
+    assert limits[1] == limits[0] * 5
+
+
 def test_without_an_api_key_the_chat_says_so(signed_in: TestClient, db: FakeDb, monkeypatch: pytest.MonkeyPatch) -> None:
     def none(settings: Settings) -> Any:
         raise RuntimeError("OPENAI_API_KEY ausente")
