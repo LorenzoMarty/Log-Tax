@@ -49,6 +49,14 @@ class UserDb:
     async def delete(self, table: str, **filters: str) -> list[dict[str, Any]]:
         return await self._rows("DELETE", f"/rest/v1/{table}", params=filters, headers=_RETURN)
 
+    async def auth_user(self) -> dict[str, Any]:
+        """The signed-in user's record in Supabase Auth (`created_at` is not in the token)."""
+        res = await self._http.get("/auth/v1/user", headers=self._headers)
+        if res.status_code >= 400:
+            raise DbError(res.status_code, res.text[:200])
+        user: dict[str, Any] = res.json()
+        return user
+
     # ---- Storage: same session, so the storage policies (owner may write, members may read) decide ----
     async def storage_upload(self, bucket: str, path: str, data: bytes, content_type: str) -> bool:
         """True when stored. A refusal (policy, duplicate path) is False: the caller says "no permission", never the detail."""
