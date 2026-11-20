@@ -10,8 +10,8 @@ drop policy comments_insert on public.comments;
 create policy comments_insert on public.comments for insert to authenticated
   with check (
     author_id = (select auth.uid()) and public.can_comment(workspace_id)
-    and (parent_id is null or exists (
-      select 1 from public.comments p where p.id = parent_id and p.workspace_id = comments.workspace_id))
+    and (comments.parent_id is null or exists (
+      select 1 from public.comments p where p.id = comments.parent_id and p.workspace_id = comments.workspace_id))
   );
 
 -- Resolving: whoever may comment, and only the two resolution columns (the text of a comment is never edited).
