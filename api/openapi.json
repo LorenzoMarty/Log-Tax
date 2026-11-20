@@ -1,6 +1,42 @@
 {
   "components": {
     "schemas": {
+      "AgentTemplateOut": {
+        "properties": {
+          "firstQuestion": {
+            "title": "Firstquestion",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "objective": {
+            "title": "Objective",
+            "type": "string"
+          },
+          "tools": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tools",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "objective",
+          "tools",
+          "firstQuestion"
+        ],
+        "title": "AgentTemplateOut",
+        "type": "object"
+      },
       "AlertPatch": {
         "properties": {
           "active": {
@@ -3661,6 +3697,60 @@
         "summary": "Export",
         "tags": [
           "account"
+        ]
+      }
+    },
+    "/v1/agent-templates": {
+      "get": {
+        "description": "Needs a signed-in user (like every other route); the list itself is static.",
+        "operationId": "agent_templates_v1_agent_templates_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AgentTemplateOut"
+                  },
+                  "title": "Response Agent Templates V1 Agent Templates Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Agent Templates",
+        "tags": [
+          "agents"
         ]
       }
     },
