@@ -9,6 +9,7 @@ from typing import Any, Literal, Protocol
 
 from app.chat.dashboard import Action, Dashboard, History, new_dashboard, reduce
 from app.chat.types import Agent
+from app.documents.search import DocumentSearch
 from app.engine.real_engine import RealEngine
 from app.engine.types import CompanyProfile, PersonProfile
 
@@ -65,6 +66,7 @@ class ToolContext:
     approvals: frozenset[str] = frozenset()
     """Approval keys the *user* granted out-of-band (see `approval_key`). The model cannot add to this."""
     workspaces: WorkspaceAdmin | None = None
+    documents: DocumentSearch | None = None
 
 
 @dataclass

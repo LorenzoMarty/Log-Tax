@@ -198,6 +198,8 @@ def test_a_nota_fiscal_is_stored_classified_encrypted_and_audited(signed_in: Tes
     assert doc["content_hash"] == sha256_hex(NFE.encode()) and doc["nfe_key"] == KEY and doc["size_bytes"] == len(NFE.encode())
     assert is_encrypted(doc["extracted"]["fields"]["emitente_cnpj"]) and CNPJ_EMIT not in json.dumps(doc["extracted"])
     assert doc["doc_type"] == "nota_fiscal" and doc["consented_at"]
+    text = doc["search_text"]  # searchable; the NF-e key stays, a bare CNPJ never does
+    assert "[cnpj]" in text and f" {CNPJ_EMIT} " not in text and "<" not in text
     assert ("record_consent", {"p_purpose": "documents", "p_version": "2026-11", "p_action": "granted"}) in db.rpc_calls
     assert any(c[0] == "audit_record" and c[1]["p_action"] == "document_uploaded" for c in db.rpc_calls)
 

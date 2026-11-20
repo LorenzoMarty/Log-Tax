@@ -20,6 +20,7 @@ from app.chat.workspaces import DbWorkspaceAdmin
 from app.core.audit import audit, track
 from app.core.config import Settings
 from app.db.client import UserDb
+from app.documents.search import DbDocumentSearch
 from app.engine.real_engine import RealEngine
 
 # Which successful tool means which funnel step.
@@ -78,7 +79,9 @@ async def handle_chat(
         workspace_id, state.workspace_name, state.kind, agent["id"] if agent else None, tuple(agent["tools"]) if agent else None
     )
     # Approvals come from the user's click on the client, never from the model.
-    tools = ToolRegistry(ToolContext(scope, state.store, engine, approve, DbWorkspaceAdmin(db, user_id)))
+    tools = ToolRegistry(
+        ToolContext(scope, state.store, engine, approve, DbWorkspaceAdmin(db, user_id), DbDocumentSearch(db, scope.workspace_id))
+    )
     store = state.store
     system = build_system_prompt(
         state.workspace_name,
