@@ -9,6 +9,7 @@ import { issMonth } from "./iss";
 import { foundOpportunities } from "./opportunities";
 import { ICMS_RULES } from "./data/icms";
 import { icmsMonth } from "./icms";
+import { ITCMD_RULES } from "./data/itcmd";
 import { INSS_AUTONOMO, INSS_CEILING, PAYROLL_RULES, type InssCeilingRules, type PayrollRules } from "./data/payroll";
 import { payrollCharges, proLaboreRetention } from "./payroll";
 import { LUCRO_REAL_RULES, type LucroRealRules } from "./data/lucro-real";
@@ -23,7 +24,7 @@ import { competenceOf, refOf, RuleBook, type RuleVersion } from "./rulebook";
 import type { CalcStep, CompanyProfile, Diagnosis, EngineResult, IrScenario, PersonDiagnosis, PersonProfile, TaxCode, TaxEngine, TaxLine } from "./types";
 
 /** Every rule the real engine knows. New tables are added to the data files, not to the calculations. */
-export const DEFAULT_RULEBOOK = new RuleBook([...IRPF_MONTHLY, ...IRPF_ANNUAL_TABLE, ...IRPF_ANNUAL, ...REFORM_PHASES, ...REFORM_REDUCTIONS, ...IRPF_INVESTMENT_RULES, ...SIMPLES_RULES, ...MEI_RULES, ...PRESUMIDO_RULES, ...LUCRO_REAL_RULES, ...PAYROLL_RULES, ...INSS_CEILING, ...INSS_AUTONOMO, ...ICMS_RULES, ...ISS_LIMITS]);
+export const DEFAULT_RULEBOOK = new RuleBook([...IRPF_MONTHLY, ...IRPF_ANNUAL_TABLE, ...IRPF_ANNUAL, ...REFORM_PHASES, ...REFORM_REDUCTIONS, ...IRPF_INVESTMENT_RULES, ...SIMPLES_RULES, ...MEI_RULES, ...PRESUMIDO_RULES, ...LUCRO_REAL_RULES, ...PAYROLL_RULES, ...INSS_CEILING, ...INSS_AUTONOMO, ...ICMS_RULES, ...ISS_LIMITS, ...ITCMD_RULES]);
 
 /** A fraction as a pt-BR percentage ("7,1900"). Formatted with Intl. */
 const pct = (fraction: number, digits: number) => (fraction * 100).toLocaleString("pt-BR", { minimumFractionDigits: digits, maximumFractionDigits: digits });

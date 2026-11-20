@@ -328,6 +328,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/engine/itcmd": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Itcmd
+         * @description ITCMD on an inheritance or donation by UF; a UF without a checked table asks for validation.
+         */
+        post: operations["itcmd_v1_engine_itcmd_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/engine/opportunities": {
         parameters: {
             query?: never;
@@ -1262,6 +1282,7 @@ export interface components {
             steps?: components["schemas"]["CalcStep"][];
         };
         Envelope_Diagnosis_: components["schemas"]["OkOut_Diagnosis_"] | components["schemas"]["InsufficientDataOut"] | components["schemas"]["NotApplicableOut"] | components["schemas"]["NoneFoundOut"];
+        Envelope_ItcmdResult_: components["schemas"]["OkOut_ItcmdResult_"] | components["schemas"]["InsufficientDataOut"] | components["schemas"]["NotApplicableOut"] | components["schemas"]["NoneFoundOut"];
         Envelope_OpportunitySet_: components["schemas"]["OkOut_OpportunitySet_"] | components["schemas"]["InsufficientDataOut"] | components["schemas"]["NotApplicableOut"] | components["schemas"]["NoneFoundOut"];
         Envelope_PersonDiagnosis_: components["schemas"]["OkOut_PersonDiagnosis_"] | components["schemas"]["InsufficientDataOut"] | components["schemas"]["NotApplicableOut"] | components["schemas"]["NoneFoundOut"];
         Envelope_PrestadorComparison_: components["schemas"]["OkOut_PrestadorComparison_"] | components["schemas"]["InsufficientDataOut"] | components["schemas"]["NotApplicableOut"] | components["schemas"]["NoneFoundOut"];
@@ -1354,6 +1375,42 @@ export interface components {
             /** Taxablebase */
             taxableBase: string;
         };
+        /** ItcmdIn */
+        ItcmdIn: {
+            /** Basevalue */
+            baseValue: number | string;
+            /** Competence */
+            competence?: string | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "heranca" | "doacao";
+            /** Uf */
+            uf: string;
+        };
+        /** ItcmdResult */
+        ItcmdResult: {
+            /** Assumptions */
+            assumptions: string[];
+            /** Basevalue */
+            baseValue: string;
+            /** Disclaimer */
+            disclaimer: string;
+            kind: components["schemas"]["Kind"];
+            /** Rate */
+            rate: string;
+            /** Rulesused */
+            rulesUsed?: components["schemas"]["RuleRef"][];
+            /** Rulesversion */
+            rulesVersion: string;
+            /** Tax */
+            tax: string;
+            /** Uf */
+            uf: string;
+        };
+        /** @enum {string} */
+        Kind: "heranca" | "doacao";
         /** Lookup */
         Lookup: {
             company?: components["schemas"]["Found"] | null;
@@ -1425,6 +1482,15 @@ export interface components {
              */
             status: "ok";
             value: components["schemas"]["Diagnosis"];
+        };
+        /** OkOut[ItcmdResult] */
+        OkOut_ItcmdResult_: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            status: "ok";
+            value: components["schemas"]["ItcmdResult"];
         };
         /** OkOut[OpportunitySet] */
         OkOut_OpportunitySet_: {
@@ -2368,6 +2434,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TaxHistory"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    itcmd_v1_engine_itcmd_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ItcmdIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_ItcmdResult_"];
                 };
             };
             /** @description Validation Error */

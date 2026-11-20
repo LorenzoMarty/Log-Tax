@@ -12,6 +12,7 @@ from app.api.schemas import (
     DiagnoseIn,
     Envelope,
     HistoryIn,
+    ItcmdIn,
     PersonRequest,
     PrestadorIn,
     ReformImpactIn,
@@ -23,6 +24,7 @@ from app.engine.calendar import DeadlineList, upcoming_deadlines
 from app.engine.company_schema import apply_fields
 from app.engine.history import TaxHistory, tax_history
 from app.engine.irpf import PersonDiagnosis
+from app.engine.itcmd import ItcmdResult, compute_itcmd
 from app.engine.opportunities import OpportunitySet
 from app.engine.prestador import PrestadorComparison, compare_prestador
 from app.engine.real_engine import RealEngine, Simulation
@@ -69,6 +71,12 @@ async def person(body: PersonRequest) -> Envelope[PersonDiagnosis]:
 async def prestador(body: PrestadorIn) -> Envelope[PrestadorComparison]:
     """Self-employed vs MEI vs Simples for a service provider: taxes of the month in each, with the premises."""
     return envelope(compare_prestador(default_rulebook(), _competence(body.competence), body.to_input()))  # type: ignore[return-value]
+
+
+@router.post("/itcmd")
+async def itcmd(body: ItcmdIn) -> Envelope[ItcmdResult]:
+    """ITCMD on an inheritance or donation by UF; a UF without a checked table asks for validation."""
+    return envelope(compute_itcmd(default_rulebook(), _competence(body.competence), body.to_input()))  # type: ignore[return-value]
 
 
 @router.post("/history")
