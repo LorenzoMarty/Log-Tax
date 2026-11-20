@@ -4,6 +4,7 @@ Port of the `ChatStore`/`ToolContext` types and of `src/chat/memory-store.ts`. T
 only know this protocol.
 """
 
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal, Protocol
 
@@ -38,6 +39,8 @@ class ChatStore(Protocol):
     async def save_person(self, person: PersonProfile) -> PersonProfile: ...
     async def get_dashboard(self) -> Dashboard: ...
     async def dispatch(self, action: Action) -> Dashboard: ...
+    async def list_versions(self) -> list[dict[str, Any]]: ...
+    async def restore_version(self, version: int) -> Dashboard | None: ...
     async def add_alert(self, rule: dict[str, Any]) -> Alert: ...
     async def list_alerts(self) -> list[Alert]: ...
     async def set_alert_active(self, alert_id: str, active: bool) -> Alert | None: ...
@@ -103,6 +106,8 @@ class MemoryStore:
     heirs: list[Heir] = field(default_factory=list)
     removed_heir_ids: list[str] = field(default_factory=list)
     touched_heir_ids: set[str] = field(default_factory=set)
+    load_versions: Callable[[int | None], Awaitable[list[dict[str, Any]]]] | None = None
+    """Reads the saved versions: None = the list (no data), a number = that one version with its `data`."""
     _n: int = 0
 
     def _next(self) -> int:
@@ -129,6 +134,14 @@ class MemoryStore:
     async def dispatch(self, action: Action) -> Dashboard:
         self.history = reduce(self.history, action)
         return self.history.present
+
+    async def list_versions(self) -> list[dict[str, Any]]:
+        return await self.load_versions(None) if self.load_versions else []
+
+    async def restore_version(self, version: int) -> Dashboard | None:
+        """The dashboard as that version was, saved as a new version; None if there is no such version."""
+        rows = await self.load_versions(version) if self.load_versions else []
+        return await self.dispatch({"type": "restore", "dashboard": rows[0]["data"]}) if rows else None
 
     async def add_alert(self, rule: dict[str, Any]) -> Alert:
         alert = {"id": f"new-alert-{self._next()}", "rule": rule, "active": True}

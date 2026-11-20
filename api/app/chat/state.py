@@ -15,6 +15,7 @@ from pydantic.alias_generators import to_camel
 from app.chat.dashboard import Dashboard, History
 from app.chat.store import Kind, MemoryStore
 from app.chat.types import Agent, Msg
+from app.chat.versions import get_version, list_versions, record_versions
 from app.core.config import Settings
 from app.core.crypto import decrypt_field, encrypt_field
 from app.db.client import UserDb
@@ -37,6 +38,8 @@ class WorkspaceState:
     role: Role
     store: MemoryStore
     dashboard_row_id: str | None = None
+    loaded_version: int | None = None
+    """The dashboard version when the state was loaded: a save only records versions when it moved."""
     agent: Agent | None = None
     """Set when the state was loaded for a conversation with one specialised agent."""
     history: list[Msg] = field(default_factory=list)
@@ -140,7 +143,15 @@ async def load_workspace_state(
         person = seed_person() if demo else PersonProfile()
 
     present: Dashboard = dashboards[0]["data"] if dashboards and dashboards[0].get("data") else empty_dashboard(workspace_id)
+
+    async def load_versions(version: int | None) -> list[dict[str, Any]]:
+        if version is None:
+            return await list_versions(db, workspace_id)
+        data = await get_version(db, workspace_id, version)
+        return [{"version": version, "data": data}] if data else []
+
     store = MemoryStore(
+        load_versions=load_versions,
         company=company,
         person=person,
         history=History(present),
@@ -161,6 +172,7 @@ async def load_workspace_state(
         role=role if role in ("owner", "commenter", "reader") else "reader",
         store=store,
         dashboard_row_id=dashboards[0]["id"] if dashboards else None,
+        loaded_version=present["version"],
         agent=agent,
         history=conv.get("history", []),
         messages=conv.get("messages", []),
@@ -196,6 +208,8 @@ async def save_workspace_state(
         await db.update("dashboards", row, id=f"eq.{state.dashboard_row_id}")
     else:
         await db.insert("dashboards", row)
+    if dashboard["version"] != state.loaded_version:  # something changed this turn: keep each step as a version
+        await record_versions(db, workspace_id, [*store.history.past, dashboard])
 
     new_alerts = [
         {"workspace_id": workspace_id, "rule": a["rule"], "active": a["active"]}
