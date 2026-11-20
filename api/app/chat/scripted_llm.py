@@ -8,9 +8,10 @@ import json
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
-from decimal import ROUND_FLOOR, ROUND_HALF_UP, Decimal
+from decimal import Decimal
 from typing import Any, cast
 
+from app.chat.format import money, pct, to_decimal
 from app.chat.types import LlmTurn, Msg, ToolCall, ToolOutcome, ToolSpec
 
 Step = Callable[[list[ToolOutcome], str, str], dict[str, Any] | None]
@@ -24,18 +25,7 @@ class Plan:
     reply: Reply
 
 
-def _num(v: Any) -> Decimal:
-    return Decimal(str(v))
-
-
-def money(n: Any) -> str:
-    """`R$ 1.234`: rounded like JavaScript's Math.round (halves go up), thousands with a dot."""
-    rounded = int((_num(n) + Decimal("0.5")).to_integral_value(ROUND_FLOOR))
-    return f"R$ {rounded:,}".replace(",", ".")
-
-
-def pct(r: Any) -> str:
-    return f"{(_num(r) * 100).quantize(Decimal('0.1'), ROUND_HALF_UP)}".replace(".", ",") + "%"
+_num = to_decimal
 
 
 def data_of(o: ToolOutcome | None) -> Any:
