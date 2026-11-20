@@ -31,3 +31,8 @@ source_modules =
     app.db
 forbidden_modules =
     app.tasks.system
+# The only HTTP doors to the system tasks: the cron route (answers only to the scheduler's secret) and account erasure
+# (the person confirms with their own e-mail, and the route authenticates them first).
+ignore_imports =
+    app.api.cron -> app.tasks.jobs
+    app.api.account -> app.tasks.accounts

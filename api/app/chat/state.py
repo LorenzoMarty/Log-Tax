@@ -12,11 +12,11 @@ from typing import Any, Literal
 
 from pydantic.alias_generators import to_camel
 
-from app.chat.crypto import decrypt_field, encrypt_field
 from app.chat.dashboard import Dashboard, History
 from app.chat.store import Kind, MemoryStore
 from app.chat.types import Agent, Msg
 from app.core.config import Settings
+from app.core.crypto import decrypt_field, encrypt_field
 from app.db.client import UserDb
 from app.engine.company_schema import normalize_profile
 from app.engine.seed import seed_company, seed_person

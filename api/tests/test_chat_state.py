@@ -9,12 +9,12 @@ import pytest
 from app.chat.alerts import alert_statuses, compute_metrics, evaluate_alerts
 from app.chat.budget import BUDGET_EXHAUSTED, daily_token_limit, record_tokens, tokens_left
 from app.chat.conversation import RatingIn, delete_conversation, rate_message
-from app.chat.crypto import decrypt_field, encrypt_field, is_encrypted, key_for
 from app.chat.handle_chat import EVENT_OF_TOOL, ReadOnlyError, handle_chat
 from app.chat.scripted_llm import ScriptedLlm
 from app.chat.state import empty_dashboard, is_persisted, load_workspace_state, profile_to_json, save_workspace_state
 from app.chat.workspaces import DbWorkspaceAdmin
 from app.core.config import Settings
+from app.core.crypto import decrypt_field, encrypt_field, is_encrypted, key_for
 from app.core.errors import DbError
 from app.engine.real_engine import RealEngine
 from app.engine.types import CompanyProfile, MonthlyEntry
