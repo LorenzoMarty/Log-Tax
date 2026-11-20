@@ -1,5 +1,6 @@
 name: AI evaluation
 # Weekly, and on demand before changing OPENAI_MODEL or the system prompt. Needs the OPENAI_API_KEY repository secret.
+# Runs the Python backend's evaluation (api/app/chat/eval): same cases and minimum pass rate as before the move.
 on:
   schedule:
     - cron: "0 9 * * 1"
@@ -11,21 +12,23 @@ on:
 jobs:
   eval:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-python@v6
         with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
+          python-version: "3.12"
+      - run: pip install "poetry>=2,<3" && poetry install --only main
       - name: Run the evaluation
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ inputs.model }}
-        run: npx vitest run --config vitest.live.config.mts src/chat/__tests__/eval.live.test.ts
+        run: poetry run python -m app.chat.eval.run
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: eval-reports
-          path: eval-reports/
+          path: api/eval-reports/
           retention-days: 30
