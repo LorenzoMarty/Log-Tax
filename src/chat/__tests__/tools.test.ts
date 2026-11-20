@@ -430,3 +430,10 @@ describe("cash impact block (#106)", () => {
     expect(widgetIds()).not.toContain("split-payment-caixa");
   });
 });
+
+describe("alphanumeric CNPJ (#328)", () => {
+  it("saves the company CNPJ with its letters, upper case and without punctuation", async () => {
+    expect((await call("save_company_data", { cnpj: "12.abc.345/01de-35" })).status).toBe("ok");
+    expect(ctx.store.getCompany().cnpj).toBe("12ABC34501DE35");
+  });
+});
