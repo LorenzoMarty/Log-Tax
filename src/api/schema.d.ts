@@ -478,6 +478,8 @@ export interface components {
             series?: components["schemas"]["MonthlyEntryIn"][] | null;
             /** Substituicaotributaria */
             substituicaoTributaria?: boolean | null;
+            /** Taxbenefitannual */
+            taxBenefitAnnual?: number | string | null;
             /** Taxlossbalance */
             taxLossBalance?: number | string | null;
             /** Terceirosrate */
@@ -533,6 +535,8 @@ export interface components {
             series?: components["schemas"]["MonthlyEntryIn"][] | null;
             /** Substituicaotributaria */
             substituicaoTributaria?: boolean | null;
+            /** Taxbenefitannual */
+            taxBenefitAnnual?: number | string | null;
             /** Taxlossbalance */
             taxLossBalance?: number | string | null;
             /** Terceirosrate */

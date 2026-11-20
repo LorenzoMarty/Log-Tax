@@ -80,6 +80,7 @@ class CompanyProfile:
     fap: Decimal | None = None
     terceiros_rate: Decimal | None = None
     tax_loss_balance: Decimal | None = None  # loss from earlier periods still to offset (Lucro Real), in reais
+    tax_benefit_annual: Decimal | None = None  # ICMS/ISS benefit used, reais a year (#107)
     fator_r: bool = False  # the activity is subject to Fator R
     series: list[MonthlyEntry] | None = None  # monthly history, oldest first
 

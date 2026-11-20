@@ -34,6 +34,8 @@ export interface CompanyProfile {
   terceirosRate?: number;
   /** Tax loss from earlier periods still to be offset (Lucro Real), in reais. */
   taxLossBalance?: number;
+  /** Annual value of a state/municipal ICMS or ISS tax benefit the company uses, in reais (#107). */
+  taxBenefitAnnual?: number;
   /** The activity is subject to Fator R (annex III when payroll is 28% or more of revenue, otherwise V). */
   fatorR?: boolean;
   /** Monthly history, oldest first. Simples needs the last 12 months of revenue. */

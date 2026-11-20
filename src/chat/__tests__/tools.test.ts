@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createRealEngine, mockEngine } from "@/engine";
-import { approvalKey, cashImpactWidget, invokeTool, TOOL_NAMES, toolSpecs } from "../tools";
+import { approvalKey, benefitSunsetWidgets, cashImpactWidget, invokeTool, TOOL_NAMES, toolSpecs } from "../tools";
 import { createMemoryStore } from "../memory-store";
 import type { ToolContext } from "../types";
 
@@ -13,10 +13,10 @@ beforeEach(() => {
 });
 
 describe("registry", () => {
-  it("exposes the 27 tools with JSON-schema parameters", () => {
-    expect(TOOL_NAMES).toHaveLength(27);
+  it("exposes the 28 tools with JSON-schema parameters", () => {
+    expect(TOOL_NAMES).toHaveLength(28);
     const specs = toolSpecs(ctx.scope);
-    expect(specs).toHaveLength(27);
+    expect(specs).toHaveLength(28);
     for (const s of specs) expect(s.parameters).toMatchObject({ type: "object" });
   });
 
@@ -383,6 +383,29 @@ describe("workspace tools", () => {
     const full = Array.from({ length: 10 }, (_, i) => ({ id: `00000000-0000-4000-8000-${String(i).padStart(12, "0")}`, name: `E${i}`, kind: "empresa" as const }));
     const { admin } = fake(full);
     expect((await call("create_workspace", { name: "Mais uma", kind: "empresa" }, { ...ctx, workspaces: admin })).status).toBe("error");
+  });
+});
+
+describe("benefit sunset block (#107)", () => {
+  it("asks for the benefit value when the profile has none", async () => {
+    const r = await call("add_benefit_sunset_block");
+    expect(r.status).toBe("error");
+    expect(widgetIds()).not.toContain("beneficio-cronograma");
+  });
+
+  it("shows the yearly schedule and the alert for a company with a benefit, once", async () => {
+    ctx.store.saveCompany({ taxBenefitAnnual: 100_000 });
+    await call("add_benefit_sunset_block");
+    expect((await call("add_benefit_sunset_block")).status).toBe("ok");
+    const [line, alert] = ["beneficio-cronograma", "beneficio-alerta"].map((id) => ctx.store.getDashboard().widgets.filter((w) => w.id === id));
+    expect(line).toHaveLength(1);
+    expect(line[0]).toMatchObject({ kind: "line", data: expect.arrayContaining([{ label: "2029", value: 90_000 }, { label: "2033", value: 0 }]) });
+    expect(alert[0]).toMatchObject({ kind: "text", body: expect.stringContaining("deixa de valer em 2033") });
+  });
+
+  it("maps every year to a point in reais", () => {
+    const [line] = benefitSunsetWidgets({ years: [{ year: 2030, remainingShare: 0.8, valueCents: 12_345 }], alert: "a" });
+    expect(line).toMatchObject({ data: [{ label: "2030", value: 123.45 }] });
   });
 });
 

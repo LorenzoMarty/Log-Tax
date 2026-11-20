@@ -68,6 +68,7 @@ class CompanyFields(_Strict):
     employees: Annotated[int, Field(ge=0, le=1_000_000)] | None = None
     monthly_purchases: _MONEY | None = None
     tax_loss_balance: _MONEY | None = None
+    tax_benefit_annual: _MONEY | None = None  # ICMS/ISS benefit used, reais a year (#107)
     iss_rate: Annotated[Decimal, Field(ge=Decimal("0.02"), le=Decimal("0.05"))] | None = None
     substituicao_tributaria: bool | None = None
     rat_grade: Literal[1, 2, 3] | None = None
