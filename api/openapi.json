@@ -1,6 +1,21 @@
 {
   "components": {
     "schemas": {
+      "AskIn": {
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "title": "AskIn",
+        "type": "object"
+      },
       "Body_upload_v1_documents_post": {
         "properties": {
           "consent": {
@@ -168,6 +183,28 @@
           "message"
         ],
         "title": "ChatIn",
+        "type": "object"
+      },
+      "CommentIn": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Body",
+            "type": "string"
+          },
+          "widgetId": {
+            "default": "",
+            "maxLength": 80,
+            "title": "Widgetid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "title": "CommentIn",
         "type": "object"
       },
       "CompanyFields": {
@@ -959,6 +996,49 @@
         ],
         "type": "string"
       },
+      "ConsentIn": {
+        "additionalProperties": false,
+        "properties": {
+          "decision": {
+            "enum": [
+              "granted",
+              "revoked"
+            ],
+            "title": "Decision",
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision"
+        ],
+        "title": "ConsentIn",
+        "type": "object"
+      },
+      "CreateIn": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": [
+              "empresa",
+              "pessoal"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "kind"
+        ],
+        "title": "CreateIn",
+        "type": "object"
+      },
       "Deadline": {
         "properties": {
           "competence": {
@@ -1451,6 +1531,30 @@
           "missing"
         ],
         "title": "InsufficientDataOut",
+        "type": "object"
+      },
+      "InviteIn": {
+        "additionalProperties": false,
+        "properties": {
+          "email": {
+            "maxLength": 254,
+            "title": "Email",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "commenter",
+              "reader"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "role"
+        ],
+        "title": "InviteIn",
         "type": "object"
       },
       "IrScenario": {
@@ -2056,6 +2160,48 @@
         "title": "PersonRequest",
         "type": "object"
       },
+      "RatingIn": {
+        "additionalProperties": false,
+        "properties": {
+          "messageIndex": {
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Messageindex",
+            "type": "integer"
+          },
+          "rating": {
+            "enum": [
+              1,
+              -1
+            ],
+            "title": "Rating",
+            "type": "integer"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "workspaceId": {
+            "title": "Workspaceid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workspaceId",
+          "messageIndex",
+          "rating"
+        ],
+        "title": "RatingIn",
+        "type": "object"
+      },
       "ReformImpact": {
         "properties": {
           "assumptions": {
@@ -2651,6 +2797,49 @@
         ]
       }
     },
+    "/v1/account/documents": {
+      "delete": {
+        "description": "Deletes every stored document the person owns: the files first, then the records.",
+        "operationId": "delete_all_my_documents_v1_account_documents_delete",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete All My Documents",
+        "tags": [
+          "sharing"
+        ]
+      }
+    },
     "/v1/account/export": {
       "get": {
         "description": "The person downloads their own data as one JSON file.",
@@ -2756,6 +2945,120 @@
         ]
       }
     },
+    "/v1/consents": {
+      "get": {
+        "description": "The latest decision for each purpose.",
+        "operationId": "consents_v1_consents_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Consents",
+        "tags": [
+          "sharing"
+        ]
+      }
+    },
+    "/v1/consents/{purpose}": {
+      "put": {
+        "description": "Revoking `documents` stops new uploads at once (the upload checks the latest decision); existing files stay.\n\n`analytics` (funnel events without values or messages) is opt-in and can be switched off at any time.",
+        "operationId": "decide_v1_consents__purpose__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "purpose",
+            "required": true,
+            "schema": {
+              "enum": [
+                "documents",
+                "analytics"
+              ],
+              "title": "Purpose",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Decide",
+        "tags": [
+          "sharing"
+        ]
+      }
+    },
     "/v1/cron/run": {
       "get": {
         "description": "Enqueues the recurring jobs, then runs what is due. Called by the external scheduler (Vercel Cron sends the secret).",
@@ -2858,6 +3161,69 @@
         "summary": "Upload",
         "tags": [
           "documents"
+        ]
+      }
+    },
+    "/v1/documents/{document_id}": {
+      "delete": {
+        "description": "Deletes the file first, then the record, so a failure never leaves a stored file the person thinks is gone.",
+        "operationId": "delete_document_v1_documents__document_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Document Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Document",
+        "tags": [
+          "workspaces"
         ]
       }
     },
@@ -3411,6 +3777,173 @@
         ]
       }
     },
+    "/v1/home/ask": {
+      "post": {
+        "description": "The home-screen question: finds the first space of the kind it is about, creates one when there is none.",
+        "operationId": "ask_from_home_v1_home_ask_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AskIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ask From Home",
+        "tags": [
+          "workspaces"
+        ]
+      }
+    },
+    "/v1/invites/{invite_id}": {
+      "delete": {
+        "operationId": "decline_invite_v1_invites__invite_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invite_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Invite Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Decline Invite",
+        "tags": [
+          "sharing"
+        ]
+      }
+    },
+    "/v1/invites/{invite_id}/accept": {
+      "post": {
+        "operationId": "accept_invite_v1_invites__invite_id__accept_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invite_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Invite Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Accept Invite",
+        "tags": [
+          "sharing"
+        ]
+      }
+    },
     "/v1/me": {
       "get": {
         "description": "Who the API thinks the caller is. Also the cheapest way for the front-end to check its token.",
@@ -3486,6 +4019,64 @@
         ]
       }
     },
+    "/v1/ratings": {
+      "post": {
+        "description": "Thumbs up/down (with an optional reason) on one AI answer; one rating per message per user.",
+        "operationId": "rate_answer_v1_ratings_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RatingIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Rate Answer",
+        "tags": [
+          "workspaces"
+        ]
+      }
+    },
     "/v1/vitals": {
       "post": {
         "description": "Receives one Web Vital from a real visit and logs it (CLS is sent times 1000). Public and tiny: no user data accepted.",
@@ -3518,6 +4109,558 @@
         "summary": "Vitals",
         "tags": [
           "ops"
+        ]
+      }
+    },
+    "/v1/workspaces": {
+      "post": {
+        "operationId": "create_workspace_v1_workspaces_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Workspace",
+        "tags": [
+          "workspaces"
+        ]
+      }
+    },
+    "/v1/workspaces/defaults": {
+      "post": {
+        "description": "First visit: a company space and a personal one, unless the person already has spaces. Idempotent.",
+        "operationId": "create_default_workspaces_v1_workspaces_defaults_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Default Workspaces",
+        "tags": [
+          "workspaces"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/comments": {
+      "post": {
+        "operationId": "add_comment_v1_workspaces__workspace_id__comments_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Comment",
+        "tags": [
+          "sharing"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/comments/{comment_id}": {
+      "delete": {
+        "operationId": "delete_comment_v1_workspaces__workspace_id__comments__comment_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "comment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Comment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Comment",
+        "tags": [
+          "sharing"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/conversation": {
+      "delete": {
+        "description": "\"Apagar conversa\": removes the saved conversation and leaves a trace in the audit trail.",
+        "operationId": "clear_conversation_v1_workspaces__workspace_id__conversation_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "agentId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Agentid"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Clear Conversation",
+        "tags": [
+          "workspaces"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/invites": {
+      "post": {
+        "operationId": "invite_member_v1_workspaces__workspace_id__invites_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Invite Member",
+        "tags": [
+          "sharing"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/invites/{invite_id}": {
+      "delete": {
+        "operationId": "revoke_invite_v1_workspaces__workspace_id__invites__invite_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "invite_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Invite Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Revoke Invite",
+        "tags": [
+          "sharing"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/members/{user_id}": {
+      "delete": {
+        "operationId": "remove_member_v1_workspaces__workspace_id__members__user_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Member",
+        "tags": [
+          "sharing"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/membership": {
+      "delete": {
+        "operationId": "leave_workspace_v1_workspaces__workspace_id__membership_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Leave Workspace",
+        "tags": [
+          "sharing"
         ]
       }
     },
