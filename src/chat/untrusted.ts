@@ -8,7 +8,7 @@ const MAX_CHARS = 6000;
  * Example: `wrapUntrusted("documento informe.pdf", text)`.
  */
 export function wrapUntrusted(source: string, text: string): string {
-  const safe = text.replace(new RegExp(`</?\s*${UNTRUSTED_TAG}[^>]*>`, "gi"), "[tag removida]").slice(0, MAX_CHARS);
+  const safe = text.replace(new RegExp(`</?\\s*${UNTRUSTED_TAG}[^>]*>`, "gi"), "[tag removida]").slice(0, MAX_CHARS);
   return `<${UNTRUSTED_TAG} fonte="${source.replace(/["<>]/g, "")}">\n${safe}\n</${UNTRUSTED_TAG}>`;
 }
 
