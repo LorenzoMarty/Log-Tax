@@ -3,6 +3,7 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 from fastapi import Depends
@@ -47,6 +48,31 @@ class UserDb:
 
     async def delete(self, table: str, **filters: str) -> list[dict[str, Any]]:
         return await self._rows("DELETE", f"/rest/v1/{table}", params=filters, headers=_RETURN)
+
+    # ---- Storage: same session, so the storage policies (owner may write, members may read) decide ----
+    async def storage_upload(self, bucket: str, path: str, data: bytes, content_type: str) -> bool:
+        """True when stored. A refusal (policy, duplicate path) is False: the caller says "no permission", never the detail."""
+        res = await self._http.post(
+            f"/storage/v1/object/{bucket}/{quote(path)}", content=data, headers={**self._headers, "Content-Type": content_type}
+        )
+        return res.status_code < 400
+
+    async def storage_remove(self, bucket: str, paths: list[str]) -> list[str]:
+        """The paths actually removed (the policy lets only the owner)."""
+        res = await self._http.request("DELETE", f"/storage/v1/object/{bucket}", json={"prefixes": paths}, headers=self._headers)
+        if res.status_code >= 400:
+            return []
+        return [item["name"] for item in res.json()]
+
+    async def storage_sign(self, bucket: str, path: str, expires_in: int, download: str | None = None) -> str | None:
+        """A short-lived signed URL, or None when the caller may not read the file."""
+        res = await self._http.post(
+            f"/storage/v1/object/sign/{bucket}/{quote(path)}", json={"expiresIn": expires_in}, headers=self._headers
+        )
+        if res.status_code >= 400:
+            return None
+        url = f"{str(self._http.base_url).rstrip('/')}/storage/v1{res.json()['signedURL']}"
+        return f"{url}&download={quote(download)}" if download else url
 
     async def rpc(self, name: str, args: dict[str, Any] | None = None) -> Any:
         return await self._send("POST", f"/rest/v1/rpc/{name}", json=args or {})

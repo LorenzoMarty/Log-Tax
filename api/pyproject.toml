@@ -14,6 +14,8 @@ pydantic = ">=2.9,<3"
 pydantic-settings = ">=2.6,<3"
 httpx = ">=0.27,<1"
 pyjwt = {version = ">=2.9,<3", extras = ["crypto"]}
+python-multipart = ">=0.0.20,<1"
+defusedxml = ">=0.7.1,<1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=8.3,<9"
@@ -22,6 +24,7 @@ pytest-cov = ">=6,<8"
 ruff = ">=0.8,<1"
 mypy = ">=1.13,<2"
 import-linter = ">=2.1,<3"
+types-defusedxml = ">=0.7"
 
 [build-system]
 requires = ["poetry-core>=2.0.0"]
@@ -39,7 +42,7 @@ ignore = ["S101", "RUF001"]  # RUF001: the engine writes "−" and "×" in the m
 extend-immutable-calls = ["fastapi.Depends"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S105", "S106", "N817"]
+"tests/**" = ["S105", "S106", "N817", "E501"]  # E501: long literals in test tables and golden strings
 "app/engine/real_engine.py" = ["E501"]  # long pt-BR messages and formulas, ported verbatim from the TypeScript engine
 
 [tool.mypy]

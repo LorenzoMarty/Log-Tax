@@ -42,6 +42,14 @@ describe("proxyToApi", () => {
     expect(res.headers.get("cache-control")).toBe("no-store");
   });
 
+  it("passes a redirect through (the document download is a 302 to a signed URL)", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 302, headers: { location: "https://storage.test/sign/x?token=t", "set-cookie": "leak=1" } }));
+    const res = await proxyToApi(new Request("http://app.test/api/v1/documents/1/download"), ["documents", "1", "download"]);
+    expect(res.status).toBe(302);
+    expect(res.headers.get("location")).toBe("https://storage.test/sign/x?token=t");
+    expect(res.headers.get("set-cookie")).toBeNull();
+  });
+
   it("needs a session: without one the API is never called", async () => {
     getSession.mockResolvedValue({ data: { session: null } });
     const res = await proxyToApi(post("/api/v1/me", {}), ["me"]);

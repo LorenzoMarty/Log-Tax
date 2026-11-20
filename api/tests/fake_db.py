@@ -15,6 +15,8 @@ class FakeDb:
         self.rpcs: dict[str, Callable[[dict[str, Any]], Any]] = {}
         self.rpc_calls: list[tuple[str, dict[str, Any]]] = []
         self._n = 0
+        self.storage: dict[str, bytes] = {}
+        self.can_write = True
 
     def seed(self, table: str, **row: Any) -> dict[str, Any]:
         self._n += 1
@@ -25,6 +27,11 @@ class FakeDb:
     @staticmethod
     def _match(row: dict[str, Any], filters: dict[str, str]) -> bool:
         for column, spec in filters.items():
+            if column == "or":  # "(a.eq.1,b.eq.2)": any of them
+                options = [o.split(".", 2) for o in spec.strip("()").split(",")]
+                if not any(str(row.get(col)) == value for col, _op, value in options):
+                    return False
+                continue
             op, _, value = spec.partition(".")
             if op == "eq" and str(row.get(column)) != value:
                 return False
@@ -70,6 +77,21 @@ class FakeDb:
         rows = self._filtered(table, filters)
         self.tables[table] = [r for r in self.tables.get(table, []) if r not in rows]
         return copy.deepcopy(rows)
+
+    async def storage_upload(self, bucket: str, path: str, data: bytes, content_type: str) -> bool:
+        if not self.can_write:
+            return False
+        self.storage[f"{bucket}/{path}"] = data
+        return True
+
+    async def storage_remove(self, bucket: str, paths: list[str]) -> list[str]:
+        gone = [p for p in paths if self.storage.pop(f"{bucket}/{p}", None) is not None]
+        return gone
+
+    async def storage_sign(self, bucket: str, path: str, expires_in: int, download: str | None = None) -> str | None:
+        if f"{bucket}/{path}" not in self.storage:
+            return None
+        return f"https://storage.test/sign/{bucket}/{path}?exp={expires_in}" + (f"&download={download}" if download else "")
 
     async def rpc(self, name: str, args: dict[str, Any] | None = None) -> Any:
         self.rpc_calls.append((name, args or {}))

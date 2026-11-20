@@ -6,8 +6,8 @@ export const apiUrl = () => (process.env.API_URL ?? "http://localhost:8100").rep
 const SEGMENT = /^[A-Za-z0-9._~-]+$/;
 /** Request headers worth passing on. The user's cookies never travel: the API authenticates by the bearer token alone. */
 const FORWARD_REQUEST = ["content-type", "accept", "x-request-id", "x-forwarded-for", "x-real-ip"];
-/** Response headers worth passing back (streaming answers keep their content type; the rest is internal). */
-const FORWARD_RESPONSE = ["content-type", "cache-control", "retry-after", "x-request-id", "content-disposition"];
+/** Response headers worth passing back (streaming answers keep their content type, a document download its redirect; the rest is internal). */
+const FORWARD_RESPONSE = ["content-type", "cache-control", "retry-after", "x-request-id", "content-disposition", "location"];
 
 const failure = (status: number, code: string, message: string) => Response.json({ error: { code, message } }, { status });
 
