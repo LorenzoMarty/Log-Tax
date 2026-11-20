@@ -91,7 +91,7 @@ async def chat(
         )  # fmt: skip
         if reply is not None:
             _log_metrics(request, principal, body, reply, started)
-            await record_tokens(db, reply.usage.get("input", 0), reply.usage.get("output", 0))
+            await record_tokens(db, str(body.workspace_id), reply.usage.get("input", 0), reply.usage.get("output", 0))
         return reply
 
     # Out of budget: say so clearly and never call the model.

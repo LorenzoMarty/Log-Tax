@@ -36,6 +36,8 @@ class FakeDb:
             actual = row.get(column)
             if op == "eq" and (str(actual).lower() if isinstance(actual, bool) else str(actual)) != value:
                 return False
+            if op == "gte" and not str(row.get(column)) >= value:
+                return False
             if op == "lt" and not str(row.get(column)) < value:  # ISO dates compare as text
                 return False
             if op == "is" and value == "null" and row.get(column) is not None:

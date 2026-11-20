@@ -247,14 +247,17 @@ async def test_the_daily_token_budget_fails_open_and_records_spending() -> None:
     )
     assert await tokens_left(db, 1000) == 1000  # type: ignore[arg-type]  # no such rpc: fails open
     db.rpcs["token_budget_left"] = lambda a: str(a["p_limit"] - 300)
-    db.rpcs["token_usage_add"] = lambda a: None
+    db.rpcs["ai_usage_record"] = lambda a: None
     assert await tokens_left(db, 1000) == 700  # type: ignore[arg-type]
-    await record_tokens(db, 100.4, 50.4)  # type: ignore[arg-type]
-    await record_tokens(db, 0, 0)  # type: ignore[arg-type]
-    assert db.rpc_calls[-1] == ("token_usage_add", {"p_tokens": 151})
-    assert len([c for c in db.rpc_calls if c[0] == "token_usage_add"]) == 1
-    del db.rpcs["token_usage_add"]
-    await record_tokens(db, 5, 5)  # type: ignore[arg-type]  # a failure is swallowed
+    await record_tokens(db, "ws-1", 100.4, 50.4)  # type: ignore[arg-type]
+    await record_tokens(db, "ws-1", 0, 0)  # type: ignore[arg-type]
+    assert db.rpc_calls[-1] == (
+        "ai_usage_record",
+        {"p_workspace": "ws-1", "p_input": 100, "p_output": 50, "p_cost_micro_usd": 45},
+    )
+    assert len([c for c in db.rpc_calls if c[0] == "ai_usage_record"]) == 1  # one row per call, none for zero spend
+    del db.rpcs["ai_usage_record"]
+    await record_tokens(db, "ws-1", 5, 5)  # type: ignore[arg-type]  # a failure is swallowed
     assert "limite diário" in BUDGET_EXHAUSTED
 
 

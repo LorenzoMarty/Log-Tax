@@ -30,7 +30,7 @@ def db(signed_in: TestClient, monkeypatch: pytest.MonkeyPatch) -> Iterator[FakeD
     get_settings.cache_clear()
     fake = FakeDb(USER)
     fake.rpcs.update(
-        {"rate_limit_hit": lambda a: 0, "token_budget_left": lambda a: a["p_limit"], "token_usage_add": lambda a: None}
+        {"rate_limit_hit": lambda a: 0, "token_budget_left": lambda a: a["p_limit"], "ai_usage_record": lambda a: None}
     )
     fake.rpcs.update({"track_event": lambda a: None, "audit_record": lambda a: None, "my_role": lambda a: "owner"})
 
@@ -69,9 +69,9 @@ def test_a_turn_answers_with_the_reply_and_persists_it(signed_in: TestClient, db
         w["id"] for w in body["dashboard"]["widgets"]
     ] == ["kpi", "breakdown"]
     assert [m["role"] for m in body["messages"]] == ["user", "assistant"]
-    assert (
-        len(db.tables["conversations"]) == 1 and ("token_usage_add", {"p_tokens": 0}) not in db.rpc_calls
-    )  # nothing spent, nothing recorded
+    assert len(db.tables["conversations"]) == 1 and not [
+        c for c in db.rpc_calls if c[0] == "ai_usage_record" and c[1]["p_input"] + c[1]["p_output"] == 0
+    ]  # nothing spent, nothing recorded
 
 
 def test_the_stream_sends_one_line_per_tool_then_the_reply(signed_in: TestClient, db: FakeDb) -> None:

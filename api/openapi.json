@@ -2769,6 +2769,80 @@
         "title": "TaxLine",
         "type": "object"
       },
+      "Usage": {
+        "properties": {
+          "byDay": {
+            "items": {
+              "$ref": "#/components/schemas/UsageDay"
+            },
+            "title": "Byday",
+            "type": "array"
+          },
+          "calls": {
+            "title": "Calls",
+            "type": "integer"
+          },
+          "costUsd": {
+            "title": "Costusd",
+            "type": "number"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "inputTokens": {
+            "title": "Inputtokens",
+            "type": "integer"
+          },
+          "outputTokens": {
+            "title": "Outputtokens",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "days",
+          "calls",
+          "inputTokens",
+          "outputTokens",
+          "costUsd",
+          "byDay"
+        ],
+        "title": "Usage",
+        "type": "object"
+      },
+      "UsageDay": {
+        "properties": {
+          "calls": {
+            "title": "Calls",
+            "type": "integer"
+          },
+          "costUsd": {
+            "title": "Costusd",
+            "type": "number"
+          },
+          "day": {
+            "title": "Day",
+            "type": "string"
+          },
+          "inputTokens": {
+            "title": "Inputtokens",
+            "type": "integer"
+          },
+          "outputTokens": {
+            "title": "Outputtokens",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "day",
+          "calls",
+          "inputTokens",
+          "outputTokens",
+          "costUsd"
+        ],
+        "title": "UsageDay",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -4255,6 +4329,68 @@
         "summary": "Me",
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/v1/me/ai-usage": {
+      "get": {
+        "description": "Per-day totals of the last `days` days. `costUsd` is an estimate from list prices, not an invoice.",
+        "operationId": "ai_usage_v1_me_ai_usage_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "days",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "maximum": 90,
+              "minimum": 1,
+              "title": "Days",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Usage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ai Usage",
+        "tags": [
+          "usage"
         ]
       }
     },

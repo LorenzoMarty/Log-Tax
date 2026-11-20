@@ -24,12 +24,31 @@ async def tokens_left(db: UserDb, limit: int) -> int:
         return limit
 
 
-async def record_tokens(db: UserDb, input_tokens: int, output_tokens: int) -> None:
-    """Records what a turn spent. A failure here must not fail the reply that was already produced."""
-    total = max(0, round(input_tokens + output_tokens))
-    if total == 0:
+# Rough list price per million tokens in USD (input, output) of the default chat model: an estimate, not an invoice.
+PRICE_PER_MILLION_USD = (0.15, 0.60)
+
+
+def estimate_cost_micro_usd(input_tokens: int, output_tokens: int) -> int:
+    price_in, price_out = PRICE_PER_MILLION_USD
+    return round(input_tokens * price_in + output_tokens * price_out)  # tokens x USD/million = micro-USD
+
+
+async def record_tokens(db: UserDb, workspace_id: str, input_tokens: float, output_tokens: float) -> None:
+    """Records one model call (tokens and estimated cost, never content) and adds it to today's budget.
+
+    A failure here must not fail the reply that was already produced."""
+    tokens_in, tokens_out = max(0, round(input_tokens)), max(0, round(output_tokens))
+    if tokens_in + tokens_out == 0:
         return
     try:
-        await db.rpc("token_usage_add", {"p_tokens": total})
+        await db.rpc(
+            "ai_usage_record",
+            {
+                "p_workspace": workspace_id,
+                "p_input": tokens_in,
+                "p_output": tokens_out,
+                "p_cost_micro_usd": estimate_cost_micro_usd(tokens_in, tokens_out),
+            },
+        )
     except DbError as exc:
         log.warning("token_usage_unrecorded", extra={"db_status": exc.status})
