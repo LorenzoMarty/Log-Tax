@@ -16,6 +16,7 @@ from app.engine.types import CompanyProfile, PersonProfile
 Kind = Literal["empresa", "pessoal"]
 Alert = dict[str, Any]  # {"id", "rule": {"metric", "operator", "threshold"}, "active"}
 Memory = dict[str, str]  # {"id", "text"}
+Asset = dict[str, Any]  # {"id", "kind", "description", "value" (decimal string), "acquired_at" (ISO date | None), "extra"}
 
 
 @dataclass(frozen=True)
@@ -45,6 +46,10 @@ class ChatStore(Protocol):
     async def list_memories(self) -> list[Memory]: ...
     async def add_memory(self, text: str) -> Memory: ...
     async def remove_memory(self, memory_id: str) -> bool: ...
+    async def list_assets(self) -> list[Asset]: ...
+    async def add_asset(self, values: dict[str, Any]) -> Asset: ...
+    async def update_asset(self, asset_id: str, patch: dict[str, Any]) -> Asset | None: ...
+    async def remove_asset(self, asset_id: str) -> bool: ...
 
 
 class WorkspaceAdmin(Protocol):
@@ -82,6 +87,9 @@ class MemoryStore:
     agents: list[Agent] = field(default_factory=list)
     memories: list[Memory] = field(default_factory=list)
     removed_memory_ids: list[str] = field(default_factory=list)
+    assets: list[Asset] = field(default_factory=list)
+    removed_asset_ids: list[str] = field(default_factory=list)
+    touched_asset_ids: set[str] = field(default_factory=set)
     _n: int = 0
 
     def _next(self) -> int:
@@ -157,4 +165,26 @@ class MemoryStore:
         self.memories = [m for m in self.memories if m["id"] != memory_id]
         if had:
             self.removed_memory_ids.append(memory_id)
+        return had
+
+    async def list_assets(self) -> list[Asset]:
+        return self.assets
+
+    async def add_asset(self, values: dict[str, Any]) -> Asset:
+        asset = {"id": f"new-asset-{self._next()}", **values}
+        self.assets.append(asset)
+        return asset
+
+    async def update_asset(self, asset_id: str, patch: dict[str, Any]) -> Asset | None:
+        asset = next((a for a in self.assets if a["id"] == asset_id), None)
+        if asset is not None:
+            asset.update(patch)
+            self.touched_asset_ids.add(asset_id)
+        return asset
+
+    async def remove_asset(self, asset_id: str) -> bool:
+        had = any(a["id"] == asset_id for a in self.assets)
+        self.assets = [a for a in self.assets if a["id"] != asset_id]
+        if had:
+            self.removed_asset_ids.append(asset_id)
         return had

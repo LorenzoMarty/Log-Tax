@@ -110,6 +110,10 @@ async def load_workspace_state(
     # Owner-only by RLS: a guest gets an empty list.
     memories = await db.select("workspace_memories", select="id,text", workspace_id=f"eq.{workspace_id}", order="created_at")
 
+    asset_rows = await db.select(
+        "assets", select="id,kind,description,value,acquired_at,extra", workspace_id=f"eq.{workspace_id}", order="created_at"
+    )
+
     agents: list[Agent] = [
         {"id": a["id"], "name": a["name"], "objective": a["objective"], "tools": (a.get("config") or {}).get("tools", [])}
         for a in agent_rows
@@ -139,6 +143,10 @@ async def load_workspace_state(
         alerts=[{"id": a["id"], "rule": a["rule"], "active": a["active"]} for a in alerts],
         agents=agents,
         memories=[{"id": m["id"], "text": m["text"]} for m in memories],
+        assets=[
+            {**a, "value": str(Decimal(str(a["value"])).quantize(Decimal("0.01"))), "extra": a.get("extra") or {}}
+            for a in asset_rows
+        ],
     )
     conv = conversation[0] if conversation else {}
     return WorkspaceState(
@@ -204,6 +212,16 @@ async def save_workspace_state(
     new_memories = [{"workspace_id": workspace_id, "text": m["text"]} for m in store.memories if not is_persisted(m["id"])]
     if new_memories:
         await db.insert("workspace_memories", new_memories)
+
+    gone_assets = [i for i in store.removed_asset_ids if is_persisted(i)]
+    if gone_assets:
+        await db.delete("assets", id=f"in.({','.join(gone_assets)})", workspace_id=f"eq.{workspace_id}")
+    for asset in store.assets:
+        values = {k: asset[k] for k in ("kind", "description", "value", "acquired_at", "extra")}
+        if not is_persisted(asset["id"]):
+            await db.insert("assets", {**values, "workspace_id": workspace_id})
+        elif asset["id"] in store.touched_asset_ids:
+            await db.update("assets", values, id=f"eq.{asset['id']}")
 
     saved: list[Agent] = []
     for agent in store.agents:

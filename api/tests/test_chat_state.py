@@ -393,3 +393,25 @@ async def test_a_db_failure_while_saving_is_not_hidden() -> None:
     db.update = boom  # type: ignore[method-assign]
     with pytest.raises(DbError):
         await chat(db, ws, "Empresa")
+
+
+async def test_assets_persist_through_the_workspace_state() -> None:
+    db = FakeDb()
+    ws = workspace(db, kind="pessoal")
+    state = await load_workspace_state(db, ws, BLANK)
+    assert state is not None
+    keep = await state.store.add_asset(
+        {"kind": "bem", "description": "Moto", "value": "100.00", "acquired_at": None, "extra": {}}
+    )
+    await save_workspace_state(db, ws, state, [], [], BLANK)
+    assert db.tables["assets"][0]["workspace_id"] == ws and db.tables["assets"][0]["value"] == "100.00" and keep
+    again = await load_workspace_state(db, ws, BLANK)
+    assert again is not None and again.store.assets[0]["description"] == "Moto"
+    await again.store.update_asset(again.store.assets[0]["id"], {"value": "150.00"})
+    await save_workspace_state(db, ws, again, [], [], BLANK)
+    assert len(db.tables["assets"]) == 1 and db.tables["assets"][0]["value"] == "150.00"
+    third = await load_workspace_state(db, ws, BLANK)
+    assert third is not None and third.store.assets[0]["value"] == "150.00"
+    await third.store.remove_asset(third.store.assets[0]["id"])
+    await save_workspace_state(db, ws, third, [], [], BLANK)
+    assert db.tables["assets"] == []
