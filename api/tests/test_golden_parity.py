@@ -13,6 +13,10 @@ from typing import Any
 import pytest
 from pydantic import TypeAdapter
 
+from app.chat.redact import redact
+from app.chat.system_prompt import build_system_prompt
+from app.chat.trim_history import trim_history
+from app.chat.untrusted import wrap_untrusted
 from app.engine.calendar import upcoming_deadlines
 from app.engine.irpf_investments import (
     Acoes,
@@ -186,6 +190,21 @@ def run(case: dict[str, Any]) -> Any:
         return mul_rate(i["cents"], i["rate"], i["mode"])
     if kind == "allocate":
         return allocate(i["total"], i["weights"])
+    if kind == "redact":
+        return redact(i["text"])
+    if kind == "trim_history":
+        return trim_history(i["history"])
+    if kind == "wrap_untrusted":
+        return wrap_untrusted(i["source"], i["text"])
+    if kind == "system_prompt":
+        o = i["opts"]
+        return build_system_prompt(
+            o["workspaceName"],
+            kind=o.get("kind"),
+            agent=o.get("agent"),
+            agents=o.get("agents", ()),
+            memories=o.get("memories", ()),
+        )
     assert kind == "deadlines"
     return jsonable(upcoming_deadlines(i["regime"], i["from"], i["horizonDays"]))
 
@@ -213,7 +232,12 @@ def test_the_python_engine_matches_the_typescript_engine_case_by_case(kind: str)
 
 def test_the_golden_file_covers_every_kind_regime_and_state() -> None:
     kinds = {c["input"]["kind"] for c in CASES}
-    assert kinds == {"company", "person", "investment", "reform", "to_cents", "mul_rate", "allocate", "deadlines"}
+    assert kinds == {"company", "person", "investment", "reform", "to_cents", "mul_rate", "allocate", "deadlines"} | {
+        "redact",
+        "trim_history",
+        "system_prompt",
+        "wrap_untrusted",
+    }
     companies = [c for c in CASES if c["input"]["kind"] == "company"]
     assert {c["input"]["profile"]["regime"] for c in companies} == {"simples", "presumido", "real", "mei"}
     assert {c["output"]["diagnose"]["status"] for c in companies} == {"ok", "insufficient_data", "not_applicable"}
