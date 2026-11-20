@@ -219,6 +219,18 @@
             "title": "Body",
             "type": "string"
           },
+          "parentId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parentid"
+          },
           "widgetId": {
             "default": "",
             "maxLength": 80,
@@ -2493,6 +2505,20 @@
         "title": "ReformYear",
         "type": "object"
       },
+      "ResolveIn": {
+        "additionalProperties": false,
+        "properties": {
+          "resolved": {
+            "title": "Resolved",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "resolved"
+        ],
+        "title": "ResolveIn",
+        "type": "object"
+      },
       "Revenue": {
         "additionalProperties": false,
         "properties": {
@@ -4716,6 +4742,77 @@
           }
         },
         "summary": "Delete Comment",
+        "tags": [
+          "sharing"
+        ]
+      },
+      "patch": {
+        "description": "Marks a comment as resolved (or reopens it). RLS lets only whoever may comment, and only these two columns.",
+        "operationId": "resolve_comment_v1_workspaces__workspace_id__comments__comment_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "comment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Comment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Resolve Comment",
         "tags": [
           "sharing"
         ]
