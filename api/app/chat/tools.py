@@ -284,9 +284,17 @@ class StyleArgs(_Args):
 
 
 class AlertArgs(_Args):
-    metric: Literal["monthlyTotal", "effectiveRate", "annualSavings"]
-    operator: Literal["gt", "lt"]
+    metric: Literal["monthlyTotal", "effectiveRate", "annualSavings", "daysToDeadline"]
+    operator: Literal["gt", "lt", "within"]
     threshold: float
+
+    @model_validator(mode="after")
+    def _operator_fits_the_metric(self) -> "AlertArgs":
+        if (self.metric == "daysToDeadline") != (self.operator == "within"):
+            raise ValueError("daysToDeadline usa o operador within, e within só serve para daysToDeadline")
+        if self.metric == "daysToDeadline" and not 0 <= self.threshold <= 60:
+            raise ValueError("o prazo vai de 0 a 60 dias")
+        return self
 
 
 class CreateAgentArgs(_Args):
@@ -682,7 +690,9 @@ async def _dashboard_set_style(ctx: ToolContext, a: StyleArgs) -> Any:
 # ---- alerts and agents ----
 @_tool(
     "create_alert",
-    "Cria um alerta: avisa quando a métrica ficar acima (gt) ou abaixo (lt) do limite. effectiveRate é fração (0.15 = 15%).",
+    "Cria um alerta: avisa quando a métrica ficar acima (gt) ou abaixo (lt) do limite. effectiveRate é fração (0.15 = 15%). "
+    'Para avisar N dias antes de um vencimento (ex.: "me avise 10 dias antes dos impostos") use metric daysToDeadline, '
+    "operator within e threshold N (0 a 60): dispara quando a próxima obrigação estiver a N dias ou menos.",
     AlertArgs,
     kinds=("empresa",),
 )

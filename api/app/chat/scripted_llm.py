@@ -166,6 +166,18 @@ def _agent_id(system: str) -> str | None:
     return m.group(1) if m else None
 
 
+def _days_before(text: str) -> int:
+    m = re.search(r"(\d+)\s*dias antes", text, _I)
+    assert m
+    return int(m.group(1))
+
+
+def _deadline_alert_reply(p: list[ToolOutcome], text: str) -> str:
+    if not _ok(_first(p)):
+        return "Não consegui criar o alerta de prazo. Com quantos dias de antecedência devo avisar?"
+    return f"Pronto! Vou te avisar aqui no painel quando faltarem {_days_before(text)} dias ou menos para o próximo vencimento."
+
+
 def _below(text: str) -> bool:
     return bool(re.search(r"abaixo|menos de|menor", text, _I))
 
@@ -386,6 +398,11 @@ PLANS: list[Plan] = [
     ),
     _plan(r"tira|remov|^sim\b", [lambda _p, _t, _s: _call("dashboard_remove_widget", id="kpi")], _remove_reply),
     _plan(r"\be se\b|simul|cenário|cenario", _simulation_steps(), _simulation_reply),
+    _plan(
+        r"\d+\s*dias antes",
+        [lambda _p, text, _s: _call("create_alert", metric="daysToDeadline", operator="within", threshold=_days_before(text))],
+        _deadline_alert_reply,
+    ),
     _plan(
         r"avis|alert",
         [
