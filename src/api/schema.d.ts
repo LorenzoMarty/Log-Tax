@@ -214,6 +214,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/documents/ir-import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Ir */
+        post: operations["import_ir_v1_documents_ir_import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/documents/nfe-batch": {
         parameters: {
             query?: never;
@@ -1082,6 +1099,26 @@ export interface components {
              * @default false
              */
             confirm: boolean;
+            /** File */
+            file: string;
+            /**
+             * Workspaceid
+             * Format: uuid
+             */
+            workspaceId: string;
+        };
+        /** Body_import_ir_v1_documents_ir_import_post */
+        Body_import_ir_v1_documents_ir_import_post: {
+            /**
+             * Confirm
+             * @default false
+             */
+            confirm: boolean;
+            /**
+             * Confirmlow
+             * @default false
+             */
+            confirmLow: boolean;
             /** File */
             file: string;
             /**
@@ -2351,6 +2388,41 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_ir_v1_documents_ir_import_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_import_ir_v1_documents_ir_import_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
