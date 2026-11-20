@@ -34,6 +34,11 @@ class FakeDb:
                 continue
             op, _, value = spec.partition(".")
             actual = row.get(column)
+            if op.startswith("wfts"):  # full text: every word appears in name + text (case-insensitive, no stemming)
+                haystack = f"{row.get('name', '')} {row.get('search_text') or ''}".lower()
+                if not all(w in haystack for w in value.lower().split()):
+                    return False
+                continue
             if op == "eq" and (str(actual).lower() if isinstance(actual, bool) else str(actual)) != value:
                 return False
             if op == "gte" and not str(row.get(column)) >= value:

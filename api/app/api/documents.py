@@ -23,6 +23,7 @@ from app.documents.checks import quota_bytes, scan_bytes, signature_matches
 from app.documents.classify import classify_document
 from app.documents.duplicates import Fingerprint, fingerprint_document
 from app.documents.pdf_text import pdf_text
+from app.documents.search import searchable_text
 from app.documents.storage import (
     BUCKET,
     CONSENT_VERSION,
@@ -137,6 +138,7 @@ async def upload(
         "consented_at": datetime.now(UTC).isoformat(),
         "content_hash": fingerprint.content_hash,
         "nfe_key": fingerprint.nfe_key,
+        "search_text": searchable_text(read_text, markup="xml" in mime) if read_text else None,
     }
     try:
         await db.insert("documents", row)

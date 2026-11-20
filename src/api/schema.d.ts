@@ -211,6 +211,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/documents/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search */
+        get: operations["search_v1_documents_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/documents/{document_id}": {
         parameters: {
             query?: never;
@@ -1681,6 +1698,20 @@ export interface components {
             /** Lapsed */
             lapsed: components["schemas"]["RuleStatus"][];
         };
+        /** SearchHitOut */
+        SearchHitOut: {
+            /** Documentid */
+            documentId: string;
+            /** Name */
+            name: string;
+            /** Snippet */
+            snippet: string;
+        };
+        /** SearchOut */
+        SearchOut: {
+            /** Hits */
+            hits: components["schemas"]["SearchHitOut"][];
+        };
         /** SimulateIn */
         SimulateIn: {
             company: components["schemas"]["CompanyIn"];
@@ -2115,6 +2146,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_v1_documents_search_get: {
+        parameters: {
+            query: {
+                workspaceId: string;
+                q: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchOut"];
                 };
             };
             /** @description Validation Error */

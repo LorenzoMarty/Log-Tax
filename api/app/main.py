@@ -7,6 +7,7 @@ from app.api import (
     chat,
     company_lookup,
     cron,
+    document_search,
     documents,
     engine,
     health,
@@ -44,6 +45,7 @@ def create_app() -> FastAPI:
     app.include_router(vitals.router)
     app.include_router(engine.router)
     app.include_router(chat.router)
+    app.include_router(document_search.router)  # before documents.router, harmless either way: /search is a fixed path
     app.include_router(documents.router)
     app.include_router(nfe_import.router)
     app.include_router(cron.router)
