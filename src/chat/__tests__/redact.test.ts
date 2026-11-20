@@ -26,4 +26,10 @@ describe("redact", () => {
     const s = "Faturamento R$ 500.000,00 em 2026, carga de 13,1% e 42800 por mês";
     expect(redact(s)).toBe(s);
   });
+
+  it("masks the alphanumeric CNPJ, formatted or bare, and keeps one with a wrong check digit (#328)", () => {
+    expect(redact("CNPJ 12.ABC.345/01DE-35")).toBe("CNPJ **.***.***/****-35");
+    expect(redact("cnpj 12abc34501de35")).toBe("cnpj **.***.***/****-35");
+    expect(redact("código 12ABC34501DE36")).toBe("código 12ABC34501DE36");
+  });
 });

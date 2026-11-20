@@ -25,7 +25,7 @@ from pydantic_core import to_jsonable_python
 from app.chat.dashboard import Widget, validate_widget
 from app.chat.store import Kind, Scope, ToolContext
 from app.chat.types import ToolOutcome, ToolSpec
-from app.core.br_ids import only_digits
+from app.core.br_ids import normalize_cnpj
 from app.documents.search import cited_for_model
 from app.engine.calendar import upcoming_deadlines
 from app.engine.company_schema import CompanyFields, apply_fields, inconsistencies, merge_series
@@ -506,7 +506,7 @@ async def _save_company_data(ctx: ToolContext, a: SaveCompanyArgs) -> Any:
     company = await ctx.store.get_company()
     merged = apply_fields(company, a)
     if "cnpj" in a.model_fields_set and a.cnpj:
-        merged = replace(merged, cnpj=only_digits(a.cnpj))
+        merged = replace(merged, cnpj=normalize_cnpj(a.cnpj))
     if a.series:
         incoming = apply_fields(replace(company, series=None), CompanyFields(series=a.series)).series or []
         merged = replace(merged, series=merge_series(company.series, incoming))

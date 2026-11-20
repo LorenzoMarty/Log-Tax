@@ -56,7 +56,9 @@ _BY_NAME: list[tuple[re.Pattern[str], DocType]] = [
     (re.compile(r"declaracao|irpf|dirf"), "declaracao"),
     (re.compile(r"recibo|comprovante|consulta|medic|escola|mensalidade|saude|hospital|clinica"), "comprovante_despesa"),
 ]
-_NUMERO, _CNPJ, _VALOR, _EMISSAO = (re.compile(p) for p in (r"\d{1,9}", r"\d{14}", r"\d+(?:\.\d{1,2})?", r"\d{4}-\d{2}-\d{2}"))
+_NUMERO, _CNPJ, _VALOR, _EMISSAO = (
+    re.compile(p) for p in (r"\d{1,9}", r"[0-9A-Z]{12}\d{2}", r"\d+(?:\.\d{1,2})?", r"\d{4}-\d{2}-\d{2}")
+)
 
 
 @dataclass(frozen=True)

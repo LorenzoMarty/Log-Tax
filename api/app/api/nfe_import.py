@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, File, Form, UploadFile
 from fastapi.responses import JSONResponse, Response
 
 from app.chat.state import profile_to_json
+from app.core.br_ids import normalize_cnpj
 from app.core.config import Settings, get_settings
 from app.core.crypto import decrypt_field, encrypt_field
 from app.core.errors import error_response
@@ -47,7 +48,7 @@ async def import_batch(
         return error_response(404, "not_found", "Não encontrei o que você pediu.")
     raw: Any = rows[0].get("profile")
     cnpj = decrypt_field(raw["cnpj"], settings) if isinstance(raw, dict) and isinstance(raw.get("cnpj"), str) else ""
-    company_cnpj = "".join(c for c in cnpj if c.isdigit())
+    company_cnpj = normalize_cnpj(cnpj)  # keeps the letters of an alphanumeric CNPJ (#328)
     if len(company_cnpj) != 14:
         return error_response(422, "cnpj_required", "Informe o CNPJ da empresa antes de importar notas.")
 
