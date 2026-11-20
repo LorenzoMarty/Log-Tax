@@ -36,6 +36,8 @@ class ChatStore(Protocol):
     async def dispatch(self, action: Action) -> Dashboard: ...
     async def add_alert(self, rule: dict[str, Any]) -> Alert: ...
     async def list_alerts(self) -> list[Alert]: ...
+    async def set_alert_active(self, alert_id: str, active: bool) -> Alert | None: ...
+    async def remove_alert(self, alert_id: str) -> bool: ...
     async def add_agent(self, agent: dict[str, Any]) -> Agent: ...
     async def update_agent(self, agent_id: str, patch: dict[str, Any]) -> Agent | None: ...
     async def list_agents(self) -> list[Agent]: ...
@@ -73,6 +75,8 @@ class MemoryStore:
     person: PersonProfile = field(default_factory=PersonProfile)
     history: History = field(default_factory=lambda: History(new_dashboard()))
     alerts: list[Alert] = field(default_factory=list)
+    removed_alert_ids: list[str] = field(default_factory=list)
+    touched_alert_ids: set[str] = field(default_factory=set)
     agents: list[Agent] = field(default_factory=list)
     memories: list[Memory] = field(default_factory=list)
     removed_memory_ids: list[str] = field(default_factory=list)
@@ -110,6 +114,19 @@ class MemoryStore:
 
     async def list_alerts(self) -> list[Alert]:
         return self.alerts
+
+    async def set_alert_active(self, alert_id: str, active: bool) -> Alert | None:
+        alert = next((a for a in self.alerts if a["id"] == alert_id), None)
+        if alert is not None:
+            alert["active"] = active
+            self.touched_alert_ids.add(alert_id)
+        return alert
+
+    async def remove_alert(self, alert_id: str) -> bool:
+        before = len(self.alerts)
+        self.alerts = [a for a in self.alerts if a["id"] != alert_id]
+        self.removed_alert_ids.append(alert_id)
+        return len(self.alerts) < before
 
     async def add_agent(self, agent: dict[str, Any]) -> Agent:
         created: Agent = {"id": f"new-agent-{self._next()}", **agent}  # type: ignore[typeddict-item]

@@ -154,6 +154,23 @@ def test_the_profile_is_stored_as_camel_case_numbers() -> None:
     json.dumps(stored)  # plain JSON
 
 
+async def test_paused_resumed_and_deleted_alerts_reach_the_table() -> None:
+    db = FakeDb()
+    ws = workspace(db)
+    rule = {"metric": "monthlyTotal", "operator": "gt", "threshold": 1}
+    keep = db.seed("alerts", workspace_id=ws, rule=rule, active=True, fired=True)
+    gone = db.seed("alerts", workspace_id=ws, rule=rule, active=True, fired=False)
+    state = await load_workspace_state(db, ws, DEMO)
+    assert state is not None
+    await state.store.set_alert_active(keep["id"], False)
+    await state.store.remove_alert(gone["id"])
+    await save_workspace_state(db, ws, state, [], [], DEMO)
+    assert [(a["id"], a["active"]) for a in db.tables["alerts"]] == [(keep["id"], False)]
+    await state.store.set_alert_active(keep["id"], True)
+    await save_workspace_state(db, ws, state, [], [], DEMO)
+    assert db.tables["alerts"][0]["active"] is True and db.tables["alerts"][0]["fired"] is False
+
+
 async def test_a_saved_turn_comes_back_identical_and_new_rows_get_real_ids() -> None:
     db = FakeDb()
     ws = workspace(db)

@@ -1,5 +1,6 @@
 """Scheduled alerts (#145): a notice is written once when an alert turns over its limit, never repeated, re-armed when it turns back."""
 
+import uuid
 from collections.abc import AsyncIterator, Iterator
 from typing import Any
 
@@ -150,3 +151,35 @@ def test_the_notices_need_a_signed_in_user(anonymous: TestClient) -> None:
     ws = "6f1d9a4e-6c1c-4b57-9d62-3a4c1f0a9b11"
     assert anonymous.get(f"/v1/workspaces/{ws}/alert-events").status_code == 401
     assert anonymous.post(f"/v1/workspaces/{ws}/alert-events/read").status_code == 401
+
+
+def test_unread_filter_and_marking_one_notice_read(api: tuple[TestClient, FakeDb]) -> None:
+    client, db = api
+    ws = workspace(db)
+    a = alert(db, ws)
+    one = db.seed("alert_events", workspace_id=ws, alert_id=a["id"], text="um", current_text=None, read_at=None)
+    db.seed("alert_events", workspace_id=ws, alert_id=a["id"], text="dois", current_text=None, read_at=None)
+    assert client.post(f"/v1/workspaces/{ws}/alert-events/{one['id']}/read").status_code == 204
+    assert [e["text"] for e in client.get(f"/v1/workspaces/{ws}/alert-events?unread=true").json()] == ["dois"]
+    assert len(client.get(f"/v1/workspaces/{ws}/alert-events").json()) == 2
+    assert client.post(f"/v1/workspaces/{ws}/alert-events/{uuid.uuid4()}/read").status_code == 404
+
+
+def test_alerts_are_listed_paused_resumed_and_deleted_inside_their_workspace(api: tuple[TestClient, FakeDb]) -> None:
+    client, db = api
+    ws = workspace(db)
+    a = alert(db, ws)
+    a["fired"] = True
+    alert(db, "other")
+    assert [x["id"] for x in client.get(f"/v1/workspaces/{ws}/alerts").json()] == [a["id"]]
+    url = f"/v1/workspaces/{ws}/alerts/{a['id']}"
+    assert client.patch(url, json={"active": False}).json()["active"] is False and a["fired"] is True
+    assert client.patch(url, json={"active": True}).json()["active"] is True and a["fired"] is False  # re-armed
+    assert client.delete(url).status_code == 204 and len(db.tables["alerts"]) == 1
+    assert client.delete(url).status_code == 404 and client.patch(url, json={"active": True}).status_code == 404
+
+
+def test_alert_management_needs_a_signed_in_user(anonymous: TestClient) -> None:
+    base = "/v1/workspaces/6f1d9a4e-6c1c-4b57-9d62-3a4c1f0a9b11/alerts"
+    assert anonymous.get(base).status_code == 401
+    assert anonymous.delete(f"{base}/6f1d9a4e-6c1c-4b57-9d62-3a4c1f0a9b12").status_code == 401

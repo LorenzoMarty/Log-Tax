@@ -191,6 +191,13 @@ async def save_workspace_state(
     if new_alerts:
         await db.insert("alerts", new_alerts)
 
+    gone = [i for i in store.removed_alert_ids if is_persisted(i)]
+    if gone:
+        await db.delete("alerts", id=f"in.({','.join(gone)})", workspace_id=f"eq.{workspace_id}")
+    for a in store.alerts:
+        if a["id"] in store.touched_alert_ids and is_persisted(a["id"]):  # resuming re-arms it, as the REST route does
+            await db.update("alerts", {"active": a["active"]} | ({"fired": False} if a["active"] else {}), id=f"eq.{a['id']}")
+
     removed = [i for i in store.removed_memory_ids if is_persisted(i)]
     if removed:
         await db.delete("workspace_memories", id=f"in.({','.join(removed)})", workspace_id=f"eq.{workspace_id}")

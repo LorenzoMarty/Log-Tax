@@ -84,7 +84,7 @@ async def call(reg: ToolRegistry, name: str, args: Any = None, untrusted: bool =
 
 # ---- catalogue and schemas ----
 def test_every_tool_has_a_clean_json_schema_and_the_flags_are_consistent() -> None:
-    assert len(TOOL_NAMES) == len(set(TOOL_NAMES)) == 27
+    assert len(TOOL_NAMES) == len(set(TOOL_NAMES)) == 31
     for t in TOOLS:
         schema = tool_parameters(t)
         text = json.dumps(schema)
@@ -106,7 +106,7 @@ def test_specs_follow_the_workspace_kind_and_the_agent_allow_list() -> None:
     assert not {"get_tax_diagnosis", "run_simulation", "create_alert"} & set(names("pessoal"))
     assert "get_tax_diagnosis" in names("empresa") and not {"get_ir_diagnosis", "save_person_data"} & set(names("empresa"))
     assert names("empresa", ("get_tax_diagnosis", "get_ir_diagnosis")) == ["get_tax_diagnosis"]
-    assert len(names(None)) == 27
+    assert len(names(None)) == 31
 
 
 async def test_unknown_wrong_kind_and_not_allowed_tools_are_refused_at_runtime() -> None:
@@ -176,6 +176,20 @@ async def test_no_confirmation_is_asked_without_external_content() -> None:
     reg, store = make()
     assert (await call(reg, "create_alert", {"metric": "monthlyTotal", "operator": "gt", "threshold": 20000}))["status"] == "ok"
     assert store.alerts[0]["rule"]["threshold"] == 20000
+
+
+async def test_alerts_can_be_listed_paused_resumed_and_deleted_after_confirmation() -> None:
+    reg, store = make()
+    made = (await call(reg, "create_alert", {"metric": "monthlyTotal", "operator": "gt", "threshold": 1}))["data"]
+    assert (await call(reg, "list_alerts"))["data"][0]["id"] == made["id"]
+    assert (await call(reg, "pause_alert", {"id": made["id"]}))["data"]["active"] is False
+    assert (await call(reg, "resume_alert", {"id": made["id"]}))["data"]["active"] is True
+    assert (await call(reg, "pause_alert", {"id": "nope"}))["status"] == "error"
+    asked = await call(reg, "delete_alert", {"id": made["id"]})
+    assert asked["status"] == "confirmation_required" and len(store.alerts) == 1
+    reg2, _ = make(approvals=frozenset({asked["key"]}), store=store)
+    assert (await call(reg2, "delete_alert", {"id": made["id"]}))["status"] == "ok" and store.alerts == []
+    assert (await call(reg2, "delete_alert", {"id": made["id"]}))["status"] == "error"
 
 
 async def test_an_agent_cannot_grant_tools_it_does_not_have() -> None:

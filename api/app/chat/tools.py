@@ -701,6 +701,40 @@ async def _create_alert(ctx: ToolContext, a: AlertArgs) -> Any:
 
 
 @_tool(
+    "list_alerts",
+    "Lista os alertas do espaço com id, regra e se estão ativos (use o id em pause_alert, resume_alert e delete_alert).",
+    NoArgs,
+    read_only=True,
+    kinds=("empresa",),
+)
+async def _list_alerts(ctx: ToolContext, a: NoArgs) -> Any:
+    return await ctx.store.list_alerts()
+
+
+@_tool("pause_alert", "Pausa um alerta sem apagá-lo (use o id de list_alerts).", IdArgs, kinds=("empresa",))
+async def _pause_alert(ctx: ToolContext, a: IdArgs) -> Any:
+    return _need(await ctx.store.set_alert_active(a.id, False), f'Alerta "{a.id}" não encontrado.')
+
+
+@_tool("resume_alert", "Reativa um alerta pausado (use o id de list_alerts).", IdArgs, kinds=("empresa",))
+async def _resume_alert(ctx: ToolContext, a: IdArgs) -> Any:
+    return _need(await ctx.store.set_alert_active(a.id, True), f'Alerta "{a.id}" não encontrado.')
+
+
+@_tool(
+    "delete_alert",
+    'Apaga um alerta ("cancela aquele alerta"). Exige confirmação do usuário.',
+    IdArgs,
+    destructive=True,
+    kinds=("empresa",),
+)
+async def _delete_alert(ctx: ToolContext, a: IdArgs) -> Any:
+    if not await ctx.store.remove_alert(a.id):
+        raise ToolError(f'Alerta "{a.id}" não encontrado.')
+    return {"removed": a.id}
+
+
+@_tool(
     "create_agent", "Cria uma IA especializada com nome, objetivo e a lista de ferramentas que ela pode usar.", CreateAgentArgs
 )
 async def _create_agent(ctx: ToolContext, a: CreateAgentArgs) -> Any:
