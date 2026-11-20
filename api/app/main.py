@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import account, chat, cron, documents, engine, health, me, report, vitals
+from app.api import account, chat, cron, documents, engine, health, me, report, sharing, vitals
 from app.core.config import get_settings
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging
@@ -30,6 +30,7 @@ def create_app() -> FastAPI:
     app.include_router(cron.router)
     app.include_router(account.router)
     app.include_router(report.router)
+    app.include_router(sharing.router)
     return app
 
 
