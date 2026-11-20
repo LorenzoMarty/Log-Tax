@@ -9,7 +9,7 @@ SIMPLES = {
     "series": [*SERIES_2025, {"month": "2026-01", "revenue": {"comercio": "50000"}}],
 }
 PRESUMIDO = {"regime": "presumido", "activity": "comercio", "monthlyRevenue": "100000", "monthlyPurchases": "60000", "uf": "SP"}
-ROUTES = ["diagnose", "simulate", "opportunities", "person", "history", "deadlines", "reform-impact"]
+ROUTES = ["diagnose", "simulate", "opportunities", "person", "history", "deadlines", "reform-impact", "prestador"]
 
 
 def test_every_engine_route_needs_a_signed_in_user(anonymous: TestClient) -> None:
@@ -117,7 +117,7 @@ def test_rules_lists_every_version_with_source_and_what_has_lapsed(signed_in: Te
     r = signed_in.get("/v1/engine/rules", params={"today": "2026-11"})
     assert r.status_code == 200
     body = r.json()
-    assert len(body["changelog"]) == 30 and all(e["source"] for e in body["changelog"])
+    assert len(body["changelog"]) == 32 and all(e["source"] for e in body["changelog"])
     assert sorted(x["id"] for x in body["lapsed"]) == ["irpf-anual-deducoes", "irpf-tabela-anual"]
     assert signed_in.get("/v1/engine/rules", params={"today": "bad"}).status_code == 422
     assert signed_in.get("/v1/engine/rules").status_code == 200
