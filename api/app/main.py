@@ -13,6 +13,7 @@ from app.api import (
     me,
     missing_documents,
     nfe_import,
+    organized_documents,
     report,
     sharing,
     vitals,
@@ -45,6 +46,7 @@ def create_app() -> FastAPI:
     app.include_router(chat.router)
     app.include_router(documents.router)
     app.include_router(nfe_import.router)
+    app.include_router(organized_documents.router)
     app.include_router(cron.router)
     app.include_router(account.router)
     app.include_router(report.router)
