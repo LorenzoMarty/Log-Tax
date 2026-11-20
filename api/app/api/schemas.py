@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
 from app.engine.company_schema import CompanyFields, apply_fields
+from app.engine.itcmd import ItcmdInput
 from app.engine.prestador import PrestadorInput
 from app.engine.result import EngineResult, InsufficientData, NoneFound, NotApplicable, Ok
 from app.engine.types import CompanyProfile, PersonProfile
@@ -113,6 +114,16 @@ class PrestadorIn(_In):
             self.monthly_revenue, self.deductible_expenses, self.dependents, self.inss_plan,
             self.annex, self.fator_r, self.pro_labore,
         )  # fmt: skip
+
+
+class ItcmdIn(_In):
+    competence: Competence | None = None
+    uf: Annotated[str, Field(pattern=r"^[A-Za-z]{2}$")]
+    kind: Literal["heranca", "doacao"]
+    base_value: Annotated[Decimal, Field(gt=0, le=Decimal("1e12"))]
+
+    def to_input(self) -> ItcmdInput:
+        return ItcmdInput(self.uf, self.kind, self.base_value)
 
 
 class HistoryIn(_In):

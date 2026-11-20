@@ -1353,6 +1353,31 @@
           }
         ]
       },
+      "Envelope_ItcmdResult_": {
+        "discriminator": {
+          "mapping": {
+            "insufficient_data": "#/components/schemas/InsufficientDataOut",
+            "none_found": "#/components/schemas/NoneFoundOut",
+            "not_applicable": "#/components/schemas/NotApplicableOut",
+            "ok": "#/components/schemas/OkOut_ItcmdResult_"
+          },
+          "propertyName": "status"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/OkOut_ItcmdResult_"
+          },
+          {
+            "$ref": "#/components/schemas/InsufficientDataOut"
+          },
+          {
+            "$ref": "#/components/schemas/NotApplicableOut"
+          },
+          {
+            "$ref": "#/components/schemas/NoneFoundOut"
+          }
+        ]
+      },
       "Envelope_OpportunitySet_": {
         "discriminator": {
           "mapping": {
@@ -1755,6 +1780,123 @@
         "title": "IrScenario",
         "type": "object"
       },
+      "ItcmdIn": {
+        "additionalProperties": false,
+        "properties": {
+          "baseValue": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1000000000000.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Basevalue"
+          },
+          "competence": {
+            "anyOf": [
+              {
+                "examples": [
+                  "2026-03"
+                ],
+                "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Competence"
+          },
+          "kind": {
+            "enum": [
+              "heranca",
+              "doacao"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "uf": {
+            "pattern": "^[A-Za-z]{2}$",
+            "title": "Uf",
+            "type": "string"
+          }
+        },
+        "required": [
+          "uf",
+          "kind",
+          "baseValue"
+        ],
+        "title": "ItcmdIn",
+        "type": "object"
+      },
+      "ItcmdResult": {
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "baseValue": {
+            "title": "Basevalue",
+            "type": "string"
+          },
+          "disclaimer": {
+            "title": "Disclaimer",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/Kind"
+          },
+          "rate": {
+            "title": "Rate",
+            "type": "string"
+          },
+          "rulesUsed": {
+            "items": {
+              "$ref": "#/components/schemas/RuleRef"
+            },
+            "title": "Rulesused",
+            "type": "array"
+          },
+          "rulesVersion": {
+            "title": "Rulesversion",
+            "type": "string"
+          },
+          "tax": {
+            "title": "Tax",
+            "type": "string"
+          },
+          "uf": {
+            "title": "Uf",
+            "type": "string"
+          }
+        },
+        "required": [
+          "uf",
+          "kind",
+          "baseValue",
+          "rate",
+          "tax",
+          "assumptions",
+          "disclaimer",
+          "rulesVersion"
+        ],
+        "title": "ItcmdResult",
+        "type": "object"
+      },
+      "Kind": {
+        "enum": [
+          "heranca",
+          "doacao"
+        ],
+        "type": "string"
+      },
       "Lookup": {
         "properties": {
           "company": {
@@ -1976,6 +2118,24 @@
           "value"
         ],
         "title": "OkOut[Diagnosis]",
+        "type": "object"
+      },
+      "OkOut_ItcmdResult_": {
+        "properties": {
+          "status": {
+            "const": "ok",
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/ItcmdResult"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "OkOut[ItcmdResult]",
         "type": "object"
       },
       "OkOut_OpportunitySet_": {
@@ -4212,6 +4372,66 @@
           }
         },
         "summary": "History",
+        "tags": [
+          "engine"
+        ]
+      }
+    },
+    "/v1/engine/itcmd": {
+      "post": {
+        "description": "ITCMD on an inheritance or donation by UF; a UF without a checked table asks for validation.",
+        "operationId": "itcmd_v1_engine_itcmd_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItcmdIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_ItcmdResult_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Itcmd",
         "tags": [
           "engine"
         ]
