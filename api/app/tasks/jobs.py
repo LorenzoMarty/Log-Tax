@@ -15,6 +15,7 @@ from app.core.config import Settings
 from app.core.logging import log
 from app.db.client import UserDb
 from app.engine.real_engine import RealEngine
+from app.tasks.alert_jobs import evaluate_all_alerts
 from app.tasks.system import service_client
 
 Job = dict[str, Any]
@@ -77,11 +78,17 @@ async def _retention(job: Job, db: UserDb) -> None:
     await purge_expired(db)
 
 
+async def _alerts(job: Job, db: UserDb) -> None:
+    """Evaluates every active alert and records a notice when one turns over its limit (see `alert_jobs`)."""
+    await evaluate_all_alerts(db)
+
+
 # Job types the platform knows. New features register theirs here (document reading, syncs, proactive agents).
 HANDLERS: dict[str, Handler] = {
     "housekeeping.purge_rate_limits": _purge_rate_limits,
     "engine.rules_check": _rules_check,
     "retention.purge": _retention,
+    "alerts.evaluate": _alerts,
 }
 
 # Recurring jobs: each gets one job per period, keyed by the period, so a double tick creates nothing extra.
@@ -89,6 +96,7 @@ RECURRING: list[tuple[str, Literal["hour", "day"]]] = [
     ("housekeeping.purge_rate_limits", "hour"),
     ("retention.purge", "day"),
     ("engine.rules_check", "day"),
+    ("alerts.evaluate", "hour"),
 ]
 
 

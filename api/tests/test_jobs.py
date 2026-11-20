@@ -181,8 +181,10 @@ async def test_a_tick_enqueues_the_recurring_jobs_once_and_runs_what_is_due(monk
     monkeypatch.setattr(jobs, "service_client", fake_service)
     settings = Settings(supabase_url="https://p.supabase.co", supabase_service_role_key="srv-key")
     assert await run_cron(settings) == {"claimed": 1, "done": 1, "failed": 0}
-    assert set(seen_headers) == {"Bearer srv-key"} and len(state["keys"]) == 3
-    assert (await run_cron(settings))["claimed"] == 0 and len(state["keys"]) == 3  # a double tick creates nothing extra
+    assert set(seen_headers) == {"Bearer srv-key"} and len(state["keys"]) == len(RECURRING)
+    assert (await run_cron(settings))["claimed"] == 0 and len(state["keys"]) == len(
+        RECURRING
+    )  # a double tick creates nothing extra
 
 
 # ---- the route ----

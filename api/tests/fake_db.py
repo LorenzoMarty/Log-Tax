@@ -33,9 +33,12 @@ class FakeDb:
                     return False
                 continue
             op, _, value = spec.partition(".")
-            if op == "eq" and str(row.get(column)) != value:
+            actual = row.get(column)
+            if op == "eq" and (str(actual).lower() if isinstance(actual, bool) else str(actual)) != value:
                 return False
             if op == "lt" and not str(row.get(column)) < value:  # ISO dates compare as text
+                return False
+            if op == "is" and value == "null" and row.get(column) is not None:
                 return False
             if op == "in" and str(row.get(column)) not in value.strip("()").split(","):
                 return False
@@ -48,8 +51,17 @@ class FakeDb:
 
     async def select(self, table: str, **params: str) -> list[dict[str, Any]]:
         rows = self._filtered(table, params)
+        if "workspaces(" in params.get("select", ""):  # an embedded many-to-one: the row's workspace
+            rows = [
+                {
+                    **r,
+                    "workspaces": next((w for w in self.tables.get("workspaces", []) if w["id"] == r.get("workspace_id")), None),
+                }
+                for r in rows
+            ]
         if "order" in params:
-            rows = sorted(rows, key=lambda r: r.get(params["order"], ""))
+            column, _, direction = params["order"].partition(".")
+            rows = sorted(rows, key=lambda r: r.get(column, ""), reverse=direction == "desc")
         if "limit" in params:
             rows = rows[: int(params["limit"])]
         return copy.deepcopy(rows)

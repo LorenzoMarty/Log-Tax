@@ -4217,6 +4217,117 @@
         ]
       }
     },
+    "/v1/workspaces/{workspace_id}/alert-events": {
+      "get": {
+        "description": "Newest first, at most 50.",
+        "operationId": "list_alert_events_v1_workspaces__workspace_id__alert_events_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Alert Events",
+        "tags": [
+          "alerts"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/alert-events/read": {
+      "post": {
+        "description": "Marks every unread notice of the workspace as read (RLS lets only the owner).",
+        "operationId": "mark_read_v1_workspaces__workspace_id__alert_events_read_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mark Read",
+        "tags": [
+          "alerts"
+        ]
+      }
+    },
     "/v1/workspaces/{workspace_id}/comments": {
       "post": {
         "operationId": "add_comment_v1_workspaces__workspace_id__comments_post",
