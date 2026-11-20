@@ -296,6 +296,21 @@
       }
     },
     {
+      "id": "inss-autonomo",
+      "name": "INSS do contribuinte individual (autônomo): planos normal e simplificado",
+      "jurisdiction": "Federal",
+      "validFrom": "2026-01",
+      "validUntil": null,
+      "source": "INSS, Plano simplificado de Previdência Social (11% sobre o salário mínimo, LC 123/2006) e plano normal (20% sobre o salário de contribuição, até o teto): https://www.gov.br/inss/pt-br/direitos-e-deveres/inscricao-e-contribuicao/plano-simplificado",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": "Alíquotas conferidas por resumo de busca em gov.br/inss, não pelo texto da Lei 8.212/1991 art. 21: confirme com um contador. Salário mínimo e teto vêm das regras mei-das e inss-teto.",
+      "data": {
+        "normalRate": 0.2,
+        "simplifiedRate": 0.11
+      }
+    },
+    {
       "id": "inss-teto",
       "name": "Teto do salário de contribuição do INSS",
       "jurisdiction": "Federal",
@@ -505,13 +520,62 @@
       "name": "Tabela progressiva mensal do IRPF",
       "jurisdiction": "Federal",
       "validFrom": "2025-05",
-      "validUntil": null,
+      "validUntil": "2025-12",
       "source": "Receita Federal, Tributação de 2025, incidência mensal a partir de maio/2025 (Lei 15.191/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2025",
       "confidence": "medium",
       "requiresValidation": true,
       "notes": null,
       "data": {
         "dependentMonthly": 189.59,
+        "brackets": [
+          {
+            "upTo": 2428.8,
+            "rate": 0,
+            "deduction": 0
+          },
+          {
+            "upTo": 2826.65,
+            "rate": 0.075,
+            "deduction": 182.16
+          },
+          {
+            "upTo": 3751.05,
+            "rate": 0.15,
+            "deduction": 394.16
+          },
+          {
+            "upTo": 4664.68,
+            "rate": 0.225,
+            "deduction": 675.49
+          },
+          {
+            "upTo": null,
+            "rate": 0.275,
+            "deduction": 908.73
+          }
+        ]
+      }
+    },
+    {
+      "id": "irpf-tabela-mensal",
+      "name": "Tabela progressiva mensal do IRPF",
+      "jurisdiction": "Federal",
+      "validFrom": "2026-01",
+      "validUntil": null,
+      "source": "Receita Federal, Tributação de 2026, incidência mensal a partir de janeiro/2026 (Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": "Redução mensal: até R$ 5.000,00 de base, reduz até R$ 312,89 (zera o imposto); de R$ 5.000,01 a R$ 7.350,00, redução = R$ 978,62 - 0,133145 x base; acima, sem redução. Desconto simplificado mensal: R$ 607,20. Valores lidos na página oficial da Receita (conferido em 2026-11-20).",
+      "data": {
+        "dependentMonthly": 189.59,
+        "reducer": {
+          "fullUpTo": 5000,
+          "fullAmount": 312.89,
+          "phaseOutUpTo": 7350,
+          "phaseOutConstant": 978.62,
+          "phaseOutFactor": 0.133145
+        },
+        "simplifiedDiscountMonthly": 607.2,
         "brackets": [
           {
             "upTo": 2428.8,

@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
 from app.engine.company_schema import CompanyFields, apply_fields
+from app.engine.prestador import PrestadorInput
 from app.engine.result import EngineResult, InsufficientData, NoneFound, NotApplicable, Ok
 from app.engine.types import CompanyProfile, PersonProfile
 
@@ -95,6 +96,23 @@ class SimulateIn(DiagnoseIn):
 class PersonRequest(_In):
     competence: Competence | None = None
     person: PersonIn
+
+
+class PrestadorIn(_In):
+    competence: Competence | None = None
+    monthly_revenue: Annotated[Decimal, Field(gt=0, le=Decimal("1e12"))]
+    deductible_expenses: _MONEY = Decimal(0)
+    dependents: Annotated[int, Field(ge=0, le=50)] = 0
+    inss_plan: Literal["normal", "simplificado"] = "normal"
+    annex: Literal["III", "IV", "V"] | None = None
+    fator_r: bool = False
+    pro_labore: _MONEY | None = None
+
+    def to_input(self) -> PrestadorInput:
+        return PrestadorInput(
+            self.monthly_revenue, self.deductible_expenses, self.dependents, self.inss_plan,
+            self.annex, self.fator_r, self.pro_labore,
+        )  # fmt: skip
 
 
 class HistoryIn(_In):

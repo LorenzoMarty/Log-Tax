@@ -5,15 +5,21 @@ export interface IrpfMonthlyTable {
   brackets: { upTo: number; rate: number; deduction: number }[];
   /** Deduction per dependent, per month. */
   dependentMonthly: number;
+  /** Lei 15.270/2025 monthly reducer (from 2026), applied on the tax and looking at the taxable income. */
+  reducer?: { fullUpTo: number; fullAmount: number; phaseOutUpTo: number; phaseOutConstant: number; phaseOutFactor: number };
+  /** Optional simplified discount, per month (from 2026). */
+  simplifiedDiscountMonthly?: number;
 }
 
 const SOURCE_2024 = "Receita Federal, Tributação de 2024, incidência mensal a partir de fevereiro/2024 (Lei 14.848/2024): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/copy_of_2024";
+const SOURCE_2026 = "Receita Federal, Tributação de 2026, incidência mensal a partir de janeiro/2026 (Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026";
 const SOURCE_2025 = "Receita Federal, Tributação de 2025, incidência mensal a partir de maio/2025 (Lei 15.191/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2025";
 
 /**
  * Versions of the IRPF monthly table. Each carries its law and page; conferred against the Receita Federal pages
  * on 2026-11-10, still pending the human check required by #98.
- * Note: the Lei 15.270/2025 reducers that apply from 2026 sit on top of this table and are not modelled yet (#93).
+ * The 2026 version carries the Lei 15.270/2025 monthly reducer (read on the official page on 2026-11-20); the annual 2026
+ * reducer is not modelled yet (#93).
  */
 export const IRPF_MONTHLY: RuleVersion<IrpfMonthlyTable>[] = [
   {
@@ -41,11 +47,34 @@ export const IRPF_MONTHLY: RuleVersion<IrpfMonthlyTable>[] = [
     name: "Tabela progressiva mensal do IRPF",
     jurisdiction: "Federal",
     validFrom: "2025-05",
+    validUntil: "2025-12",
     source: SOURCE_2025,
     confidence: "medium",
     requiresValidation: true,
     data: {
       dependentMonthly: 189.59,
+      brackets: [
+        { upTo: 2428.8, rate: 0, deduction: 0 },
+        { upTo: 2826.65, rate: 0.075, deduction: 182.16 },
+        { upTo: 3751.05, rate: 0.15, deduction: 394.16 },
+        { upTo: 4664.68, rate: 0.225, deduction: 675.49 },
+        { upTo: Infinity, rate: 0.275, deduction: 908.73 },
+      ],
+    },
+  },
+  {
+    id: "irpf-tabela-mensal",
+    name: "Tabela progressiva mensal do IRPF",
+    jurisdiction: "Federal",
+    validFrom: "2026-01",
+    source: SOURCE_2026,
+    confidence: "medium",
+    requiresValidation: true,
+    notes: "Redução mensal: até R$ 5.000,00 de base, reduz até R$ 312,89 (zera o imposto); de R$ 5.000,01 a R$ 7.350,00, redução = R$ 978,62 - 0,133145 x base; acima, sem redução. Desconto simplificado mensal: R$ 607,20. Valores lidos na página oficial da Receita (conferido em 2026-11-20).",
+    data: {
+      dependentMonthly: 189.59,
+      reducer: { fullUpTo: 5000, fullAmount: 312.89, phaseOutUpTo: 7350, phaseOutConstant: 978.62, phaseOutFactor: 0.133145 },
+      simplifiedDiscountMonthly: 607.2,
       brackets: [
         { upTo: 2428.8, rate: 0, deduction: 0 },
         { upTo: 2826.65, rate: 0.075, deduction: 182.16 },

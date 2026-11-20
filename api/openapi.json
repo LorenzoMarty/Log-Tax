@@ -1378,6 +1378,31 @@
           }
         ]
       },
+      "Envelope_PrestadorComparison_": {
+        "discriminator": {
+          "mapping": {
+            "insufficient_data": "#/components/schemas/InsufficientDataOut",
+            "none_found": "#/components/schemas/NoneFoundOut",
+            "not_applicable": "#/components/schemas/NotApplicableOut",
+            "ok": "#/components/schemas/OkOut_PrestadorComparison_"
+          },
+          "propertyName": "status"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/OkOut_PrestadorComparison_"
+          },
+          {
+            "$ref": "#/components/schemas/InsufficientDataOut"
+          },
+          {
+            "$ref": "#/components/schemas/NotApplicableOut"
+          },
+          {
+            "$ref": "#/components/schemas/NoneFoundOut"
+          }
+        ]
+      },
       "Envelope_ReformImpact_": {
         "discriminator": {
           "mapping": {
@@ -1964,6 +1989,24 @@
         "title": "OkOut[PersonDiagnosis]",
         "type": "object"
       },
+      "OkOut_PrestadorComparison_": {
+        "properties": {
+          "status": {
+            "const": "ok",
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/PrestadorComparison"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "OkOut[PrestadorComparison]",
+        "type": "object"
+      },
       "OkOut_ReformImpact_": {
         "properties": {
           "status": {
@@ -2101,6 +2144,14 @@
         ],
         "title": "OpportunitySet",
         "type": "object"
+      },
+      "Option": {
+        "enum": [
+          "pessoa_fisica",
+          "mei",
+          "simples"
+        ],
+        "type": "string"
       },
       "PersonDiagnosis": {
         "properties": {
@@ -2306,6 +2357,221 @@
           "person"
         ],
         "title": "PersonRequest",
+        "type": "object"
+      },
+      "PrestadorComparison": {
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "best": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Option"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "disclaimer": {
+            "title": "Disclaimer",
+            "type": "string"
+          },
+          "monthlyRevenue": {
+            "title": "Monthlyrevenue",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/PrestadorOption"
+            },
+            "title": "Options",
+            "type": "array"
+          },
+          "rulesUsed": {
+            "items": {
+              "$ref": "#/components/schemas/RuleRef"
+            },
+            "title": "Rulesused",
+            "type": "array"
+          },
+          "rulesVersion": {
+            "title": "Rulesversion",
+            "type": "string"
+          }
+        },
+        "required": [
+          "monthlyRevenue",
+          "options",
+          "best",
+          "assumptions",
+          "disclaimer",
+          "rulesVersion"
+        ],
+        "title": "PrestadorComparison",
+        "type": "object"
+      },
+      "PrestadorIn": {
+        "additionalProperties": false,
+        "properties": {
+          "annex": {
+            "anyOf": [
+              {
+                "enum": [
+                  "III",
+                  "IV",
+                  "V"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annex"
+          },
+          "competence": {
+            "anyOf": [
+              {
+                "examples": [
+                  "2026-03"
+                ],
+                "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Competence"
+          },
+          "deductibleExpenses": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "title": "Deductibleexpenses"
+          },
+          "dependents": {
+            "default": 0,
+            "maximum": 50.0,
+            "minimum": 0.0,
+            "title": "Dependents",
+            "type": "integer"
+          },
+          "fatorR": {
+            "default": false,
+            "title": "Fatorr",
+            "type": "boolean"
+          },
+          "inssPlan": {
+            "default": "normal",
+            "enum": [
+              "normal",
+              "simplificado"
+            ],
+            "title": "Inssplan",
+            "type": "string"
+          },
+          "monthlyRevenue": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1000000000000.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Monthlyrevenue"
+          },
+          "proLabore": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prolabore"
+          }
+        },
+        "required": [
+          "monthlyRevenue"
+        ],
+        "title": "PrestadorIn",
+        "type": "object"
+      },
+      "PrestadorOption": {
+        "properties": {
+          "annualTotal": {
+            "title": "Annualtotal",
+            "type": "string"
+          },
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/TaxLine"
+            },
+            "title": "Breakdown",
+            "type": "array"
+          },
+          "effectiveRate": {
+            "title": "Effectiverate",
+            "type": "string"
+          },
+          "eligible": {
+            "title": "Eligible",
+            "type": "boolean"
+          },
+          "monthlyTotal": {
+            "title": "Monthlytotal",
+            "type": "string"
+          },
+          "netMonthly": {
+            "title": "Netmonthly",
+            "type": "string"
+          },
+          "option": {
+            "$ref": "#/components/schemas/Option"
+          }
+        },
+        "required": [
+          "option",
+          "eligible",
+          "monthlyTotal",
+          "annualTotal",
+          "effectiveRate",
+          "netMonthly",
+          "breakdown",
+          "assumptions"
+        ],
+        "title": "PrestadorOption",
         "type": "object"
       },
       "RatingIn": {
@@ -3844,6 +4110,66 @@
           }
         },
         "summary": "Person",
+        "tags": [
+          "engine"
+        ]
+      }
+    },
+    "/v1/engine/prestador": {
+      "post": {
+        "description": "Self-employed vs MEI vs Simples for a service provider: taxes of the month in each, with the premises.",
+        "operationId": "prestador_v1_engine_prestador_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrestadorIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_PrestadorComparison_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Prestador",
         "tags": [
           "engine"
         ]

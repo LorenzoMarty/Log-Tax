@@ -13,6 +13,7 @@ from app.api.schemas import (
     Envelope,
     HistoryIn,
     PersonRequest,
+    PrestadorIn,
     ReformImpactIn,
     SimulateIn,
     envelope,
@@ -23,9 +24,11 @@ from app.engine.company_schema import apply_fields
 from app.engine.history import TaxHistory, tax_history
 from app.engine.irpf import PersonDiagnosis
 from app.engine.opportunities import OpportunitySet
+from app.engine.prestador import PrestadorComparison, compare_prestador
 from app.engine.real_engine import RealEngine, Simulation
 from app.engine.reform_impact import ReformImpact, reform_impact
 from app.engine.rulebook import ChangelogEntry, RuleStatus, competence_of
+from app.engine.rules_data import default_rulebook
 from app.engine.types import Diagnosis
 
 router = APIRouter(prefix="/v1/engine", tags=["engine"], dependencies=[Depends(current_user)])
@@ -60,6 +63,12 @@ async def opportunities(body: DiagnoseIn) -> Envelope[OpportunitySet]:
 async def person(body: PersonRequest) -> Envelope[PersonDiagnosis]:
     """Annual IRPF of a person in the simplified and the complete model, and which one is better."""
     return envelope(RealEngine(_competence(body.competence)).diagnose_person(body.person.to_profile()))  # type: ignore[return-value]
+
+
+@router.post("/prestador")
+async def prestador(body: PrestadorIn) -> Envelope[PrestadorComparison]:
+    """Self-employed vs MEI vs Simples for a service provider: taxes of the month in each, with the premises."""
+    return envelope(compare_prestador(default_rulebook(), _competence(body.competence), body.to_input()))  # type: ignore[return-value]
 
 
 @router.post("/history")

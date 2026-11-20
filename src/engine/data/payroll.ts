@@ -51,3 +51,24 @@ export const INSS_CEILING: RuleVersion<InssCeilingRules>[] = [
     data: { ceiling: 8475.55, proLaboreRate: 0.11 },
   },
 ];
+
+export interface InssAutonomoRules {
+  /** Plano normal: rate on the contribution salary, up to the ceiling. */
+  normalRate: number;
+  /** Plano simplificado: rate on the minimum wage. */
+  simplifiedRate: number;
+}
+
+export const INSS_AUTONOMO: RuleVersion<InssAutonomoRules>[] = [
+  {
+    id: "inss-autonomo",
+    name: "INSS do contribuinte individual (autônomo): planos normal e simplificado",
+    jurisdiction: "Federal",
+    validFrom: "2026-01",
+    source: "INSS, Plano simplificado de Previdência Social (11% sobre o salário mínimo, LC 123/2006) e plano normal (20% sobre o salário de contribuição, até o teto): https://www.gov.br/inss/pt-br/direitos-e-deveres/inscricao-e-contribuicao/plano-simplificado",
+    confidence: "medium",
+    requiresValidation: true,
+    notes: "Alíquotas conferidas por resumo de busca em gov.br/inss, não pelo texto da Lei 8.212/1991 art. 21: confirme com um contador. Salário mínimo e teto vêm das regras mei-das e inss-teto.",
+    data: { normalRate: 0.2, simplifiedRate: 0.11 },
+  },
+];

@@ -351,6 +351,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/engine/prestador": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Prestador
+         * @description Self-employed vs MEI vs Simples for a service provider: taxes of the month in each, with the premises.
+         */
+        post: operations["prestador_v1_engine_prestador_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/engine/reform-impact": {
         parameters: {
             query?: never;
@@ -1081,6 +1101,7 @@ export interface components {
         Envelope_Diagnosis_: components["schemas"]["OkOut_Diagnosis_"] | components["schemas"]["InsufficientDataOut"] | components["schemas"]["NotApplicableOut"] | components["schemas"]["NoneFoundOut"];
         Envelope_OpportunitySet_: components["schemas"]["OkOut_OpportunitySet_"] | components["schemas"]["InsufficientDataOut"] | components["schemas"]["NotApplicableOut"] | components["schemas"]["NoneFoundOut"];
         Envelope_PersonDiagnosis_: components["schemas"]["OkOut_PersonDiagnosis_"] | components["schemas"]["InsufficientDataOut"] | components["schemas"]["NotApplicableOut"] | components["schemas"]["NoneFoundOut"];
+        Envelope_PrestadorComparison_: components["schemas"]["OkOut_PrestadorComparison_"] | components["schemas"]["InsufficientDataOut"] | components["schemas"]["NotApplicableOut"] | components["schemas"]["NoneFoundOut"];
         Envelope_ReformImpact_: components["schemas"]["OkOut_ReformImpact_"] | components["schemas"]["InsufficientDataOut"] | components["schemas"]["NotApplicableOut"] | components["schemas"]["NoneFoundOut"];
         Envelope_Simulation_: components["schemas"]["OkOut_Simulation_"] | components["schemas"]["InsufficientDataOut"] | components["schemas"]["NotApplicableOut"] | components["schemas"]["NoneFoundOut"];
         /** Found */
@@ -1260,6 +1281,15 @@ export interface components {
             status: "ok";
             value: components["schemas"]["PersonDiagnosis"];
         };
+        /** OkOut[PrestadorComparison] */
+        OkOut_PrestadorComparison_: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            status: "ok";
+            value: components["schemas"]["PrestadorComparison"];
+        };
         /** OkOut[ReformImpact] */
         OkOut_ReformImpact_: {
             /**
@@ -1312,6 +1342,8 @@ export interface components {
             /** Items */
             items: components["schemas"]["Opportunity"][];
         };
+        /** @enum {string} */
+        Option: "pessoa_fisica" | "mei" | "simples";
         /** PersonDiagnosis */
         PersonDiagnosis: {
             /** Annualgrossincome */
@@ -1354,6 +1386,72 @@ export interface components {
             /** Competence */
             competence?: string | null;
             person: components["schemas"]["PersonIn"];
+        };
+        /** PrestadorComparison */
+        PrestadorComparison: {
+            /** Assumptions */
+            assumptions: string[];
+            best: components["schemas"]["Option"] | null;
+            /** Disclaimer */
+            disclaimer: string;
+            /** Monthlyrevenue */
+            monthlyRevenue: string;
+            /** Options */
+            options: components["schemas"]["PrestadorOption"][];
+            /** Rulesused */
+            rulesUsed?: components["schemas"]["RuleRef"][];
+            /** Rulesversion */
+            rulesVersion: string;
+        };
+        /** PrestadorIn */
+        PrestadorIn: {
+            /** Annex */
+            annex?: ("III" | "IV" | "V") | null;
+            /** Competence */
+            competence?: string | null;
+            /**
+             * Deductibleexpenses
+             * @default 0
+             */
+            deductibleExpenses: number | string;
+            /**
+             * Dependents
+             * @default 0
+             */
+            dependents: number;
+            /**
+             * Fatorr
+             * @default false
+             */
+            fatorR: boolean;
+            /**
+             * Inssplan
+             * @default normal
+             * @enum {string}
+             */
+            inssPlan: "normal" | "simplificado";
+            /** Monthlyrevenue */
+            monthlyRevenue: number | string;
+            /** Prolabore */
+            proLabore?: number | string | null;
+        };
+        /** PrestadorOption */
+        PrestadorOption: {
+            /** Annualtotal */
+            annualTotal: string;
+            /** Assumptions */
+            assumptions: string[];
+            /** Breakdown */
+            breakdown: components["schemas"]["TaxLine"][];
+            /** Effectiverate */
+            effectiveRate: string;
+            /** Eligible */
+            eligible: boolean;
+            /** Monthlytotal */
+            monthlyTotal: string;
+            /** Netmonthly */
+            netMonthly: string;
+            option: components["schemas"]["Option"];
         };
         /** RatingIn */
         RatingIn: {
@@ -2096,6 +2194,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_PersonDiagnosis_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    prestador_v1_engine_prestador_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrestadorIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_PrestadorComparison_"];
                 };
             };
             /** @description Validation Error */
