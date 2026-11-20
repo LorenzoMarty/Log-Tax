@@ -12,6 +12,7 @@ from typing import Any
 from app.chat.format import money, pct
 from app.documents.classify import DOC_LABEL
 from app.documents.storage import MISSING_LABEL
+from app.engine.history import tax_history
 from app.engine.opportunities import Opportunity
 from app.engine.real_engine import RealEngine
 from app.engine.result import EngineResult, InsufficientData, NoneFound, NotApplicable, Ok
@@ -104,6 +105,54 @@ def _premises(engine: RealEngine, result: EngineResult[Any], person: bool) -> Se
     assumptions = result.value.assumptions if isinstance(result, Ok) else [f"Regras versão {engine.version}."]
     table = {"head": ["Regra", "Fonte", "Vigência", "Confiança"], "rows": _rule_rows(engine, person)}
     return {"id": "premissas", "title": "Premissas", "paragraphs": assumptions, "table": table}
+
+
+def _shown(value: Any, fmt: Any = str) -> str:
+    return "não informado" if value is None else fmt(value)
+
+
+def _data_section(rows: list[list[str]]) -> Section:
+    return {"id": "dados", "title": "Dados analisados", "table": {"head": ["Dado", "Valor"], "rows": rows}}
+
+
+def _risks_section(engine: RealEngine, problem: str | None, person: bool) -> Section:
+    """Risks come only from what the engine knows: missing data and rules whose confidence is not high."""
+    items = [problem] if problem else []
+    items += [f"Regra com confiança {r[3]}: {r[0]} ({r[1]})." for r in _rule_rows(engine, person) if r[3] != "alta"]
+    items.append(_ILLUSTRATIVE_RULES)
+    return {"id": "riscos", "title": "Riscos", "items": items}
+
+
+def _pending_section(items: list[str]) -> Section:
+    if not items:
+        return {"id": "pendencias", "title": "Pendências", "paragraphs": ["Nenhuma pendência com os dados atuais."]}
+    return {"id": "pendencias", "title": "Pendências", "items": items}
+
+
+def _recommendations(items: list[str]) -> Section:
+    return {
+        "id": "recomendacoes",
+        "title": "Recomendações",
+        "items": [*items, "Leve este relatório a um contador antes de decidir."],
+    }
+
+
+def _evolution(company: CompanyProfile, engine: RealEngine) -> Section:
+    """The last 12 months computed with the rules of each month; a month nobody recorded is a gap, never an estimate."""
+    points = tax_history(company, engine.competence, 12).points
+    if not any(p.status == "ok" for p in points):
+        text = "Sem histórico mensal gravado para mostrar a evolução. Informe o faturamento dos últimos meses."
+        return {"id": "evolucao", "title": "Evolução", "paragraphs": [text]}
+    rows = [
+        [p.month, money(p.monthly_total), pct(p.effective_rate)] if p.status == "ok" and p.monthly_total is not None
+        and p.effective_rate is not None else [p.month, "—", p.reason or "sem dados"]
+        for p in points
+    ]  # fmt: skip
+    return {
+        "id": "evolucao", "title": "Evolução",
+        "paragraphs": ["Imposto estimado por mês, com as regras vigentes em cada competência."],
+        "table": {"head": ["Mês", "Imposto", "Alíquota efetiva / motivo"], "rows": rows},
+    }  # fmt: skip
 
 
 def _opportunity_status(o: Opportunity) -> str:
@@ -214,8 +263,44 @@ def _company_report(
         alertas = {"id": "alertas", "title": "Alertas", "paragraphs": ["Nenhum alerta configurado."]}
 
     steps = diag.value.steps if isinstance(diag, Ok) else None
-    sections = [resumo, impostos, oportunidades, economia, _premises(engine, diag, False), *memoria_section(steps)]
-    sections += [validar, _documents_section(docs), alertas]
+    dados = _data_section(
+        [
+            ["Regime", _REGIME[company.regime]],
+            ["Atividade", _ACTIVITY[company.activity]],
+            ["Faturamento mensal", _shown(company.monthly_revenue, money)],
+            ["Compras mensais", _shown(company.monthly_purchases, money)],
+            ["Margem de lucro", _shown(company.profit_margin, pct)],
+            ["Funcionários", _shown(company.employees)],
+            ["UF", _shown(company.uf)],
+            ["Meses de histórico", str(len(company.series or []))],
+        ]
+    )
+    pending = [i for i in items if "faltam dados" in i.lower() or i.startswith("Faltam dados")] + _unreadable(docs)
+    recs = [f'Validar a oportunidade "{o.title}" com um contador.' for o in found]
+    recs += [
+        f"Informar: {_fields(o.missing or [])} ({o.title})."
+        for o in (opps.value.items if isinstance(opps, Ok) else [])
+        if o.status == "insufficient_data"
+    ]
+    if isinstance(diag, InsufficientData):
+        recs.append(f"Informar {_fields(diag.missing)} para calcular os impostos.")
+    problem = None if isinstance(diag, Ok) else f"Impostos não calculados. {_problem(diag)}"
+    sections = [
+        resumo,
+        dados,
+        impostos,
+        _evolution(company, engine),
+        oportunidades,
+        economia,
+        _risks_section(engine, problem, False),
+        alertas,
+        _documents_section(docs),
+        _pending_section(pending),
+        _premises(engine, diag, False),
+        *memoria_section(steps),
+        _recommendations(recs),
+        validar,
+    ]
     return {
         "title": "Relatório tributário",
         "subtitle": f"{name} · gerado em {_date(now)}",
@@ -283,8 +368,46 @@ def _person_report(engine: RealEngine, name: str, person: PersonProfile, docs: l
     validar: Section = {"id": "validar", "title": "Itens a validar", "items": items}
 
     steps = d.value.steps if isinstance(d, Ok) else None
-    sections = [resumo, impostos, economia, _premises(engine, d, True), *memoria_section(steps), validar]
-    sections.append(_documents_section(docs))
+    dados = _data_section(
+        [
+            ["Renda bruta anual", _shown(person.annual_gross_income, money)],
+            ["INSS pago", _shown(person.inss_paid, money)],
+            ["Dependentes", _shown(person.dependents)],
+            ["Despesas de saúde", _shown(person.health_expenses, money)],
+            ["Despesas de educação", _shown(person.education_expenses, money)],
+            ["Previdência privada", _shown(person.private_pension, money)],
+            ["Imposto retido na fonte", _shown(person.tax_withheld, money)],
+        ]
+    )
+    evolucao: Section = {
+        "id": "evolucao", "title": "Evolução",
+        "paragraphs": ["O Imposto de Renda é calculado por ano: não há histórico mensal para mostrar."],
+    }  # fmt: skip
+    oportunidades: Section = {
+        "id": "oportunidades", "title": "Oportunidades",
+        "paragraphs": ["A única alavanca calculada é a escolha do modelo de declaração (veja Economia potencial)."],
+    }  # fmt: skip
+    pending = [] if isinstance(d, Ok) else [f"Impostos não calculados. {_problem(d)}"]
+    if person.tax_withheld is None:
+        pending.append("Informe o imposto retido na fonte (informe de rendimentos).")
+    pending += _unreadable(docs)
+    recs = [f"Declarar pelo modelo {best.model}."] if isinstance(d, Ok) else []
+    problem = None if isinstance(d, Ok) else f"Imposto de Renda não calculado. {_problem(d)}"
+    sections = [
+        resumo,
+        dados,
+        impostos,
+        evolucao,
+        oportunidades,
+        economia,
+        _risks_section(engine, problem, True),
+        _documents_section(docs),
+        _pending_section(pending),
+        _premises(engine, d, True),
+        *memoria_section(steps),
+        _recommendations(recs),
+        validar,
+    ]
     title = "Relatório de Imposto de Renda"
     return {"title": title, "subtitle": f"{name} · gerado em {_date(now)}", "disclaimer": DISCLAIMER, "sections": sections}
 
