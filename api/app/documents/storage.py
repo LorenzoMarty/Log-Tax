@@ -2,7 +2,7 @@
 
 import re
 import unicodedata
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from app.core.config import Settings
@@ -59,17 +59,28 @@ class StoredExtraction:
     missing: list[str]
     notes: list[str]
     confidence: str
+    field_confidence: dict[str, str] = field(default_factory=dict)
+    to_confirm: list[str] = field(default_factory=list)
 
     def as_json(self) -> dict[str, Any]:
-        return {"fields": self.fields, "missing": self.missing, "notes": self.notes, "confidence": self.confidence}
+        out: dict[str, Any] = {"fields": self.fields, "missing": self.missing, "notes": self.notes, "confidence": self.confidence}
+        if self.field_confidence:
+            out |= {"fieldConfidence": self.field_confidence, "toConfirm": self.to_confirm}
+        return out
 
 
 def to_stored(
-    extracted: dict[str, str], missing: list[str], notes: list[str], confidence: str, settings: Settings
+    extracted: dict[str, str],
+    missing: list[str],
+    notes: list[str],
+    confidence: str,
+    settings: Settings,
+    field_confidence: dict[str, str] | None = None,
+    to_confirm: list[str] | None = None,
 ) -> StoredExtraction:
     """CNPJ/CPF fields are encrypted before they reach the database; read them back with `open_stored`."""
     sealed = {k: encrypt_field(v, settings) if _IDENTIFIER_KEY.search(k) else v for k, v in extracted.items()}
-    return StoredExtraction(sealed, missing, notes, confidence)
+    return StoredExtraction(sealed, missing, notes, confidence, field_confidence or {}, to_confirm or [])
 
 
 def open_stored(stored: dict[str, Any] | None, settings: Settings) -> dict[str, Any] | None:

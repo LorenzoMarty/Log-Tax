@@ -6,6 +6,7 @@ storage policy accepted the writer is the duplicate lookup done, so someone who 
 already there. Text read from a document is data for the model: it reaches it wrapped as untrusted content.
 """
 
+import asyncio
 import uuid
 from datetime import UTC, datetime
 from typing import Annotated
@@ -21,6 +22,7 @@ from app.db.client import UserDb, user_db
 from app.documents.checks import quota_bytes, scan_bytes, signature_matches
 from app.documents.classify import classify_document
 from app.documents.duplicates import Fingerprint, fingerprint_document
+from app.documents.pdf_text import pdf_text
 from app.documents.storage import (
     BUCKET,
     CONSENT_VERSION,
@@ -94,16 +96,17 @@ async def upload(
         message = f"Este espaço atingiu o limite de {limit_mb} MB de documentos. Apague algum documento para enviar outro."
         return error_response(413, "quota_exceeded", message)
 
-    # Only small text-like files are read; PDFs and images are stored and classified by name.
+    # Text-like files and the text layer of PDFs are read (#141); images are stored and classified by name.
     text = (
         data.decode("utf-8", errors="replace")
         if ("xml" in mime or mime == "text/plain") and len(data) <= MAX_TEXT_BYTES
         else None
     )
+    read_text = await asyncio.to_thread(pdf_text, data) if mime == "application/pdf" else text
     fingerprint = fingerprint_document(data, text)
     doc_id = str(uuid.uuid4())
     path = f"{ws}/{doc_id}/{safe_file_name(file.filename)}"
-    classification = classify_document(file.filename, mime, text)
+    classification = classify_document(file.filename, mime, read_text)
 
     # The database decides who may write: a non-owner is refused here by the storage policy.
     if not await db.storage_upload(BUCKET, path, data, mime):
@@ -114,7 +117,13 @@ async def upload(
         return _duplicate(existing)
 
     stored = to_stored(
-        classification.extracted, classification.missing, classification.notes, classification.confidence, settings
+        classification.extracted,
+        classification.missing,
+        classification.notes,
+        classification.confidence,
+        settings,
+        classification.field_confidence,
+        classification.to_confirm,
     )
     row = {
         "id": doc_id,
