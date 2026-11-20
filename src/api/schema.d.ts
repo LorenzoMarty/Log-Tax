@@ -485,6 +485,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/me/ai-usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ai Usage
+         * @description Per-day totals of the last `days` days. `costUsd` is an estimate from list prices, not an invoice.
+         */
+        get: operations["ai_usage_v1_me_ai_usage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/ping": {
         parameters: {
             query?: never;
@@ -1582,6 +1602,34 @@ export interface components {
             /** Tax */
             tax: string;
         };
+        /** Usage */
+        Usage: {
+            /** Byday */
+            byDay: components["schemas"]["UsageDay"][];
+            /** Calls */
+            calls: number;
+            /** Costusd */
+            costUsd: number;
+            /** Days */
+            days: number;
+            /** Inputtokens */
+            inputTokens: number;
+            /** Outputtokens */
+            outputTokens: number;
+        };
+        /** UsageDay */
+        UsageDay: {
+            /** Calls */
+            calls: number;
+            /** Costusd */
+            costUsd: number;
+            /** Day */
+            day: string;
+            /** Inputtokens */
+            inputTokens: number;
+            /** Outputtokens */
+            outputTokens: number;
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -2433,6 +2481,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Me"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ai_usage_v1_me_ai_usage_get: {
+        parameters: {
+            query?: {
+                days?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Usage"];
                 };
             };
             /** @description Validation Error */
