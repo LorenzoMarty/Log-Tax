@@ -29,6 +29,16 @@ describe("ChatPanel", () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
   });
 
+  it("shows the message of an error from either backend (#307)", async () => {
+    vi.stubGlobal("fetch", reply({ error: "Mensagem inválida." }, false));
+    setup();
+    send("oi");
+    expect(await screen.findByText("Mensagem inválida.")).toBeInTheDocument();
+    vi.stubGlobal("fetch", reply({ error: { code: "too_many_requests", message: "Muitas tentativas em pouco tempo." } }, false));
+    send("de novo");
+    expect(await screen.findByText("Muitas tentativas em pouco tempo.")).toBeInTheDocument();
+  });
+
   it("does not suggest inside a specialised AI's conversation", () => {
     render(<ChatPanel workspaceId="ws1" workspaceKind="empresa" agentId="a1" initialMessages={[{ role: "assistant", text: "Olá!" }]} initialDashboard={sampleDashboard} />);
     expect(screen.queryByRole("region", { name: "Sugestões" })).not.toBeInTheDocument();

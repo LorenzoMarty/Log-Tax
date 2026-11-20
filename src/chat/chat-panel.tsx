@@ -39,6 +39,11 @@ function withReportLinks(text: string): React.ReactNode[] {
 }
 
 /** Reads the NDJSON stream: tool lines update the progress text, the last line carries the reply (or an error). */
+/** `NEXT_PUBLIC_CHAT_API=fastapi` sends the chat to the Python backend (via the same-origin proxy); unset keeps the Next.js route (#307). */
+const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_API === "fastapi" ? "/api/v1/chat" : "/api/chat";
+/** The Next.js route answers `{ error: "text" }`; the FastAPI backend answers `{ error: { code, message } }`. */
+const errorText = (e: unknown): string | undefined => (typeof e === "string" ? e : e && typeof e === "object" && "message" in e ? String((e as { message: unknown }).message) : undefined);
+
 async function readStream(res: Response, onProgress: (text: string) => void) {
   const reader = res.body!.getReader();
   const decoder = new TextDecoder();
@@ -92,14 +97,14 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
     const controller = new AbortController();
     abort.current = controller;
     try {
-      const res = await fetch("/api/chat", {
+      const res = await fetch(CHAT_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: NDJSON },
         body: JSON.stringify({ workspaceId: props.workspaceId, agentId: props.agentId, message, approve }),
         signal: controller.signal,
       });
       const data = res.headers.get("content-type")?.includes(NDJSON) ? await readStream(res, setProgress) : await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Algo deu errado.");
+      if (!res.ok) throw new Error(errorText(data.error) ?? "Algo deu errado.");
       setMessages((m) => [...m, { role: "assistant", text: data.text }]);
       applyWithTransition(() => setDashboard(data.dashboard));
       setAlerts(data.alerts ?? []);
