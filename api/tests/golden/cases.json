@@ -71751,41 +71751,41 @@
    "id": "redact-1160",
    "input": {
     "kind": "redact",
-    "text": "Conta corrente: 94171-4 agência 875"
+    "text": "Ag. 1234, c/c 98765-4 e conta poupança 5555-1"
    },
-   "output": "Conta corrente **** agência 875"
+   "output": "Ag. ****, c/c **** e conta poupança ****"
   },
   {
    "id": "redact-1161",
    "input": {
     "kind": "redact",
-    "text": "Chave da nota: 67578922082252518912683241679762508270959413 paga em 2026."
+    "text": "Faturei R$ 19977.71 em 5 meses (17802271788 não é CPF válido)."
    },
-   "output": "Chave da nota: [chave NF-e …9413] paga em 2026."
+   "output": "Faturei R$ 19977.71 em 5 meses (17802271788 não é CPF válido)."
   },
   {
    "id": "redact-1162",
    "input": {
     "kind": "redact",
-    "text": "Conta corrente: 49437-5 agência 5881 Conta corrente: 49437-5 agência 5881 Texto normal sobre impostos sem identificadores."
+    "text": "Conta corrente: 49437-5 agência 5881 Ag. 1234, c/c 98765-4 e conta poupança 5555-1 CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36."
    },
-   "output": "Conta corrente **** agência **** Conta corrente **** agência **** Texto normal sobre impostos sem identificadores."
+   "output": "Conta corrente **** agência **** Ag. ****, c/c **** e conta poupança **** CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36."
   },
   {
    "id": "redact-1163",
    "input": {
     "kind": "redact",
-    "text": "Meu CPF é 96241493213 e o da empresa 67.180.254/3174-99."
+    "text": "Chave da nota: 13423101978135285944339076977245319076294609 paga em 2026."
    },
-   "output": "Meu CPF é ***.***.***-13 e o da empresa **.***.***/****-99."
+   "output": "Chave da nota: [chave NF-e …4609] paga em 2026."
   },
   {
    "id": "redact-1164",
    "input": {
     "kind": "redact",
-    "text": "Texto normal sobre impostos sem identificadores. Faturei R$ 73156.75 em 11 meses (96899375713 não é CPF válido). Faturei R$ 73156.75 em 11 meses (96899375713 não é CPF válido)."
+    "text": "CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36. Faturei R$ 73156.75 em 11 meses (96899375713 não é CPF válido). Faturei R$ 73156.75 em 11 meses (96899375713 não é CPF válido)."
    },
-   "output": "Texto normal sobre impostos sem identificadores. Faturei R$ 73156.75 em 11 meses (96899375713 não é CPF válido). Faturei R$ 73156.75 em 11 meses (96899375713 não é CPF válido)."
+   "output": "CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36. Faturei R$ 73156.75 em 11 meses (96899375713 não é CPF válido). Faturei R$ 73156.75 em 11 meses (96899375713 não é CPF válido)."
   },
   {
    "id": "redact-1165",
@@ -71807,33 +71807,33 @@
    "id": "redact-1167",
    "input": {
     "kind": "redact",
-    "text": "Meu CPF é 596.697.864-60 e o da empresa 43.426.356/9325-52. Faturei R$ 63615.68 em 10 meses (61057104341 não é CPF válido). Ag. 1234, c/c 98765-4 e conta poupança 5555-1"
+    "text": "Meu CPF é 596.697.864-60 e o da empresa 43.426.356/9325-52. Faturei R$ 63615.68 em 10 meses (61057104341 não é CPF válido). Texto normal sobre impostos sem identificadores."
    },
-   "output": "Meu CPF é ***.***.***-60 e o da empresa **.***.***/****-52. Faturei R$ 63615.68 em 10 meses (61057104341 não é CPF válido). Ag. ****, c/c **** e conta poupança ****"
+   "output": "Meu CPF é ***.***.***-60 e o da empresa **.***.***/****-52. Faturei R$ 63615.68 em 10 meses (61057104341 não é CPF válido). Texto normal sobre impostos sem identificadores."
   },
   {
    "id": "redact-1168",
    "input": {
     "kind": "redact",
-    "text": "Faturei R$ 79132.06 em 3 meses (14865926597 não é CPF válido). Chave da nota: 1828 2330 4756 0963 2797 3500 9060 6749 5025 1178 7491 paga em 2026. Conta corrente: 44090-9 agência 8961 Faturei R$ 79132.06 em 3 meses (14865926597 não é CPF válido)."
+    "text": "Conta corrente: 44090-9 agência 8961 Chave da nota: 1828 2330 4756 0963 2797 3500 9060 6749 5025 1178 7491 paga em 2026. Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Conta corrente: 44090-9 agência 8961"
    },
-   "output": "Faturei R$ 79132.06 em 3 meses (14865926597 não é CPF válido). Chave da nota: [chave NF-e …7491] paga em 2026. Conta corrente **** agência **** Faturei R$ 79132.06 em 3 meses (14865926597 não é CPF válido)."
+   "output": "Conta corrente **** agência **** Chave da nota: [chave NF-e …7491] paga em 2026. Ag. ****, c/c **** e conta poupança **** Conta corrente **** agência ****"
   },
   {
    "id": "redact-1169",
    "input": {
     "kind": "redact",
-    "text": "Texto normal sobre impostos sem identificadores. Conta corrente: 53870-0 agência 1899 Meu CPF é 123.016.199-66 e o da empresa 36590170980034. Chave da nota: 1909 3221 7965 8010 2593 8744 0787 2320 1557 7404 8562 paga em 2026."
+    "text": "CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36. Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Meu CPF é 123.016.199-66 e o da empresa 36590170980034. Chave da nota: 1909 3221 7965 8010 2593 8744 0787 2320 1557 7404 8562 paga em 2026."
    },
-   "output": "Texto normal sobre impostos sem identificadores. Conta corrente **** agência **** Meu CPF é ***.***.***-66 e o da empresa **.***.***/****-34. Chave da nota: [chave NF-e …8562] paga em 2026."
+   "output": "CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36. Ag. ****, c/c **** e conta poupança **** Meu CPF é ***.***.***-66 e o da empresa **.***.***/****-34. Chave da nota: [chave NF-e …8562] paga em 2026."
   },
   {
    "id": "redact-1170",
    "input": {
     "kind": "redact",
-    "text": "Texto normal sobre impostos sem identificadores."
+    "text": "CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36."
    },
-   "output": "Texto normal sobre impostos sem identificadores."
+   "output": "CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36."
   },
   {
    "id": "redact-1171",
@@ -71847,33 +71847,33 @@
    "id": "redact-1172",
    "input": {
     "kind": "redact",
-    "text": "Chave da nota: 0077 0706 2974 6444 6505 9368 1779 6109 4643 8761 3833 paga em 2026. Ag. 1234, c/c 98765-4 e conta poupança 5555-1"
+    "text": "Chave da nota: 0077 0706 2974 6444 6505 9368 1779 6109 4643 8761 3833 paga em 2026. Texto normal sobre impostos sem identificadores."
    },
-   "output": "Chave da nota: [chave NF-e …3833] paga em 2026. Ag. ****, c/c **** e conta poupança ****"
+   "output": "Chave da nota: [chave NF-e …3833] paga em 2026. Texto normal sobre impostos sem identificadores."
   },
   {
    "id": "redact-1173",
    "input": {
     "kind": "redact",
-    "text": "Conta corrente: 5095-5 agência 7549 Chave da nota: 1403 0380 3176 2690 3981 3029 7065 2667 5637 1795 5702 paga em 2026."
+    "text": "Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Faturei R$ 85139.56 em 9 meses (32606633294 não é CPF válido)."
    },
-   "output": "Conta corrente **** agência **** Chave da nota: [chave NF-e …5702] paga em 2026."
+   "output": "Ag. ****, c/c **** e conta poupança **** Faturei R$ 85139.56 em 9 meses (32606633294 não é CPF válido)."
   },
   {
    "id": "redact-1174",
    "input": {
     "kind": "redact",
-    "text": "Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Ag. 1234, c/c 98765-4 e conta poupança 5555-1"
+    "text": "Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Texto normal sobre impostos sem identificadores."
    },
-   "output": "Ag. ****, c/c **** e conta poupança **** Ag. ****, c/c **** e conta poupança ****"
+   "output": "Ag. ****, c/c **** e conta poupança **** Texto normal sobre impostos sem identificadores."
   },
   {
    "id": "redact-1175",
    "input": {
     "kind": "redact",
-    "text": "Chave da nota: 42304808334613895973047826928807229982089490 paga em 2026. Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Meu CPF é 04211782800 e o da empresa 23.591.141/9809-83."
+    "text": "Chave da nota: 42304808334613895973047826928807229982089490 paga em 2026. Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores. Meu CPF é 04211782800 e o da empresa 23.591.141/9809-83."
    },
-   "output": "Chave da nota: [chave NF-e …9490] paga em 2026. Ag. ****, c/c **** e conta poupança **** Ag. ****, c/c **** e conta poupança **** Meu CPF é ***.***.***-00 e o da empresa **.***.***/****-83."
+   "output": "Chave da nota: [chave NF-e …9490] paga em 2026. Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores. Meu CPF é ***.***.***-00 e o da empresa **.***.***/****-83."
   },
   {
    "id": "redact-1176",
@@ -71887,41 +71887,41 @@
    "id": "redact-1177",
    "input": {
     "kind": "redact",
-    "text": "Chave da nota: 44011329182341845435563507483476903139930996 paga em 2026. Chave da nota: 44011329182341845435563507483476903139930996 paga em 2026. Conta corrente: 2038-8 agência 8843 Conta corrente: 2038-8 agência 8843"
+    "text": "Chave da nota: 44011329182341845435563507483476903139930996 paga em 2026. Faturei R$ 58226.4 em 8 meses (49744579016 não é CPF válido). Conta corrente: 2038-8 agência 8843 Conta corrente: 2038-8 agência 8843"
    },
-   "output": "Chave da nota: [chave NF-e …0996] paga em 2026. Chave da nota: [chave NF-e …0996] paga em 2026. Conta corrente **** agência **** Conta corrente **** agência ****"
+   "output": "Chave da nota: [chave NF-e …0996] paga em 2026. Faturei R$ 58226.4 em 8 meses (49744579016 não é CPF válido). Conta corrente **** agência **** Conta corrente **** agência ****"
   },
   {
    "id": "redact-1178",
    "input": {
     "kind": "redact",
-    "text": "Faturei R$ 38386.75 em 12 meses (30397588009 não é CPF válido). Chave da nota: 7684 0556 1832 1652 7193 2480 8618 9035 7198 4200 9947 paga em 2026. Meu CPF é 478.595.712-34 e o da empresa 85.884.828/7904-05. Meu CPF é 478.595.712-34 e o da empresa 85.884.828/7904-05."
+    "text": "Conta corrente: 56421-4 agência 2346 Chave da nota: 7684 0556 1832 1652 7193 2480 8618 9035 7198 4200 9947 paga em 2026. Meu CPF é 478.595.712-34 e o da empresa 85.884.828/7904-05. Meu CPF é 478.595.712-34 e o da empresa 85.884.828/7904-05."
    },
-   "output": "Faturei R$ 38386.75 em 12 meses (30397588009 não é CPF válido). Chave da nota: [chave NF-e …9947] paga em 2026. Meu CPF é ***.***.***-34 e o da empresa **.***.***/****-05. Meu CPF é ***.***.***-34 e o da empresa **.***.***/****-05."
+   "output": "Conta corrente **** agência **** Chave da nota: [chave NF-e …9947] paga em 2026. Meu CPF é ***.***.***-34 e o da empresa **.***.***/****-05. Meu CPF é ***.***.***-34 e o da empresa **.***.***/****-05."
   },
   {
    "id": "redact-1179",
    "input": {
     "kind": "redact",
-    "text": "Faturei R$ 57586.2 em 3 meses (04808713211 não é CPF válido). Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Texto normal sobre impostos sem identificadores."
+    "text": "Faturei R$ 57586.2 em 3 meses (04808713211 não é CPF válido). Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores. CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36."
    },
-   "output": "Faturei R$ 57586.2 em 3 meses (04808713211 não é CPF válido). Ag. ****, c/c **** e conta poupança **** Ag. ****, c/c **** e conta poupança **** Texto normal sobre impostos sem identificadores."
+   "output": "Faturei R$ 57586.2 em 3 meses (04808713211 não é CPF válido). Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores. CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36."
   },
   {
    "id": "redact-1180",
    "input": {
     "kind": "redact",
-    "text": "Conta corrente: 39962-7 agência 5448"
+    "text": "Ag. 1234, c/c 98765-4 e conta poupança 5555-1"
    },
-   "output": "Conta corrente **** agência ****"
+   "output": "Ag. ****, c/c **** e conta poupança ****"
   },
   {
    "id": "redact-1181",
    "input": {
     "kind": "redact",
-    "text": "Conta corrente: 39949-0 agência 804"
+    "text": "Ag. 1234, c/c 98765-4 e conta poupança 5555-1"
    },
-   "output": "Conta corrente **** agência 804"
+   "output": "Ag. ****, c/c **** e conta poupança ****"
   },
   {
    "id": "redact-1182",
@@ -71935,12 +71935,36 @@
    "id": "redact-1183",
    "input": {
     "kind": "redact",
-    "text": "Faturei R$ 25686.07 em 2 meses (77953170398 não é CPF válido). Conta corrente: 33619-5 agência 940"
+    "text": "Conta corrente: 33619-5 agência 940 Ag. 1234, c/c 98765-4 e conta poupança 5555-1"
    },
-   "output": "Faturei R$ 25686.07 em 2 meses (77953170398 não é CPF válido). Conta corrente **** agência 940"
+   "output": "Conta corrente **** agência 940 Ag. ****, c/c **** e conta poupança ****"
   },
   {
    "id": "redact-1184",
+   "input": {
+    "kind": "redact",
+    "text": "CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36."
+   },
+   "output": "CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36."
+  },
+  {
+   "id": "redact-1185",
+   "input": {
+    "kind": "redact",
+    "text": "CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36. Chave da nota: 6956 3584 6158 6997 1946 9329 4895 1446 0155 0857 7534 paga em 2026. Faturei R$ 69710.81 em 2 meses (00703546732 não é CPF válido). Conta corrente: 90233-9 agência 5348"
+   },
+   "output": "CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36. Chave da nota: [chave NF-e …7534] paga em 2026. Faturei R$ 69710.81 em 2 meses (00703546732 não é CPF válido). Conta corrente **** agência ****"
+  },
+  {
+   "id": "redact-1186",
+   "input": {
+    "kind": "redact",
+    "text": "Chave da nota: 34969203336151770664143994994606316340323604 paga em 2026. Conta corrente: 44094-5 agência 5233 CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36."
+   },
+   "output": "Chave da nota: [chave NF-e …3604] paga em 2026. Conta corrente **** agência **** CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36."
+  },
+  {
+   "id": "redact-1187",
    "input": {
     "kind": "redact",
     "text": "Texto normal sobre impostos sem identificadores."
@@ -71948,36 +71972,12 @@
    "output": "Texto normal sobre impostos sem identificadores."
   },
   {
-   "id": "redact-1185",
-   "input": {
-    "kind": "redact",
-    "text": "Texto normal sobre impostos sem identificadores. Chave da nota: 6956 3584 6158 6997 1946 9329 4895 1446 0155 0857 7534 paga em 2026. Chave da nota: 6956 3584 6158 6997 1946 9329 4895 1446 0155 0857 7534 paga em 2026. Faturei R$ 69710.81 em 2 meses (00703546732 não é CPF válido)."
-   },
-   "output": "Texto normal sobre impostos sem identificadores. Chave da nota: [chave NF-e …7534] paga em 2026. Chave da nota: [chave NF-e …7534] paga em 2026. Faturei R$ 69710.81 em 2 meses (00703546732 não é CPF válido)."
-  },
-  {
-   "id": "redact-1186",
-   "input": {
-    "kind": "redact",
-    "text": "Meu CPF é 641.968.803-55 e o da empresa 78614224060167. Conta corrente: 44094-5 agência 5233 Texto normal sobre impostos sem identificadores."
-   },
-   "output": "Meu CPF é ***.***.***-55 e o da empresa **.***.***/****-67. Conta corrente **** agência **** Texto normal sobre impostos sem identificadores."
-  },
-  {
-   "id": "redact-1187",
-   "input": {
-    "kind": "redact",
-    "text": "Ag. 1234, c/c 98765-4 e conta poupança 5555-1"
-   },
-   "output": "Ag. ****, c/c **** e conta poupança ****"
-  },
-  {
    "id": "redact-1188",
    "input": {
     "kind": "redact",
-    "text": "Conta corrente: 84577-2 agência 7990 Chave da nota: 6103 2831 0307 0911 1838 1757 5439 6641 8763 5572 9251 paga em 2026. Texto normal sobre impostos sem identificadores."
+    "text": "Conta corrente: 84577-2 agência 7990 Chave da nota: 6103 2831 0307 0911 1838 1757 5439 6641 8763 5572 9251 paga em 2026. CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36."
    },
-   "output": "Conta corrente **** agência **** Chave da nota: [chave NF-e …9251] paga em 2026. Texto normal sobre impostos sem identificadores."
+   "output": "Conta corrente **** agência **** Chave da nota: [chave NF-e …9251] paga em 2026. CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36."
   },
   {
    "id": "redact-1189",
@@ -71991,9 +71991,9 @@
    "id": "redact-1190",
    "input": {
     "kind": "redact",
-    "text": "Chave da nota: 03250129369247558026127679336632737823560123 paga em 2026. Conta corrente: 20169-1 agência 6091 Chave da nota: 03250129369247558026127679336632737823560123 paga em 2026."
+    "text": "Chave da nota: 03250129369247558026127679336632737823560123 paga em 2026. Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Chave da nota: 03250129369247558026127679336632737823560123 paga em 2026."
    },
-   "output": "Chave da nota: [chave NF-e …0123] paga em 2026. Conta corrente **** agência **** Chave da nota: [chave NF-e …0123] paga em 2026."
+   "output": "Chave da nota: [chave NF-e …0123] paga em 2026. Ag. ****, c/c **** e conta poupança **** Chave da nota: [chave NF-e …0123] paga em 2026."
   },
   {
    "id": "redact-1191",
@@ -72015,33 +72015,33 @@
    "id": "redact-1193",
    "input": {
     "kind": "redact",
-    "text": "Ag. 1234, c/c 98765-4 e conta poupança 5555-1"
+    "text": "Texto normal sobre impostos sem identificadores."
    },
-   "output": "Ag. ****, c/c **** e conta poupança ****"
+   "output": "Texto normal sobre impostos sem identificadores."
   },
   {
    "id": "redact-1194",
    "input": {
     "kind": "redact",
-    "text": "Chave da nota: 49538571923755244892074647945833763253891142 paga em 2026. Conta corrente: 91850-3 agência 3233 Chave da nota: 49538571923755244892074647945833763253891142 paga em 2026. Chave da nota: 49538571923755244892074647945833763253891142 paga em 2026."
+    "text": "Chave da nota: 49538571923755244892074647945833763253891142 paga em 2026. Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Chave da nota: 49538571923755244892074647945833763253891142 paga em 2026. Chave da nota: 49538571923755244892074647945833763253891142 paga em 2026."
    },
-   "output": "Chave da nota: [chave NF-e …1142] paga em 2026. Conta corrente **** agência **** Chave da nota: [chave NF-e …1142] paga em 2026. Chave da nota: [chave NF-e …1142] paga em 2026."
+   "output": "Chave da nota: [chave NF-e …1142] paga em 2026. Ag. ****, c/c **** e conta poupança **** Chave da nota: [chave NF-e …1142] paga em 2026. Chave da nota: [chave NF-e …1142] paga em 2026."
   },
   {
    "id": "redact-1195",
    "input": {
     "kind": "redact",
-    "text": "Texto normal sobre impostos sem identificadores. Ag. 1234, c/c 98765-4 e conta poupança 5555-1"
+    "text": "CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36. Ag. 1234, c/c 98765-4 e conta poupança 5555-1"
    },
-   "output": "Texto normal sobre impostos sem identificadores. Ag. ****, c/c **** e conta poupança ****"
+   "output": "CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36. Ag. ****, c/c **** e conta poupança ****"
   },
   {
    "id": "redact-1196",
    "input": {
     "kind": "redact",
-    "text": "Meu CPF é 868.080.014-72 e o da empresa 88.764.116/7996-69. Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores."
+    "text": "Meu CPF é 868.080.014-72 e o da empresa 88.764.116/7996-69. CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36. CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36. CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36."
    },
-   "output": "Meu CPF é ***.***.***-72 e o da empresa **.***.***/****-69. Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores."
+   "output": "Meu CPF é ***.***.***-72 e o da empresa **.***.***/****-69. CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36. CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36. CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36."
   },
   {
    "id": "redact-1197",
@@ -72063,9 +72063,9 @@
    "id": "redact-1199",
    "input": {
     "kind": "redact",
-    "text": "Texto normal sobre impostos sem identificadores. Chave da nota: 1818 4713 9915 6350 2244 0594 6252 5284 8614 4423 2249 paga em 2026."
+    "text": "CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36. Chave da nota: 1818 4713 9915 6350 2244 0594 6252 5284 8614 4423 2249 paga em 2026."
    },
-   "output": "Texto normal sobre impostos sem identificadores. Chave da nota: [chave NF-e …2249] paga em 2026."
+   "output": "CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36. Chave da nota: [chave NF-e …2249] paga em 2026."
   },
   {
    "id": "redact-1200",
@@ -72079,76 +72079,84 @@
    "id": "redact-1201",
    "input": {
     "kind": "redact",
-    "text": "Chave da nota: 26547649712176892045263734995065848971192436 paga em 2026. Conta corrente: 86175-5 agência 9060 Conta corrente: 86175-5 agência 9060"
+    "text": "Chave da nota: 26547649712176892045263734995065848971192436 paga em 2026. Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Conta corrente: 86175-5 agência 9060"
    },
-   "output": "Chave da nota: [chave NF-e …2436] paga em 2026. Conta corrente **** agência **** Conta corrente **** agência ****"
+   "output": "Chave da nota: [chave NF-e …2436] paga em 2026. Ag. ****, c/c **** e conta poupança **** Conta corrente **** agência ****"
   },
   {
    "id": "redact-1202",
    "input": {
     "kind": "redact",
-    "text": "Conta corrente: 31372-1 agência 3730 Faturei R$ 26809.85 em 10 meses (62179330398 não é CPF válido). Conta corrente: 31372-1 agência 3730 Chave da nota: 5293 3203 3265 7383 3309 4172 3130 9797 0454 6802 8910 paga em 2026."
+    "text": "Conta corrente: 31372-1 agência 3730 Conta corrente: 31372-1 agência 3730 Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Faturei R$ 26809.85 em 10 meses (62179330398 não é CPF válido)."
    },
-   "output": "Conta corrente **** agência **** Faturei R$ 26809.85 em 10 meses (62179330398 não é CPF válido). Conta corrente **** agência **** Chave da nota: [chave NF-e …8910] paga em 2026."
+   "output": "Conta corrente **** agência **** Conta corrente **** agência **** Ag. ****, c/c **** e conta poupança **** Faturei R$ 26809.85 em 10 meses (62179330398 não é CPF válido)."
   },
   {
    "id": "redact-1203",
    "input": {
     "kind": "redact",
-    "text": "Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Meu CPF é 557.850.408-67 e o da empresa 63615975826492. Chave da nota: 26592506644178226790709835171360112426808299 paga em 2026. Faturei R$ 65879.43 em 7 meses (57709736018 não é CPF válido)."
+    "text": "Texto normal sobre impostos sem identificadores. Chave da nota: 26592506644178226790709835171360112426808299 paga em 2026. Faturei R$ 65879.43 em 7 meses (57709736018 não é CPF válido). Faturei R$ 65879.43 em 7 meses (57709736018 não é CPF válido)."
    },
-   "output": "Ag. ****, c/c **** e conta poupança **** Meu CPF é ***.***.***-67 e o da empresa **.***.***/****-92. Chave da nota: [chave NF-e …8299] paga em 2026. Faturei R$ 65879.43 em 7 meses (57709736018 não é CPF válido)."
+   "output": "Texto normal sobre impostos sem identificadores. Chave da nota: [chave NF-e …8299] paga em 2026. Faturei R$ 65879.43 em 7 meses (57709736018 não é CPF válido). Faturei R$ 65879.43 em 7 meses (57709736018 não é CPF válido)."
   },
   {
    "id": "redact-1204",
    "input": {
     "kind": "redact",
-    "text": "Meu CPF é 33657573259 e o da empresa 45624199362077. Meu CPF é 33657573259 e o da empresa 45624199362077."
+    "text": "Chave da nota: 3008 3348 6665 5784 6540 9418 3958 4595 7046 4095 7130 paga em 2026. Meu CPF é 33657573259 e o da empresa 45624199362077."
    },
-   "output": "Meu CPF é ***.***.***-59 e o da empresa **.***.***/****-77. Meu CPF é ***.***.***-59 e o da empresa **.***.***/****-77."
+   "output": "Chave da nota: [chave NF-e …7130] paga em 2026. Meu CPF é ***.***.***-59 e o da empresa **.***.***/****-77."
   },
   {
    "id": "redact-1205",
    "input": {
     "kind": "redact",
-    "text": "Conta corrente: 95470-7 agência 6209 Meu CPF é 833.688.740-71 e o da empresa 74327673453574. Conta corrente: 95470-7 agência 6209 Faturei R$ 19767.07 em 12 meses (73280843443 não é CPF válido)."
+    "text": "Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Meu CPF é 833.688.740-71 e o da empresa 74327673453574. Conta corrente: 95470-7 agência 6209 Conta corrente: 95470-7 agência 6209"
    },
-   "output": "Conta corrente **** agência **** Meu CPF é ***.***.***-71 e o da empresa **.***.***/****-74. Conta corrente **** agência **** Faturei R$ 19767.07 em 12 meses (73280843443 não é CPF válido)."
+   "output": "Ag. ****, c/c **** e conta poupança **** Meu CPF é ***.***.***-71 e o da empresa **.***.***/****-74. Conta corrente **** agência **** Conta corrente **** agência ****"
   },
   {
    "id": "redact-1206",
    "input": {
     "kind": "redact",
-    "text": "Faturei R$ 1587.97 em 9 meses (61469987980 não é CPF válido). Ag. 1234, c/c 98765-4 e conta poupança 5555-1"
+    "text": "Faturei R$ 1587.97 em 9 meses (61469987980 não é CPF válido). Texto normal sobre impostos sem identificadores."
    },
-   "output": "Faturei R$ 1587.97 em 9 meses (61469987980 não é CPF válido). Ag. ****, c/c **** e conta poupança ****"
+   "output": "Faturei R$ 1587.97 em 9 meses (61469987980 não é CPF válido). Texto normal sobre impostos sem identificadores."
   },
   {
    "id": "redact-1207",
    "input": {
     "kind": "redact",
-    "text": "Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores. Conta corrente: 25090-8 agência 2448 Texto normal sobre impostos sem identificadores."
+    "text": "CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36. CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36. Ag. 1234, c/c 98765-4 e conta poupança 5555-1 CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36."
    },
-   "output": "Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores. Conta corrente **** agência **** Texto normal sobre impostos sem identificadores."
+   "output": "CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36. CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36. Ag. ****, c/c **** e conta poupança **** CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36."
   },
   {
    "id": "redact-1208",
    "input": {
     "kind": "redact",
-    "text": "Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Ag. 1234, c/c 98765-4 e conta poupança 5555-1"
+    "text": "Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores."
    },
-   "output": "Ag. ****, c/c **** e conta poupança **** Ag. ****, c/c **** e conta poupança ****"
+   "output": "Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores."
   },
   {
    "id": "redact-1209",
    "input": {
     "kind": "redact",
-    "text": "Texto normal sobre impostos sem identificadores. Meu CPF é 357.873.062-95 e o da empresa 70.261.475/3552-41. Texto normal sobre impostos sem identificadores. Faturei R$ 34018.43 em 4 meses (67973137153 não é CPF válido)."
+    "text": "CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36. Chave da nota: 4738 8615 6987 6469 1073 6644 3799 8358 6866 2444 2500 paga em 2026. Texto normal sobre impostos sem identificadores. Faturei R$ 34018.43 em 4 meses (67973137153 não é CPF válido)."
    },
-   "output": "Texto normal sobre impostos sem identificadores. Meu CPF é ***.***.***-95 e o da empresa **.***.***/****-41. Texto normal sobre impostos sem identificadores. Faturei R$ 34018.43 em 4 meses (67973137153 não é CPF válido)."
+   "output": "CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36. Chave da nota: [chave NF-e …2500] paga em 2026. Texto normal sobre impostos sem identificadores. Faturei R$ 34018.43 em 4 meses (67973137153 não é CPF válido)."
   },
   {
    "id": "redact-1210",
+   "input": {
+    "kind": "redact",
+    "text": "CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36."
+   },
+   "output": "CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36."
+  },
+  {
+   "id": "redact-1211",
    "input": {
     "kind": "redact",
     "text": "Texto normal sobre impostos sem identificadores."
@@ -72156,20 +72164,12 @@
    "output": "Texto normal sobre impostos sem identificadores."
   },
   {
-   "id": "redact-1211",
-   "input": {
-    "kind": "redact",
-    "text": "Ag. 1234, c/c 98765-4 e conta poupança 5555-1"
-   },
-   "output": "Ag. ****, c/c **** e conta poupança ****"
-  },
-  {
    "id": "redact-1212",
    "input": {
     "kind": "redact",
-    "text": "Meu CPF é 872.300.070-89 e o da empresa 95.807.143/7234-95. Faturei R$ 31645.21 em 1 meses (20434251096 não é CPF válido). Texto normal sobre impostos sem identificadores."
+    "text": "Meu CPF é 872.300.070-89 e o da empresa 95.807.143/7234-95. Faturei R$ 31645.21 em 1 meses (20434251096 não é CPF válido). CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36."
    },
-   "output": "Meu CPF é ***.***.***-89 e o da empresa **.***.***/****-95. Faturei R$ 31645.21 em 1 meses (20434251096 não é CPF válido). Texto normal sobre impostos sem identificadores."
+   "output": "Meu CPF é ***.***.***-89 e o da empresa **.***.***/****-95. Faturei R$ 31645.21 em 1 meses (20434251096 não é CPF válido). CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36."
   },
   {
    "id": "redact-1213",
@@ -72183,9 +72183,9 @@
    "id": "redact-1214",
    "input": {
     "kind": "redact",
-    "text": "Texto normal sobre impostos sem identificadores. Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Texto normal sobre impostos sem identificadores."
+    "text": "CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36. Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores."
    },
-   "output": "Texto normal sobre impostos sem identificadores. Ag. ****, c/c **** e conta poupança **** Texto normal sobre impostos sem identificadores."
+   "output": "CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36. Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores."
   },
   {
    "id": "redact-1215",
@@ -72199,41 +72199,41 @@
    "id": "redact-1216",
    "input": {
     "kind": "redact",
-    "text": "Texto normal sobre impostos sem identificadores. Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Meu CPF é 302.468.451-47 e o da empresa 63540193925847."
+    "text": "Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores. Meu CPF é 302.468.451-47 e o da empresa 63540193925847."
    },
-   "output": "Texto normal sobre impostos sem identificadores. Ag. ****, c/c **** e conta poupança **** Ag. ****, c/c **** e conta poupança **** Meu CPF é ***.***.***-47 e o da empresa **.***.***/****-47."
+   "output": "Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores. Meu CPF é ***.***.***-47 e o da empresa **.***.***/****-47."
   },
   {
    "id": "redact-1217",
    "input": {
     "kind": "redact",
-    "text": "Faturei R$ 4415.91 em 5 meses (11866037180 não é CPF válido)."
+    "text": "Conta corrente: 89913-8 agência 8650"
    },
-   "output": "Faturei R$ 4415.91 em 5 meses (11866037180 não é CPF válido)."
+   "output": "Conta corrente **** agência ****"
   },
   {
    "id": "redact-1218",
    "input": {
     "kind": "redact",
-    "text": "Conta corrente: 8539-9 agência 7389 Ag. 1234, c/c 98765-4 e conta poupança 5555-1"
+    "text": "Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Texto normal sobre impostos sem identificadores."
    },
-   "output": "Conta corrente **** agência **** Ag. ****, c/c **** e conta poupança ****"
+   "output": "Ag. ****, c/c **** e conta poupança **** Texto normal sobre impostos sem identificadores."
   },
   {
    "id": "redact-1219",
    "input": {
     "kind": "redact",
-    "text": "Conta corrente: 14890-8 agência 1135 Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Conta corrente: 14890-8 agência 1135 Texto normal sobre impostos sem identificadores."
+    "text": "Conta corrente: 14890-8 agência 1135 Texto normal sobre impostos sem identificadores. Ag. 1234, c/c 98765-4 e conta poupança 5555-1 CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36."
    },
-   "output": "Conta corrente **** agência **** Ag. ****, c/c **** e conta poupança **** Conta corrente **** agência **** Texto normal sobre impostos sem identificadores."
+   "output": "Conta corrente **** agência **** Texto normal sobre impostos sem identificadores. Ag. ****, c/c **** e conta poupança **** CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36."
   },
   {
    "id": "redact-1220",
    "input": {
     "kind": "redact",
-    "text": "Meu CPF é 09614051558 e o da empresa 59799296946503. Conta corrente: 40881-6 agência 4780 Meu CPF é 09614051558 e o da empresa 59799296946503."
+    "text": "Meu CPF é 09614051558 e o da empresa 59799296946503. Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Meu CPF é 09614051558 e o da empresa 59799296946503."
    },
-   "output": "Meu CPF é ***.***.***-58 e o da empresa **.***.***/****-03. Conta corrente **** agência **** Meu CPF é ***.***.***-58 e o da empresa **.***.***/****-03."
+   "output": "Meu CPF é ***.***.***-58 e o da empresa **.***.***/****-03. Ag. ****, c/c **** e conta poupança **** Meu CPF é ***.***.***-58 e o da empresa **.***.***/****-03."
   },
   {
    "id": "redact-1221",
@@ -72255,17 +72255,17 @@
    "id": "redact-1223",
    "input": {
     "kind": "redact",
-    "text": "Conta corrente: 72274-5 agência 6957 Conta corrente: 72274-5 agência 6957"
+    "text": "Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Conta corrente: 72274-5 agência 6957"
    },
-   "output": "Conta corrente **** agência **** Conta corrente **** agência ****"
+   "output": "Ag. ****, c/c **** e conta poupança **** Conta corrente **** agência ****"
   },
   {
    "id": "redact-1224",
    "input": {
     "kind": "redact",
-    "text": "Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Ag. 1234, c/c 98765-4 e conta poupança 5555-1"
+    "text": "Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores."
    },
-   "output": "Ag. ****, c/c **** e conta poupança **** Ag. ****, c/c **** e conta poupança **** Ag. ****, c/c **** e conta poupança ****"
+   "output": "Ag. ****, c/c **** e conta poupança **** Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores."
   },
   {
    "id": "redact-1225",
@@ -72279,25 +72279,25 @@
    "id": "redact-1226",
    "input": {
     "kind": "redact",
-    "text": "Conta corrente: 90259-7 agência 1245"
+    "text": "Ag. 1234, c/c 98765-4 e conta poupança 5555-1"
    },
-   "output": "Conta corrente **** agência ****"
+   "output": "Ag. ****, c/c **** e conta poupança ****"
   },
   {
    "id": "redact-1227",
    "input": {
     "kind": "redact",
-    "text": "Chave da nota: 25923688948621956117051617525052953471273492 paga em 2026. Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores."
+    "text": "Chave da nota: 25923688948621956117051617525052953471273492 paga em 2026. CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36. CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36."
    },
-   "output": "Chave da nota: [chave NF-e …3492] paga em 2026. Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores."
+   "output": "Chave da nota: [chave NF-e …3492] paga em 2026. CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36. CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36."
   },
   {
    "id": "redact-1228",
    "input": {
     "kind": "redact",
-    "text": "Meu CPF é 76360621606 e o da empresa 55769136444387. Conta corrente: 42059-6 agência 3219 Chave da nota: 17852705840994818340357386152454751530897589 paga em 2026."
+    "text": "Meu CPF é 76360621606 e o da empresa 55769136444387. Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Chave da nota: 17852705840994818340357386152454751530897589 paga em 2026."
    },
-   "output": "Meu CPF é ***.***.***-06 e o da empresa **.***.***/****-87. Conta corrente **** agência **** Chave da nota: [chave NF-e …7589] paga em 2026."
+   "output": "Meu CPF é ***.***.***-06 e o da empresa **.***.***/****-87. Ag. ****, c/c **** e conta poupança **** Chave da nota: [chave NF-e …7589] paga em 2026."
   },
   {
    "id": "redact-1229",
@@ -72311,9 +72311,9 @@
    "id": "redact-1230",
    "input": {
     "kind": "redact",
-    "text": "Conta corrente: 13466-8 agência 8273 Ag. 1234, c/c 98765-4 e conta poupança 5555-1"
+    "text": "Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Texto normal sobre impostos sem identificadores."
    },
-   "output": "Conta corrente **** agência **** Ag. ****, c/c **** e conta poupança ****"
+   "output": "Ag. ****, c/c **** e conta poupança **** Texto normal sobre impostos sem identificadores."
   },
   {
    "id": "redact-1231",
@@ -72327,33 +72327,33 @@
    "id": "redact-1232",
    "input": {
     "kind": "redact",
-    "text": "Conta corrente: 14180-4 agência 9308 Chave da nota: 5353 9643 9528 8064 1493 4452 5896 8957 1450 2646 6561 paga em 2026. Texto normal sobre impostos sem identificadores. Conta corrente: 14180-4 agência 9308"
+    "text": "Conta corrente: 14180-4 agência 9308 Faturei R$ 77704.94 em 6 meses (20117562939 não é CPF válido). CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36. Conta corrente: 14180-4 agência 9308"
    },
-   "output": "Conta corrente **** agência **** Chave da nota: [chave NF-e …6561] paga em 2026. Texto normal sobre impostos sem identificadores. Conta corrente **** agência ****"
+   "output": "Conta corrente **** agência **** Faturei R$ 77704.94 em 6 meses (20117562939 não é CPF válido). CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36. Conta corrente **** agência ****"
   },
   {
    "id": "redact-1233",
    "input": {
     "kind": "redact",
-    "text": "Texto normal sobre impostos sem identificadores. Chave da nota: 4269 6514 2541 2763 3073 1814 0118 6514 7113 1564 2700 paga em 2026."
+    "text": "CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36. Chave da nota: 4269 6514 2541 2763 3073 1814 0118 6514 7113 1564 2700 paga em 2026."
    },
-   "output": "Texto normal sobre impostos sem identificadores. Chave da nota: [chave NF-e …2700] paga em 2026."
+   "output": "CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36. Chave da nota: [chave NF-e …2700] paga em 2026."
   },
   {
    "id": "redact-1234",
    "input": {
     "kind": "redact",
-    "text": "Texto normal sobre impostos sem identificadores. Meu CPF é 717.788.279-00 e o da empresa 31502611424018."
+    "text": "CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36. Meu CPF é 717.788.279-00 e o da empresa 31502611424018."
    },
-   "output": "Texto normal sobre impostos sem identificadores. Meu CPF é ***.***.***-00 e o da empresa **.***.***/****-18."
+   "output": "CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36. Meu CPF é ***.***.***-00 e o da empresa **.***.***/****-18."
   },
   {
    "id": "redact-1235",
    "input": {
     "kind": "redact",
-    "text": "Meu CPF é 609.478.652-17 e o da empresa 84.252.160/2126-46. Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Ag. 1234, c/c 98765-4 e conta poupança 5555-1 Conta corrente: 89186-5 agência 3248"
+    "text": "Meu CPF é 609.478.652-17 e o da empresa 84.252.160/2126-46. Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores. Ag. 1234, c/c 98765-4 e conta poupança 5555-1"
    },
-   "output": "Meu CPF é ***.***.***-17 e o da empresa **.***.***/****-46. Ag. ****, c/c **** e conta poupança **** Ag. ****, c/c **** e conta poupança **** Conta corrente **** agência ****"
+   "output": "Meu CPF é ***.***.***-17 e o da empresa **.***.***/****-46. Texto normal sobre impostos sem identificadores. Texto normal sobre impostos sem identificadores. Ag. ****, c/c **** e conta poupança ****"
   },
   {
    "id": "redact-1236",
@@ -72367,25 +72367,25 @@
    "id": "redact-1237",
    "input": {
     "kind": "redact",
-    "text": "Texto normal sobre impostos sem identificadores. Ag. 1234, c/c 98765-4 e conta poupança 5555-1"
+    "text": "CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36. Texto normal sobre impostos sem identificadores."
    },
-   "output": "Texto normal sobre impostos sem identificadores. Ag. ****, c/c **** e conta poupança ****"
+   "output": "CNPJ novo **.***.***/****-35, sem pontos **.***.***/****-35, errado 12ABC34501DE36. Texto normal sobre impostos sem identificadores."
   },
   {
    "id": "redact-1238",
    "input": {
     "kind": "redact",
-    "text": "Chave da nota: 4910 2902 0653 3866 1391 9175 8595 2626 3168 6389 3844 paga em 2026. Conta corrente: 44044-3 agência 475 Faturei R$ 78331.37 em 5 meses (77933957435 não é CPF válido)."
+    "text": "Chave da nota: 4910 2902 0653 3866 1391 9175 8595 2626 3168 6389 3844 paga em 2026. Conta corrente: 44044-3 agência 475 Conta corrente: 44044-3 agência 475"
    },
-   "output": "Chave da nota: [chave NF-e …3844] paga em 2026. Conta corrente **** agência 475 Faturei R$ 78331.37 em 5 meses (77933957435 não é CPF válido)."
+   "output": "Chave da nota: [chave NF-e …3844] paga em 2026. Conta corrente **** agência 475 Conta corrente **** agência 475"
   },
   {
    "id": "redact-1239",
    "input": {
     "kind": "redact",
-    "text": "Faturei R$ 41260.79 em 11 meses (62073800782 não é CPF válido)."
+    "text": "Conta corrente: 66268-5 agência 2357"
    },
-   "output": "Faturei R$ 41260.79 em 11 meses (62073800782 não é CPF válido)."
+   "output": "Conta corrente **** agência ****"
   },
   {
    "id": "trim_history-1240",

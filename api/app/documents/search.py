@@ -16,7 +16,9 @@ MAX_SEARCH_CHARS = 200_000
 SNIPPET_CHARS = 240
 MAX_HITS = 5
 _TAGS = re.compile(r"<[^>]+>")
-_CNPJ = re.compile(r"(?<!\d)\d{2}\.?\d{3}\.?\d{3}/?\d{4}-?\d{2}(?!\d)")
+_CNPJ = re.compile(
+    r"(?<![0-9A-Za-z])[0-9A-Z]{2}\.?[0-9A-Z]{3}\.?[0-9A-Z]{3}/?[0-9A-Z]{4}-?\d{2}(?!\d)"
+)  # alnum since 2026-07 (#328)
 _CPF = re.compile(r"(?<!\d)\d{3}\.?\d{3}\.?\d{3}-?\d{2}(?!\d)")
 _SPACES = re.compile(r"\s+")
 

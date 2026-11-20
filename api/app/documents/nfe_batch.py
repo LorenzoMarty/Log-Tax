@@ -17,6 +17,8 @@ from xml.etree.ElementTree import Element
 from defusedxml import DefusedXmlException
 from defusedxml import ElementTree as SafeET
 
+from app.core.br_ids import normalize_cnpj
+
 MAX_ENTRIES = 5000
 MAX_FILE_BYTES = 2 * 1024 * 1024
 MAX_TOTAL_BYTES = 100 * 1024 * 1024
@@ -114,7 +116,7 @@ def _read(root: Element, company_cnpj: str) -> tuple[str, Invoice | None, str | 
         return "nfe", None, None
     if len(key) != 44 or len(month) != 7 or amount < 0:
         return "nfe", None, None
-    emitted, received = _digits(_find(root, "CNPJ", "emit")), _digits(_find(root, "CNPJ", "dest"))
+    emitted, received = (normalize_cnpj(_find(root, "CNPJ", side) or "") for side in ("emit", "dest"))
     side = "sale" if emitted == company_cnpj else "purchase" if received == company_cnpj else "none"
     cancelled = key if _find(root, "cStat") in _CANCELLED_STATUS else None  # cancelled by its own protocol
     return "nfe", Invoice(key, side, month, amount), cancelled

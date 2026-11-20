@@ -49,7 +49,7 @@ const BY_NAME: [RegExp, DocType][] = [
 const NFE_FIELDS: Record<string, RegExp> = {
   numero: /<nNF>\s*(\d{1,9})\s*<\/nNF>/,
   // the emitter's CNPJ lives inside <emit>; the recipient's is a different block
-  emitente_cnpj: /<emit>[\s\S]*?<CNPJ>\s*(\d{14})\s*<\/CNPJ>/,
+  emitente_cnpj: /<emit>[\s\S]*?<CNPJ>\s*([0-9A-Z]{12}\d{2})\s*<\/CNPJ>/,
   valor_total: /<vNF>\s*(\d+(?:\.\d{1,2})?)\s*<\/vNF>/,
   emissao: /<d(?:h)?Emi>\s*(\d{4}-\d{2}-\d{2})/,
 };
@@ -89,7 +89,7 @@ export function classifyDocument(input: { name: string; mime: string; text?: str
 }
 
 const brl = (n: number) => `R$ ${n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-const cnpj = (d: string) => d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
+const cnpj = (d: string) => d.replace(/^(\w{2})(\w{3})(\w{3})(\w{4})(\d{2})$/, "$1.$2.$3/$4-$5");
 const date = (iso: string) => iso.split("-").reverse().join("/");
 
 const DISPLAY: [key: string, label: string, fmt: (v: string) => string][] = [

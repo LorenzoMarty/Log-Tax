@@ -7,7 +7,7 @@ import { splitPaymentImpact } from "@/engine/split-payment";
 import { z } from "zod";
 import type { Widget } from "@/dashboard/types";
 import type { ToolContext, ToolOutcome, ToolSpec, Scope } from "./types";
-import { onlyDigits } from "@/lib/br-ids";
+import { normalizeCnpj } from "@/lib/br-ids";
 import { widgetSchema } from "./widget-schema";
 import { companyFieldsSchema, inconsistencies, mergeSeries } from "@/engine/company-schema";
 
@@ -340,7 +340,7 @@ const TOOLS: Tool[] = [
     schema: company.partial().refine((v) => Object.keys(v).length > 0, "informe ao menos um campo"),
     run(ctx, a) {
       // Merge, then judge the whole profile: some mistakes only show when two fields meet (anexo with the wrong regime).
-      if (a.cnpj) a = { ...a, cnpj: onlyDigits(a.cnpj) };
+      if (a.cnpj) a = { ...a, cnpj: normalizeCnpj(a.cnpj) };
       const merged = { ...ctx.store.getCompany(), ...a, ...(a.series ? { series: mergeSeries(ctx.store.getCompany().series, a.series) } : {}) };
       const problems = inconsistencies(merged);
       if (problems.length) throw new ToolError(`Não salvei: ${problems.join(" ")}`);

@@ -158,6 +158,8 @@ function redactCase(r: ReturnType<typeof rng>) {
     `Conta corrente: ${r.int(1000, 99999)}-${r.int(0, 9)} agência ${r.int(100, 9999)}`,
     `Ag. 1234, c/c 98765-4 e conta poupança 5555-1`,
     `Texto normal sobre impostos sem identificadores.`,
+    // alphanumeric CNPJ (#328): official example formatted, bare lower case, and a wrong check digit left alone
+    `CNPJ novo 12.ABC.345/01DE-35, sem pontos 12abc34501de35, errado 12ABC34501DE36.`,
   ];
   const text = Array.from({ length: r.int(1, 4) }, () => r.pick(parts)).join(" ");
   return { kind: "redact", text };
