@@ -3981,7 +3981,7 @@
     },
     "/v1/documents/{document_id}/download": {
       "get": {
-        "description": "A fresh, short-lived signed URL. Visibility is decided by the caller's own session (RLS).",
+        "description": "A fresh, short-lived signed URL. Visibility is decided by the caller's own session (RLS).\n\n`inline=true` drops the attachment name so the browser's viewer shows PDF and images (#165).",
         "operationId": "download_v1_documents__document_id__download_get",
         "parameters": [
           {
@@ -3992,6 +3992,16 @@
               "format": "uuid",
               "title": "Document Id",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "inline",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Inline",
+              "type": "boolean"
             }
           },
           {
