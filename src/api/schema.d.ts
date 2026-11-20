@@ -228,6 +228,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/documents/sped": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import Sped
+         * @description SPED EFD (#173): same preview-then-confirm flow and the same idempotency key (access key) as the NF-e batch.
+         */
+        post: operations["import_sped_v1_documents_sped_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/documents/{document_id}": {
         parameters: {
             query?: never;
@@ -970,6 +990,21 @@ export interface components {
         };
         /** Body_import_batch_v1_documents_nfe_batch_post */
         Body_import_batch_v1_documents_nfe_batch_post: {
+            /**
+             * Confirm
+             * @default false
+             */
+            confirm: boolean;
+            /** File */
+            file: string;
+            /**
+             * Workspaceid
+             * Format: uuid
+             */
+            workspaceId: string;
+        };
+        /** Body_import_sped_v1_documents_sped_post */
+        Body_import_sped_v1_documents_sped_post: {
             /**
              * Confirm
              * @default false
@@ -2263,6 +2298,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SearchOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_sped_v1_documents_sped_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_import_sped_v1_documents_sped_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
