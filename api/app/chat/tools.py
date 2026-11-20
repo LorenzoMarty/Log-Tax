@@ -36,6 +36,8 @@ from app.engine.split_payment import split_payment_impact
 
 MAX_WORKSPACES = 10
 MAX_MEMORIES = 30
+MAX_ASSETS = 200
+AssetKind = Literal["imovel", "veiculo", "investimento", "participacao", "bem", "divida"]
 _MONTH = Annotated[str, StringConstraints(pattern=r"^\d{4}-(0[1-9]|1[0-2])$")]
 
 
@@ -243,6 +245,27 @@ class RenameWorkspaceArgs(_Args):
 
 class RemoveWorkspaceArgs(_Args):
     id: uuid.UUID
+
+
+class AddAssetArgs(_Args):
+    kind: AssetKind
+    description: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
+    value: float = Field(ge=0, le=1e13)
+    acquired_at: date | None = None
+    extra: dict[str, Any] = Field(default_factory=dict)
+
+
+class AssetPatch(_Args, _NonEmpty):
+    kind: AssetKind | None = None
+    description: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)] | None = None
+    value: float | None = Field(default=None, ge=0, le=1e13)
+    acquired_at: date | None = None
+    extra: dict[str, Any] | None = None
+
+
+class UpdateAssetArgs(_Args):
+    id: str = Field(min_length=1)
+    patch: AssetPatch
 
 
 class ExplainArgs(_Args):
@@ -572,6 +595,64 @@ async def _search_documents(ctx: ToolContext, a: SearchDocsArgs) -> Any:
 async def _forget_memory(ctx: ToolContext, a: IdArgs) -> Any:
     if not await ctx.store.remove_memory(a.id):
         raise ToolError("Não encontrei esse item na memória.")
+    return {"removed": a.id}
+
+
+# ---- assets (patrimônio) ----
+def _asset_values(raw: dict[str, Any]) -> dict[str, Any]:
+    """Model arguments as stored: money as an exact two-place decimal string, dates as ISO text."""
+    out = dict(raw)
+    if out.get("value") is not None:
+        out["value"] = str(Decimal(str(out["value"])).quantize(Decimal("0.01"), ROUND_HALF_UP))
+    if isinstance(out.get("acquired_at"), date):
+        out["acquired_at"] = out["acquired_at"].isoformat()
+    return out
+
+
+@_tool(
+    "add_asset",
+    'Cadastra um bem ou dívida no patrimônio ("quero acompanhar esse apartamento"). kind: imovel, veiculo, investimento, participacao, bem ou divida. value em reais; acquiredAt (AAAA-MM-DD) e extra (detalhes livres, ex.: placa, matrícula) são opcionais. Só cadastre o que o USUÁRIO disse.',
+    AddAssetArgs,
+    kinds=("pessoal",),
+)  # fmt: skip
+async def _add_asset(ctx: ToolContext, a: AddAssetArgs) -> Any:
+    if len(await ctx.store.list_assets()) >= MAX_ASSETS:
+        raise ToolError(f"Já há {MAX_ASSETS} itens no patrimônio. Remova algum antes de cadastrar outro.")
+    return await ctx.store.add_asset(_asset_values(a.model_dump()))
+
+
+@_tool(
+    "list_assets",
+    "Lista os bens e dívidas do patrimônio com id, tipo, descrição, valor e data (use o id em update_asset e remove_asset).",
+    NoArgs,
+    read_only=True,
+    kinds=("pessoal",),
+)
+async def _list_assets(ctx: ToolContext, a: NoArgs) -> Any:
+    return await ctx.store.list_assets()
+
+
+@_tool(
+    "update_asset",
+    "Altera tipo, descrição, valor, data ou detalhes de um bem (use o id de list_assets).",
+    UpdateAssetArgs,
+    kinds=("pessoal",),
+)
+async def _update_asset(ctx: ToolContext, a: UpdateAssetArgs) -> Any:
+    patch = _asset_values(a.patch.model_dump(exclude_unset=True))
+    return _need(await ctx.store.update_asset(a.id, patch), f'Bem "{a.id}" não encontrado.')
+
+
+@_tool(
+    "remove_asset",
+    "Remove um bem ou dívida do patrimônio (use o id de list_assets). Exige confirmação do usuário.",
+    IdArgs,
+    destructive=True,
+    kinds=("pessoal",),
+)
+async def _remove_asset(ctx: ToolContext, a: IdArgs) -> Any:
+    if not await ctx.store.remove_asset(a.id):
+        raise ToolError(f'Bem "{a.id}" não encontrado.')
     return {"removed": a.id}
 
 

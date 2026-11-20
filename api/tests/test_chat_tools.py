@@ -84,7 +84,7 @@ async def call(reg: ToolRegistry, name: str, args: Any = None, untrusted: bool =
 
 # ---- catalogue and schemas ----
 def test_every_tool_has_a_clean_json_schema_and_the_flags_are_consistent() -> None:
-    assert len(TOOL_NAMES) == len(set(TOOL_NAMES)) == 32
+    assert len(TOOL_NAMES) == len(set(TOOL_NAMES)) == 36
     for t in TOOLS:
         schema = tool_parameters(t)
         text = json.dumps(schema)
@@ -106,7 +106,7 @@ def test_specs_follow_the_workspace_kind_and_the_agent_allow_list() -> None:
     assert not {"get_tax_diagnosis", "run_simulation", "create_alert"} & set(names("pessoal"))
     assert "get_tax_diagnosis" in names("empresa") and not {"get_ir_diagnosis", "save_person_data"} & set(names("empresa"))
     assert names("empresa", ("get_tax_diagnosis", "get_ir_diagnosis")) == ["get_tax_diagnosis"]
-    assert len(names(None)) == 32
+    assert len(names(None)) == 36
 
 
 async def test_unknown_wrong_kind_and_not_allowed_tools_are_refused_at_runtime() -> None:
@@ -471,3 +471,34 @@ async def test_the_scripted_journey_runs_through_the_real_tools() -> None:
         "ir",
         "ir-modelos",
     }
+
+
+async def test_asset_tools_add_list_update_and_remove_after_confirmation() -> None:
+    reg, store = make(Scope(WS, kind="pessoal"))
+    assert is_destructive("remove_asset")
+    made = (
+        await call(
+            reg, "add_asset", {"kind": "imovel", "description": "Apartamento", "value": 450000.5, "acquiredAt": "2024-03-01"}
+        )
+    )["data"]
+    assert made["value"] == "450000.50" and made["acquired_at"] == "2024-03-01" and made["extra"] == {}
+    assert (await call(reg, "list_assets"))["data"][0]["id"] == made["id"]
+    changed = (await call(reg, "update_asset", {"id": made["id"], "patch": {"value": 500000, "extra": {"matricula": "123"}}}))[
+        "data"
+    ]
+    assert (
+        changed["value"] == "500000.00" and changed["extra"] == {"matricula": "123"} and changed["description"] == "Apartamento"
+    )
+    assert (await call(reg, "update_asset", {"id": "nope", "patch": {"value": 1}}))["status"] == "error"
+    assert (await call(reg, "update_asset", {"id": made["id"], "patch": {}}))["status"] == "error"
+    assert (await call(reg, "add_asset", {"kind": "navio", "description": "x", "value": 1}))["status"] == "error"
+    assert (await call(reg, "add_asset", {"kind": "bem", "description": "x", "value": -1}))["status"] == "error"
+    asked = await call(reg, "remove_asset", {"id": made["id"]})
+    assert asked["status"] == "confirmation_required" and len(store.assets) == 1
+    approved, _ = make(Scope(WS, kind="pessoal"), approvals=frozenset({asked["key"]}), store=store)
+    assert (await call(approved, "remove_asset", {"id": made["id"]}))["status"] == "ok" and store.assets == []
+    assert (await call(approved, "remove_asset", {"id": made["id"]}))["status"] == "error"
+    empresa, _ = make(Scope(WS, kind="empresa"))
+    assert (await call(empresa, "list_assets"))["status"] == "refused"
+    store.assets = [{"id": str(i)} for i in range(200)]
+    assert "200 itens" in (await call(reg, "add_asset", {"kind": "bem", "description": "x", "value": 1}))["message"]
