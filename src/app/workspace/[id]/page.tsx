@@ -45,7 +45,7 @@ export default async function WorkspaceChatPage({
 
   const { data: documents } = await supabase
     .from("documents")
-    .select("id, name, doc_type, extracted, size_bytes, created_at")
+    .select("id, name, doc_type, extracted, size_bytes, mime_type, created_at")
     .eq("workspace_id", id)
     .order("created_at", { ascending: false });
   const { data: comments } = await supabase

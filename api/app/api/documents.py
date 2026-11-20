@@ -155,12 +155,15 @@ async def upload(
 
 
 @router.get("/v1/documents/{document_id}/download", response_model=None)
-async def download(document_id: uuid.UUID, db: UserDb = Depends(user_db)) -> Response:
-    """A fresh, short-lived signed URL. Visibility is decided by the caller's own session (RLS)."""
+async def download(document_id: uuid.UUID, inline: bool = False, db: UserDb = Depends(user_db)) -> Response:
+    """A fresh, short-lived signed URL. Visibility is decided by the caller's own session (RLS).
+
+    `inline=true` drops the attachment name so the browser's viewer shows PDF and images (#165).
+    """
     rows = await db.select("documents", select="name,storage_path", id=f"eq.{document_id}")
     if not rows or not rows[0].get("storage_path"):
         return error_response(404, "not_found", "Não encontrei o que você pediu.")
-    url = await db.storage_sign(BUCKET, rows[0]["storage_path"], SIGNED_URL_SECONDS, download=rows[0]["name"])
+    url = await db.storage_sign(BUCKET, rows[0]["storage_path"], SIGNED_URL_SECONDS, download=None if inline else rows[0]["name"])
     if url is None:
         return error_response(404, "not_found", "Não encontrei o que você pediu.")
     return RedirectResponse(url, status_code=302)

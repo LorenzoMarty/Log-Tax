@@ -1,6 +1,7 @@
 import { deleteDocument } from "./actions";
 import { DOC_LABEL, formatExtracted, type DocType } from "./classify";
 import { MISSING_LABEL, type StoredExtraction } from "./storage";
+import { Preview } from "./preview";
 import { UploadForm } from "./upload-form";
 
 export interface DocumentRow {
@@ -9,6 +10,7 @@ export interface DocumentRow {
   doc_type: DocType | null;
   extracted: StoredExtraction | null;
   size_bytes: number | null;
+  mime_type?: string | null;
   created_at: string;
 }
 
@@ -52,6 +54,7 @@ export function DocumentsPanel({ workspaceId, documents, canEdit }: { workspaceI
                     {n}
                   </p>
                 ))}
+                <Preview id={d.id} name={d.name} mime={d.mime_type} />
                 <div className="mt-1 flex gap-3 text-xs">
                   <a href={`/api/documents/${d.id}`} className="underline">
                     Baixar

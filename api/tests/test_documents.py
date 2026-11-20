@@ -314,6 +314,12 @@ def test_the_download_is_a_fresh_short_lived_signed_url(signed_in: TestClient, d
     assert signed_in.get("/v1/documents/not-a-uuid/download").status_code == 422
 
 
+def test_inline_download_drops_the_attachment_name_for_the_browser_viewer(signed_in: TestClient, db: FakeDb) -> None:
+    doc_id = upload(signed_in, workspace(db)).json()["id"]
+    r = signed_in.get(f"/v1/documents/{doc_id}/download?inline=true", follow_redirects=False)
+    assert r.status_code == 302 and "download=" not in r.headers["location"]
+
+
 def test_a_pdf_is_read_through_its_text_layer_and_low_confidence_fields_are_stored_for_confirmation(
     signed_in: TestClient, db: FakeDb
 ) -> None:

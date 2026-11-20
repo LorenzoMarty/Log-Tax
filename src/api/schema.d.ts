@@ -278,6 +278,8 @@ export interface paths {
         /**
          * Download
          * @description A fresh, short-lived signed URL. Visibility is decided by the caller's own session (RLS).
+         *
+         *     `inline=true` drops the attachment name so the browser's viewer shows PDF and images (#165).
          */
         get: operations["download_v1_documents__document_id__download_get"];
         put?: never;
@@ -2442,7 +2444,9 @@ export interface operations {
     };
     download_v1_documents__document_id__download_get: {
         parameters: {
-            query?: never;
+            query?: {
+                inline?: boolean;
+            };
             header?: {
                 authorization?: string | null;
             };
