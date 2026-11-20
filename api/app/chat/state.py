@@ -113,6 +113,10 @@ async def load_workspace_state(
     asset_rows = await db.select(
         "assets", select="id,kind,description,value,acquired_at,extra", workspace_id=f"eq.{workspace_id}", order="created_at"
     )
+    estate_rows = await db.select("estates", select="deceased_name,died_at,uf", workspace_id=f"eq.{workspace_id}")
+    heir_rows = await db.select(
+        "heirs", select="id,name,relationship,share", workspace_id=f"eq.{workspace_id}", order="created_at"
+    )
 
     agents: list[Agent] = [
         {"id": a["id"], "name": a["name"], "objective": a["objective"], "tools": (a.get("config") or {}).get("tools", [])}
@@ -147,6 +151,8 @@ async def load_workspace_state(
             {**a, "value": str(Decimal(str(a["value"])).quantize(Decimal("0.01"))), "extra": a.get("extra") or {}}
             for a in asset_rows
         ],
+        estate=estate_rows[0] if estate_rows else None,
+        heirs=[{**h, "share": str(Decimal(str(h["share"])).quantize(Decimal("0.01")))} for h in heir_rows],
     )
     conv = conversation[0] if conversation else {}
     return WorkspaceState(
@@ -222,6 +228,18 @@ async def save_workspace_state(
             await db.insert("assets", {**values, "workspace_id": workspace_id})
         elif asset["id"] in store.touched_asset_ids:
             await db.update("assets", values, id=f"eq.{asset['id']}")
+
+    if store.estate_changed and store.estate:
+        await db.upsert("estates", {**store.estate, "workspace_id": workspace_id}, "workspace_id")
+    gone_heirs = [i for i in store.removed_heir_ids if is_persisted(i)]
+    if gone_heirs:
+        await db.delete("heirs", id=f"in.({','.join(gone_heirs)})", workspace_id=f"eq.{workspace_id}")
+    for heir in store.heirs:
+        values = {k: heir[k] for k in ("name", "relationship", "share")}
+        if not is_persisted(heir["id"]):
+            await db.insert("heirs", {**values, "workspace_id": workspace_id})
+        elif heir["id"] in store.touched_heir_ids:
+            await db.update("heirs", values, id=f"eq.{heir['id']}")
 
     saved: list[Agent] = []
     for agent in store.agents:

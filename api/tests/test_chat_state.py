@@ -415,3 +415,25 @@ async def test_assets_persist_through_the_workspace_state() -> None:
     await third.store.remove_asset(third.store.assets[0]["id"])
     await save_workspace_state(db, ws, third, [], [], BLANK)
     assert db.tables["assets"] == []
+
+
+async def test_estate_and_heirs_persist_through_the_workspace_state() -> None:
+    db = FakeDb()
+    ws = workspace(db, kind="pessoal")
+    state = await load_workspace_state(db, ws, BLANK)
+    assert state is not None and state.store.estate is None
+    await state.store.set_estate({"deceased_name": "Maria", "died_at": "2026-05-01", "uf": "SP"})
+    await state.store.add_heir({"name": "João", "relationship": None, "share": "50.00"})
+    await save_workspace_state(db, ws, state, [], [], BLANK)
+    assert db.tables["estates"][0]["workspace_id"] == ws and db.tables["heirs"][0]["share"] == "50.00"
+    again = await load_workspace_state(db, ws, BLANK)
+    assert again is not None and again.store.estate["deceased_name"] == "Maria" and again.store.heirs[0]["name"] == "João"  # type: ignore[index]
+    await again.store.set_estate({"uf": "RJ"})
+    await again.store.update_heir(again.store.heirs[0]["id"], {"share": "60.00"})
+    await save_workspace_state(db, ws, again, [], [], BLANK)
+    assert len(db.tables["estates"]) == 1 and db.tables["estates"][0]["uf"] == "RJ" and db.tables["heirs"][0]["share"] == "60.00"
+    third = await load_workspace_state(db, ws, BLANK)
+    assert third is not None
+    await third.store.remove_heir(third.store.heirs[0]["id"])
+    await save_workspace_state(db, ws, third, [], [], BLANK)
+    assert db.tables["heirs"] == []

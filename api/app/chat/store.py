@@ -17,6 +17,8 @@ Kind = Literal["empresa", "pessoal"]
 Alert = dict[str, Any]  # {"id", "rule": {"metric", "operator", "threshold"}, "active"}
 Memory = dict[str, str]  # {"id", "text"}
 Asset = dict[str, Any]  # {"id", "kind", "description", "value" (decimal string), "acquired_at" (ISO date | None), "extra"}
+Estate = dict[str, Any]  # {"deceased_name", "died_at" (ISO date), "uf" (str | None)}
+Heir = dict[str, Any]  # {"id", "name", "relationship" (str | None), "share" (decimal string, percent)}
 
 
 @dataclass(frozen=True)
@@ -50,6 +52,12 @@ class ChatStore(Protocol):
     async def add_asset(self, values: dict[str, Any]) -> Asset: ...
     async def update_asset(self, asset_id: str, patch: dict[str, Any]) -> Asset | None: ...
     async def remove_asset(self, asset_id: str) -> bool: ...
+    async def get_estate(self) -> Estate | None: ...
+    async def set_estate(self, values: dict[str, Any]) -> Estate: ...
+    async def list_heirs(self) -> list[Heir]: ...
+    async def add_heir(self, values: dict[str, Any]) -> Heir: ...
+    async def update_heir(self, heir_id: str, patch: dict[str, Any]) -> Heir | None: ...
+    async def remove_heir(self, heir_id: str) -> bool: ...
 
 
 class WorkspaceAdmin(Protocol):
@@ -90,6 +98,11 @@ class MemoryStore:
     assets: list[Asset] = field(default_factory=list)
     removed_asset_ids: list[str] = field(default_factory=list)
     touched_asset_ids: set[str] = field(default_factory=set)
+    estate: Estate | None = None
+    estate_changed: bool = False
+    heirs: list[Heir] = field(default_factory=list)
+    removed_heir_ids: list[str] = field(default_factory=list)
+    touched_heir_ids: set[str] = field(default_factory=set)
     _n: int = 0
 
     def _next(self) -> int:
@@ -187,4 +200,34 @@ class MemoryStore:
         self.assets = [a for a in self.assets if a["id"] != asset_id]
         if had:
             self.removed_asset_ids.append(asset_id)
+        return had
+
+    async def get_estate(self) -> Estate | None:
+        return self.estate
+
+    async def set_estate(self, values: dict[str, Any]) -> Estate:
+        self.estate = {**(self.estate or {}), **values}
+        self.estate_changed = True
+        return self.estate
+
+    async def list_heirs(self) -> list[Heir]:
+        return self.heirs
+
+    async def add_heir(self, values: dict[str, Any]) -> Heir:
+        heir = {"id": f"new-heir-{self._next()}", **values}
+        self.heirs.append(heir)
+        return heir
+
+    async def update_heir(self, heir_id: str, patch: dict[str, Any]) -> Heir | None:
+        heir = next((h for h in self.heirs if h["id"] == heir_id), None)
+        if heir is not None:
+            heir.update(patch)
+            self.touched_heir_ids.add(heir_id)
+        return heir
+
+    async def remove_heir(self, heir_id: str) -> bool:
+        had = any(h["id"] == heir_id for h in self.heirs)
+        self.heirs = [h for h in self.heirs if h["id"] != heir_id]
+        if had:
+            self.removed_heir_ids.append(heir_id)
         return had
