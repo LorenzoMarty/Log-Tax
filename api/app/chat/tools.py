@@ -233,6 +233,10 @@ class RememberArgs(_Args):
     text: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=300)]
 
 
+class RestoreArgs(_Args):
+    version: int = Field(ge=1)
+
+
 class IdArgs(_Args):
     id: str = Field(min_length=1)
 
@@ -931,6 +935,29 @@ async def _dashboard_set_style(ctx: ToolContext, a: StyleArgs) -> Any:
         await ctx.store.dispatch({"type": "setDensity", "density": a.density})
     d = await ctx.store.get_dashboard()
     return {"theme": d["theme"], "density": d["density"], "widgets": len(d["widgets"])}
+
+
+@_tool(
+    "dashboard_list_versions",
+    "Lista as versões salvas do painel (as últimas 50), da mais nova para a mais antiga, com número, data e resumo da mudança. "
+    "Use antes de restaurar quando o usuário pedir para voltar a 'como estava ontem' ou similar.",
+    NoArgs,
+    read_only=True,
+)
+async def _dashboard_list_versions(ctx: ToolContext, a: NoArgs) -> Any:
+    return {"current": (await ctx.store.get_dashboard())["version"], "versions": await ctx.store.list_versions()}
+
+
+@_tool(
+    "dashboard_restore_version",
+    "Volta o painel ao estado de uma versão salva (desfazer). A restauração vira uma versão nova: nada do histórico é apagado.",
+    RestoreArgs,
+)
+async def _dashboard_restore_version(ctx: ToolContext, a: RestoreArgs) -> Any:
+    restored = await ctx.store.restore_version(a.version)
+    if restored is None:
+        raise ToolError(f"Versão {a.version} não encontrada. Liste as versões com dashboard_list_versions.")
+    return {"version": restored["version"], "widgets": [w["id"] for w in restored["widgets"]]}
 
 
 # ---- alerts and agents ----

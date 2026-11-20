@@ -9,6 +9,7 @@ from app.api import (
     chat,
     company_lookup,
     cron,
+    dashboard_versions,
     document_search,
     documents,
     engine,
@@ -66,6 +67,7 @@ def create_app() -> FastAPI:
     app.include_router(usage.router)
     app.include_router(admin.router)
     app.include_router(integrations.router)
+    app.include_router(dashboard_versions.router)
     return app
 
 

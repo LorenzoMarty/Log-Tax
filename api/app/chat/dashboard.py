@@ -160,6 +160,9 @@ def reduce(state: History, action: Action) -> History:
         moved = out.pop(source)
         out.insert(action["toIndex"], moved)
         return commit(widgets=out)
+    if kind == "restore":  # an old snapshot becomes a NEW version; the history is never rewritten
+        old = action["dashboard"]
+        return commit(**{k: old[k] for k in ("name", "theme", "density", "widgets")})
     if kind == "setTheme":
         return commit(theme=action["theme"])
     if kind == "setDensity":
