@@ -225,6 +225,29 @@ def test_the_report_route_serves_the_data_to_anyone_who_can_see_the_workspace(si
     assert personal["title"] == "Relatório de Imposto de Renda" and "alertas" not in [s["id"] for s in personal["sections"]]
 
 
+def test_the_sheet_export_is_pt_br_csv_or_xlsx_and_neutralises_formulas(signed_in: TestClient, db: FakeDb) -> None:
+    import io
+    import zipfile
+
+    ws = workspace(db)
+    db.seed("documents", workspace_id=ws, name='=HYPERLINK("x")', doc_type="nota_fiscal", extracted={})
+    r = signed_in.get(f"/v1/workspaces/{ws}/report/export")
+    assert r.status_code == 200 and r.headers["content-type"].startswith("text/csv")
+    assert "attachment" in r.headers["content-disposition"]
+    assert r.content.startswith(b"\xef\xbb\xbf") and "Tributo;Por mês".encode() in r.content and b"\r\n" in r.content
+    assert b"'=HYPERLINK" in r.content and b"\r\n=" not in r.content
+    x = signed_in.get(f"/v1/workspaces/{ws}/report/export?format=xlsx")
+    assert x.status_code == 200 and x.headers["content-type"].endswith("spreadsheetml.sheet")
+    sheet = zipfile.ZipFile(io.BytesIO(x.content)).read("xl/worksheets/sheet1.xml").decode()
+    assert "'=HYPERLINK" in sheet
+    assert signed_in.get(f"/v1/workspaces/{ws}/report/export?format=pdf").status_code == 422
+    assert signed_in.get("/v1/workspaces/6f1d9a4e-6c1c-4b57-9d62-3a4c1f0a9b11/report/export").status_code == 404
+
+
+def test_the_sheet_export_needs_a_signed_in_user(anonymous: TestClient) -> None:
+    assert anonymous.get(f"/v1/workspaces/{USER}/report/export").status_code == 401
+
+
 def test_the_report_and_the_account_routes_need_a_signed_in_user(anonymous: TestClient) -> None:
     assert anonymous.get(f"/v1/workspaces/{USER}/report").status_code == 401
     assert anonymous.get("/v1/account/export").status_code == 401
