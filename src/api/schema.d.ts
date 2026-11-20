@@ -81,6 +81,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Overview
+         * @description Totals of users, workspaces, plans and AI usage, plus the accounts that cost most. 403 unless a platform admin.
+         */
+        get: operations["overview_v1_admin_overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/agent-templates": {
         parameters: {
             query?: never;
@@ -1069,6 +1089,40 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AdminAccount */
+        AdminAccount: {
+            /** Calls */
+            calls: number;
+            /** Costusd */
+            costUsd: number;
+            /** Email */
+            email: string | null;
+            /** Plan */
+            plan: string;
+            /** Userid */
+            userId: string;
+        };
+        /** AdminOverview */
+        AdminOverview: {
+            /** Aicalls */
+            aiCalls: number;
+            /** Aicostusd */
+            aiCostUsd: number;
+            /** Aiinputtokens */
+            aiInputTokens: number;
+            /** Aioutputtokens */
+            aiOutputTokens: number;
+            /** Planfree */
+            planFree: number;
+            /** Planpro */
+            planPro: number;
+            /** Topaccounts */
+            topAccounts: components["schemas"]["AdminAccount"][];
+            /** Users */
+            users: number;
+            /** Workspaces */
+            workspaces: number;
+        };
         /** AgentTemplateOut */
         AgentTemplateOut: {
             /** Firstquestion */
@@ -2162,6 +2216,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    overview_v1_admin_overview_get: {
+        parameters: {
+            query?: {
+                top?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminOverview"];
                 };
             };
             /** @description Validation Error */

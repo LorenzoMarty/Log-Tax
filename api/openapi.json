@@ -1,6 +1,102 @@
 {
   "components": {
     "schemas": {
+      "AdminAccount": {
+        "properties": {
+          "calls": {
+            "title": "Calls",
+            "type": "integer"
+          },
+          "costUsd": {
+            "title": "Costusd",
+            "type": "number"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "plan": {
+            "title": "Plan",
+            "type": "string"
+          },
+          "userId": {
+            "title": "Userid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "email",
+          "plan",
+          "calls",
+          "costUsd"
+        ],
+        "title": "AdminAccount",
+        "type": "object"
+      },
+      "AdminOverview": {
+        "properties": {
+          "aiCalls": {
+            "title": "Aicalls",
+            "type": "integer"
+          },
+          "aiCostUsd": {
+            "title": "Aicostusd",
+            "type": "number"
+          },
+          "aiInputTokens": {
+            "title": "Aiinputtokens",
+            "type": "integer"
+          },
+          "aiOutputTokens": {
+            "title": "Aioutputtokens",
+            "type": "integer"
+          },
+          "planFree": {
+            "title": "Planfree",
+            "type": "integer"
+          },
+          "planPro": {
+            "title": "Planpro",
+            "type": "integer"
+          },
+          "topAccounts": {
+            "items": {
+              "$ref": "#/components/schemas/AdminAccount"
+            },
+            "title": "Topaccounts",
+            "type": "array"
+          },
+          "users": {
+            "title": "Users",
+            "type": "integer"
+          },
+          "workspaces": {
+            "title": "Workspaces",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "users",
+          "workspaces",
+          "planFree",
+          "planPro",
+          "aiCalls",
+          "aiInputTokens",
+          "aiOutputTokens",
+          "aiCostUsd",
+          "topAccounts"
+        ],
+        "title": "AdminOverview",
+        "type": "object"
+      },
       "AgentTemplateOut": {
         "properties": {
           "firstQuestion": {
@@ -3727,6 +3823,68 @@
         "summary": "Export",
         "tags": [
           "account"
+        ]
+      }
+    },
+    "/v1/admin/overview": {
+      "get": {
+        "description": "Totals of users, workspaces, plans and AI usage, plus the accounts that cost most. 403 unless a platform admin.",
+        "operationId": "overview_v1_admin_overview_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "top",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Top",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminOverview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Overview",
+        "tags": [
+          "admin"
         ]
       }
     },

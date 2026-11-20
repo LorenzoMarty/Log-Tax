@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import (
     account,
+    admin,
     agent_templates,
     alert_events,
     chat,
@@ -63,6 +64,7 @@ def create_app() -> FastAPI:
     app.include_router(alert_events.router)
     app.include_router(missing_documents.router)
     app.include_router(usage.router)
+    app.include_router(admin.router)
     app.include_router(integrations.router)
     return app
 
