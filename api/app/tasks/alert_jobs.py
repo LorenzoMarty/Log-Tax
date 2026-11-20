@@ -8,7 +8,7 @@ conditional update first, so two workers racing for the same alert write one not
 from collections import defaultdict
 from typing import Any
 
-from app.chat.alerts import compute_metrics, evaluate_alerts
+from app.chat.alerts import compute_metrics, evaluate_alerts, next_deadline
 from app.core.config import Settings, get_settings
 from app.core.crypto import decrypt_field
 from app.core.logging import log
@@ -44,7 +44,8 @@ async def evaluate_all_alerts(db: UserDb, settings: Settings | None = None) -> d
     for alerts in by_workspace.values():
         company = _company(alerts[0]["workspaces"], config)
         metrics = compute_metrics(engine, company) if company else {}
-        for alert, status in zip(alerts, evaluate_alerts(alerts, metrics), strict=True):
+        deadline = next_deadline(company) if company else None
+        for alert, status in zip(alerts, evaluate_alerts(alerts, metrics, deadline), strict=True):
             summary["evaluated"] += 1
             if status["triggered"] and not alert["fired"]:
                 claimed = await db.update("alerts", {"fired": True}, id=f"eq.{alert['id']}", fired="eq.false")
