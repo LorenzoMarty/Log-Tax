@@ -5039,6 +5039,80 @@
         ]
       }
     },
+    "/v1/workspaces/{workspace_id}/missing-documents": {
+      "get": {
+        "description": "`period` is YYYY-MM (default: this month). Done = a document of the type arrived in the month (the year, if annual).",
+        "operationId": "missing_documents_v1_workspaces__workspace_id__missing_documents_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Period"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Missing Documents",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
     "/v1/workspaces/{workspace_id}/report": {
       "get": {
         "operationId": "report_v1_workspaces__workspace_id__report_get",
