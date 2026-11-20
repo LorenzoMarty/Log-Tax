@@ -37,6 +37,8 @@ async def evaluate_all_alerts(db: UserDb, settings: Settings | None = None) -> d
     rows = await db.select("alerts", select=EMBED, active="eq.true")
     by_workspace: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
+        if "event" in row["rule"]:
+            continue  # an event rule is evaluated when its event happens (`event_alerts`)
         by_workspace[row["workspace_id"]].append(row)
 
     engine = RealEngine()
