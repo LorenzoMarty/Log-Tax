@@ -85,7 +85,7 @@ async def call(reg: ToolRegistry, name: str, args: Any = None, untrusted: bool =
 
 # ---- catalogue and schemas ----
 def test_every_tool_has_a_clean_json_schema_and_the_flags_are_consistent() -> None:
-    assert len(TOOL_NAMES) == len(set(TOOL_NAMES)) == 51
+    assert len(TOOL_NAMES) == len(set(TOOL_NAMES)) == 54
     for t in TOOLS:
         schema = tool_parameters(t)
         text = json.dumps(schema)
@@ -107,7 +107,7 @@ def test_specs_follow_the_workspace_kind_and_the_agent_allow_list() -> None:
     assert not {"get_tax_diagnosis", "run_simulation", "create_alert"} & set(names("pessoal"))
     assert "get_tax_diagnosis" in names("empresa") and not {"get_ir_diagnosis", "save_person_data"} & set(names("empresa"))
     assert names("empresa", ("get_tax_diagnosis", "get_ir_diagnosis")) == ["get_tax_diagnosis"]
-    assert len(names(None)) == 51
+    assert len(names(None)) == 54
 
 
 async def test_unknown_wrong_kind_and_not_allowed_tools_are_refused_at_runtime() -> None:
@@ -574,3 +574,24 @@ async def test_inventory_deadlines_checklist_and_partilha() -> None:
     assert (await call(reg, "simulate_partilha", {"meacaoHeirId": "x"}))["status"] == "error"
     odd = split_estate(Decimal("0.05"), [("a", Decimal("50")), ("b", Decimal("50"))])
     assert [s.amount for s in odd] == [Decimal("0.03"), Decimal("0.02")]
+
+
+async def test_asset_sale_carrying_tax_and_patrimony_panel() -> None:
+    reg, store = make(Scope(WS, kind="pessoal"), competence="2026-11")
+    house = (await call(reg, "add_asset", {"kind": "imovel", "description": "Casa", "value": 600000}))["data"]
+    await call(reg, "add_asset", {"kind": "divida", "description": "Financiamento", "value": 100000})
+    stock = (await call(reg, "add_asset", {"kind": "investimento", "description": "CDB", "value": 1000}))["data"]
+    ask = await call(reg, "simulate_asset_sale", {"id": house["id"], "saleValue": 500000})
+    assert ask["status"] == "ok" and ask["data"] == {"status": "insufficient_data", "missing": ["costBasis"]}
+    sim = (await call(reg, "simulate_asset_sale", {"id": house["id"], "saleValue": 500000, "costBasis": 300000}))["data"]
+    assert sim["status"] == "ok" and sim["value"]["gain"] == "200000.00" and sim["value"]["tax"] == "30000.00"
+    assert (await call(reg, "simulate_asset_sale", {"id": stock["id"], "saleValue": 1}))["data"]["status"] == "not_applicable"
+    assert (await call(reg, "simulate_asset_sale", {"id": "nope", "saleValue": 1}))["status"] == "error"
+    assert (await call(reg, "asset_carrying_tax", {"tax": "iptu"}))["data"]["missing"] == ["annualAmount"]
+    iptu = (await call(reg, "asset_carrying_tax", {"tax": "iptu", "annualAmount": 1200}))["data"]["value"]
+    assert iptu["annual"] == "1200.00" and iptu["monthly"] == "100.00"
+    out = (await call(reg, "build_patrimony_panel"))["data"]
+    assert out["netWorth"] == "501000.00" and out["byKind"]["imovel"] == "600000.00"
+    await call(reg, "build_patrimony_panel")  # second run updates in place
+    ids = [w["id"] for w in store.history.present["widgets"]]
+    assert ids.count("patrimonio-liquido") == 1 and "patrimonio-por-tipo" in ids

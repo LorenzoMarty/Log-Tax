@@ -105,7 +105,15 @@ async def load_workspace_state(
         if agent_id
         else await db.select("conversations", select="history,messages", workspace_id=f"eq.{workspace_id}")
     )
-    dashboards = await db.select("dashboards", select="id,data", workspace_id=f"eq.{workspace_id}", order="created_at", limit="1")
+    # The main dashboard has no agent; an agent's conversation edits that agent's own dashboard (#139).
+    dashboards = await db.select(
+        "dashboards",
+        select="id,data",
+        workspace_id=f"eq.{workspace_id}",
+        agent_id=f"eq.{agent_id}" if agent_id else "is.null",
+        order="created_at",
+        limit="1",
+    )
     alerts = await db.select("alerts", select="id,rule,active", workspace_id=f"eq.{workspace_id}", order="created_at")
     agent_rows = await db.select(
         "agents", select="id,name,objective,config", workspace_id=f"eq.{workspace_id}", order="created_at"
@@ -157,6 +165,8 @@ async def load_workspace_state(
         data = await get_version(db, workspace_id, version)
         return [{"version": version, "data": data}] if data else []
 
+    if agent and not (dashboards and dashboards[0].get("data")):
+        present = {**present, "id": agent["id"], "name": f"Painel de {agent['name']}"}
     store = MemoryStore(
         load_versions=load_versions,
         company=company,
@@ -215,9 +225,10 @@ async def save_workspace_state(
     }
     if state.dashboard_row_id:
         await db.update("dashboards", row, id=f"eq.{state.dashboard_row_id}")
-    else:
-        await db.insert("dashboards", row)
-    if dashboard["version"] != state.loaded_version:  # something changed this turn: keep each step as a version
+    elif state.agent is None or dashboard["widgets"]:  # an agent that never built a panel does not get an empty one
+        await db.insert("dashboards", {**row, "agent_id": state.agent["id"] if state.agent else None})
+    # ponytail: versions (#122) are per workspace, so only the main dashboard keeps them; agent panels have none yet
+    if state.agent is None and dashboard["version"] != state.loaded_version:
         await record_versions(db, workspace_id, [*store.history.past, dashboard])
 
     new_alerts = [

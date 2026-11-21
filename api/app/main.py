@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import (
     account,
     admin,
+    agent_dashboards,
     agent_templates,
     agents,
     alert_events,
@@ -56,6 +57,7 @@ def create_app() -> FastAPI:
     app.include_router(engine.router)
     app.include_router(chat.router)
     app.include_router(agent_templates.router)
+    app.include_router(agent_dashboards.router)
     app.include_router(document_search.router)  # before documents.router, harmless either way: /search is a fixed path
     app.include_router(documents.router)
     app.include_router(nfe_import.router)
