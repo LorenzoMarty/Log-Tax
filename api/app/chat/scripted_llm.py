@@ -520,7 +520,72 @@ def _delete_page_reply(p: list[ToolOutcome], text: str) -> str:
     return str(r.get("message", "Não encontrei essa página.")) if r else "Não encontrei essa página."
 
 
+_PRESTADOR_ANEXO = re.compile(r"anexo\s+(iii|iv|v)\b", _I)
+_PRESTADOR_EXPENSES = re.compile(r"despesas?(?: dedut[íi]veis)? de\s+(R\$\s*\d[\d.,]*\s*(?:mil|k)?)", _I)
+_PRESTADOR_REVENUE = re.compile(r"(?:fatur\w+|receita|recebo|ganho)[^\d]{0,30}(R\$\s*\d[\d.,]*\s*(?:mil|k)?)", _I)
+
+
+def _prestador_step(_p: list[ToolOutcome], text: str, _s: str) -> dict[str, Any] | None:
+    m = _PRESTADOR_REVENUE.search(text)
+    revenue = revenue_from(m.group(1)) if m else None
+    if not revenue:
+        return None  # no revenue told: the reply asks for it, nothing is guessed
+    args: dict[str, Any] = {"monthlyRevenue": _wire(revenue)}
+    if e := _PRESTADOR_EXPENSES.search(text):
+        args["deductibleExpenses"] = _wire(revenue_from(e.group(1)))
+    if a := _PRESTADOR_ANEXO.search(text):
+        args["annex"] = a.group(1).upper()
+    elif re.search(r"fator r", text, _I):
+        args["fatorR"] = True
+    if re.search(r"simplificado", text, _I):
+        args["inssPlan"] = "simplificado"
+    if d := re.search(r"(\d+)\s+dependentes?", text, _I):
+        args["dependents"] = int(d.group(1))
+    return _call("compare_prestador", **args)
+
+
+_MISSING_QUESTION = {
+    "anexo": "Em qual anexo do Simples a sua atividade se enquadra (III, IV ou V)? "
+    "Se não souber, diga que quer considerar o Fator R.",
+    "monthlyRevenue": "Quanto você recebe de serviços por mês?",
+}
+
+
+def _prestador_reply(p: list[ToolOutcome], _t: str) -> str:
+    r = _first(p)
+    if r is None:
+        return "Para comparar pessoa física, MEI e Simples, quanto você recebe de serviços por mês (ex.: R$ 10 mil)?"
+    d = r["data"] if _ok(r) else None
+    if d is None:
+        return "Não consegui comparar agora. Pode conferir os valores e tentar de novo?"
+    if d["status"] == "insufficient_data":
+        asks = " ".join(_MISSING_QUESTION.get(m, f"Preciso de: {m}.") for m in d["missing"])
+        return f"Antes de comparar, preciso de uma informação. {asks}"
+    if d["status"] == "not_applicable":
+        return f"Não consigo comparar nesse caso: {d['reason']}"
+    v = d["value"]
+    by = {o["option"]: o for o in v["options"]}
+    names = {"pessoa_fisica": "pessoa física", "mei": "MEI", "simples": "Simples"}
+    parts = "; ".join(
+        f"{names[k]}: {money(o['monthlyTotal'])} de imposto, {money(o['netMonthly'])} líquidos"
+        if o["eligible"]
+        else f"{names[k]}: não se aplica"
+        for k, o in by.items()
+    )
+    best = f" A opção com maior líquido é {names[v['best']]}." if v["best"] else ""
+    check = (
+        " Algumas regras ainda precisam de validação de um profissional."
+        if any(r["requiresValidation"] for r in v["rulesUsed"])
+        else ""
+    )
+    return (
+        f"Comparei por mês sobre {money(v['monthlyRevenue'])}: {parts}.{best}{check} "
+        "Montei o painel com os detalhes e as premissas."
+    )
+
+
 PLANS: list[Plan] = [
+    _plan(r"prestador", [_prestador_step], _prestador_reply),
     _plan(
         r"^(crie|criar|nova) uma p[áa]gina",
         [
