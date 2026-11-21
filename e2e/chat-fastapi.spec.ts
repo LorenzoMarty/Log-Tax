@@ -211,3 +211,55 @@ test("criar um inventário com 2 bens e 3 herdeiros pela conversa e ver o painel
   await page.reload();
   await expect(page.getByTestId("inventory-heir")).toHaveCount(3);
 });
+
+// #186: "crie uma IA para o inventário do meu pai" produces the PRD §10 configuration (template Inventário).
+test("criar a IA do Inventário pelo chat a partir do modelo", async ({ page }) => {
+  await login(page, "agentinv");
+  await createAndOpen(page, /Vida Pessoal/);
+  await sendChatMessage(page, "Crie uma IA para o inventário do meu pai", /Criei a "IA do Inventário"/);
+  const nav = page.getByRole("navigation", { name: "Minhas IAs" });
+  await expect(nav).toContainText("IA do Inventário");
+  await expect(nav).toContainText("Acompanhar patrimônio, documentos, impostos e obrigações do inventário");
+  await expect(nav).toContainText("9 ferramentas");
+});
+
+
+// Alert management (#137) against the FastAPI backend: by chat ("cancela aquele alerta" asks first) and by the screen.
+test("cancel an alert by chat asks for confirmation, then removes it", async ({ page }) => {
+  await login(page, "alerts-chat");
+  await createAndOpen(page, /Minha Empresa/);
+  await sendChatMessage(page, "Me avise se meus impostos passarem de R$ 20 mil", /20\.000/);
+  await page.reload();
+  await expect(page.getByTestId("managed-alert")).toHaveCount(1);
+
+  await sendChatMessage(page, "cancela aquele alerta", /Você confirma/);
+  await expect(page.getByTestId("managed-alert")).toHaveCount(1); // nothing is removed before the user confirms
+  await page.getByRole("button", { name: "Confirmar" }).click();
+  await expect(page.locator('[data-role="assistant"]').filter({ hasText: /apaguei o alerta/ }).last()).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByTestId("managed-alert")).toHaveCount(0);
+});
+
+test("pause, resume and delete an alert from the management list", async ({ page }) => {
+  await login(page, "alerts-ui");
+  await createAndOpen(page, /Minha Empresa/);
+  await sendChatMessage(page, "Me avise se meus impostos passarem de R$ 20 mil", /20\.000/);
+  await page.reload();
+
+  const row = page.getByTestId("managed-alert");
+  await expect(row).toContainText("Impostos por mês acima de R$ 20.000");
+  await expect(row).toContainText("ativo");
+  await row.getByRole("button", { name: "Pausar" }).click();
+  await expect(row).toContainText("pausado");
+  await row.getByRole("button", { name: "Reativar" }).click();
+  await expect(row).toContainText("ativo");
+
+  await row.getByRole("button", { name: "Apagar" }).click();
+  await expect(row).toContainText("Apagar este alerta?");
+  await row.getByRole("button", { name: "Cancelar" }).click();
+  await expect(row).toBeVisible();
+  await row.getByRole("button", { name: "Apagar" }).click();
+  await row.getByRole("button", { name: "Confirmar exclusão" }).click();
+  await expect(page.getByTestId("managed-alert")).toHaveCount(0);
+});

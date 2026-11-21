@@ -356,6 +356,12 @@ async def test_scripted_update_agent_reads_the_agent_id_from_the_system_prompt()
     assert tools2.names == [] and "Não encontrei essa IA" in none
 
 
+async def test_scripted_inventory_agent_uses_the_template() -> None:
+    text, tools = await turn("Crie uma IA para o inventário do meu pai", {"create_agent_from_template": {"id": "a1"}})
+    assert tools.names == ["create_agent_from_template"] and tools.args[0] == {"templateId": "inventario"}
+    assert 'Criei a "IA do Inventário"' in text
+
+
 async def test_scripted_inventory_journey_calls_the_estate_asset_and_heir_tools() -> None:
     _, tools = await turn("Abrir o espólio de João Silva, falecido em 15/10/2026, em sp", {})
     assert tools.names == ["set_estate"]
@@ -373,3 +379,21 @@ async def test_scripted_inventory_journey_calls_the_estate_asset_and_heir_tools(
 async def test_scripted_agent_with_its_own_panel_gets_the_dashboard_tools() -> None:
     text, tools = await turn("crie uma IA com painel próprio", {})
     assert tools.args[0]["tools"] == ["dashboard_add_widget", "dashboard_update_widget"] and "painel próprio" in text
+
+
+async def test_scripted_cancel_alert_lists_then_deletes_the_first_and_confirm_repeats_it() -> None:
+    class Alerts(Canned):
+        async def invoke(self, name: str, args: str, *, untrusted_in_context: bool) -> ToolOutcome:
+            if name == "delete_alert":
+                self.names.append(name)
+                self.args.append(json.loads(args))
+                return {"status": "confirmation_required", "key": "k", "summary": "apagar"}
+            return await super().invoke(name, args, untrusted_in_context=untrusted_in_context)
+
+    tools = Alerts({"list_alerts": [{"id": "a1", "rule": {}, "active": True}]})
+    r = await run_turn(llm=ScriptedLlm(), tools=tools, history=[], user_message="cancela aquele alerta")
+    assert tools.names == ["list_alerts", "delete_alert"] and tools.args[1] == {"id": "a1"}
+    assert "Você confirma" in r.text
+    again = Alerts({"list_alerts": [{"id": "a1", "rule": {}, "active": True}]})
+    await run_turn(llm=ScriptedLlm(), tools=again, history=r.history, user_message="Sim, pode confirmar.")
+    assert again.names == ["list_alerts", "delete_alert"]

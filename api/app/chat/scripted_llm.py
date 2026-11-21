@@ -340,6 +340,23 @@ def _alert_reply(p: list[ToolOutcome], text: str) -> str:
     )
 
 
+def _first_alert_id(prev: list[ToolOutcome]) -> str | None:
+    rows = prev[0].get("data") if prev and prev[0]["status"] == "ok" else None
+    return str(rows[0]["id"]) if isinstance(rows, list) and rows else None
+
+
+def _delete_alert_step(prev: list[ToolOutcome], _t: str, _s: str) -> dict[str, Any] | None:
+    alert_id = _first_alert_id(prev)
+    return _call("delete_alert", id=alert_id) if alert_id else None
+
+
+def _delete_alert_reply(p: list[ToolOutcome], _t: str) -> str:
+    r = p[1] if len(p) > 1 else None
+    if r and r["status"] == "confirmation_required":
+        return "Vou apagar o seu alerta. Você confirma?"
+    return "Pronto, apaguei o alerta." if _ok(r) else "Não encontrei nenhum alerta para apagar."
+
+
 def _new_agent_reply(p: list[ToolOutcome], _t: str) -> str:
     if _ok(_first(p)):
         return (
@@ -474,6 +491,13 @@ def _saved_reply(ok_text: str) -> Reply:
     return lambda p, _t: ok_text if _ok(_first(p)) else "Não consegui registrar isso. Pode conferir os dados e tentar de novo?"
 
 
+# "cancela aquele alerta" lists the alerts, then asks to delete the first one; the confirm click ("Sim, ...") repeats the call.
+DELETE_ALERT = _plan(
+    r"cancel\w* (aquele|o|esse) alerta|^sim\b",
+    [lambda _p, _t, _s: _call("list_alerts"), _delete_alert_step],
+    _delete_alert_reply,
+)
+
 PLANS: list[Plan] = [
     _plan(r"acompanhar.*(apartamento|im[óo]vel|casa|carro|ve[íi]culo|moto)", [_track_asset_step], _asset_reply),
     _plan(
@@ -526,6 +550,16 @@ PLANS: list[Plan] = [
         ],
         lambda p, _t: (
             'Criei a "IA do Painel". Ela mantém um painel próprio, separado do principal. '
+            'Abra "Minhas IAs" para conversar com ela.'
+            if _ok(_first(p))
+            else "Não consegui criar a IA agora."
+        ),
+    ),
+    _plan(
+        r"(crie|criar|nova) uma ia.*invent[áa]rio",
+        [lambda _p, _t, _s: _call("create_agent_from_template", templateId="inventario")],
+        lambda p, _t: (
+            'Criei a "IA do Inventário". Ela acompanha patrimônio, herdeiros, prazos e documentos do inventário. '
             'Abra "Minhas IAs" para conversar com ela.'
             if _ok(_first(p))
             else "Não consegui criar a IA agora."
@@ -617,12 +651,27 @@ def _message(text: str) -> dict[str, Any]:
     }
 
 
+def _last_call(history: list[Msg]) -> str | None:
+    names = [
+        i["name"]
+        for m in history
+        if m["role"] == "llm"
+        for i in cast(dict[str, Any], m)["items"]
+        if i.get("type") == "function_call"
+    ]
+    return names[-1] if names else None
+
+
 class ScriptedLlm:
     async def respond(self, *, system: str, history: list[Msg], tools: list[ToolSpec]) -> LlmTurn:
         last_user = max(i for i, m in enumerate(history) if m["role"] == "user")
         user_text = str(cast(dict[str, Any], history[last_user])["content"])
         prev: list[ToolOutcome] = [json.loads(m["output"]) for m in history[last_user + 1 :] if m["role"] == "tool_result"]
         plan = next((p for p in PLANS if p.match.search(user_text.strip())), FALLBACK)
+        if DELETE_ALERT.match.search(user_text.strip()) and (
+            not user_text.strip().lower().startswith("sim") or _last_call(history) in ("delete_alert", "list_alerts")
+        ):
+            plan = DELETE_ALERT
 
         step = plan.steps[len(prev)](prev, user_text, system) if len(prev) < len(plan.steps) else None
         if step:
