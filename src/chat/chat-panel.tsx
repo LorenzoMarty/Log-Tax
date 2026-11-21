@@ -6,7 +6,7 @@ import type { Widget } from "@/dashboard/types";
 import { AgentList } from "@/agents/agent-list";
 import { AlertBar } from "@/alerts/alert-bar";
 import type { AlertStatus } from "@/alerts/evaluate";
-import { DashboardView } from "@/dashboard/dashboard-view";
+import { DashboardView, type Focus } from "@/dashboard/dashboard-view";
 import { postLayout, type LayoutChange } from "@/dashboard/layout";
 import { PageTabs, type DashboardPage } from "@/dashboard/page-tabs";
 import { VersionHistory } from "@/dashboard/version-history";
@@ -79,6 +79,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
   const router = useRouter();
   const [messages, setMessages] = useState(props.initialMessages);
   const [dashboard, setDashboard] = useState(props.initialDashboard);
+  const [focus, setFocus] = useState<Focus | null>(null); // temporary layout for one answer (#124); the saved panel is `dashboard`
   const [pages, setPages] = useState(props.initialPages ?? []);
   const [activeId, setActiveId] = useState<string | undefined>(props.initialPages?.[0]?.id);
   const [alerts, setAlerts] = useState(props.initialAlerts ?? []);
@@ -139,7 +140,10 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
       const data = res.headers.get("content-type")?.includes(NDJSON) ? await readStream(res, setProgress) : await res.json();
       if (!res.ok) throw new Error(errorText(data.error) ?? "Algo deu errado.");
       setMessages((m) => [...m, { role: "assistant", text: data.text }]);
-      applyWithTransition(() => setDashboard(data.dashboard));
+      applyWithTransition(() => {
+        setDashboard(data.dashboard);
+        setFocus(data.focus ?? null);
+      });
       if (data.pages?.length) {
         const added = data.pages.length > pages.length;
         setPages(data.pages);
@@ -165,6 +169,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
     if (!target) return;
     setPages((all) => all.map((p) => (p.id === activeId ? { ...p, dashboard } : p))); // keep this page's latest edits (undo/restore)
     setActiveId(id);
+    setFocus(null);
     applyWithTransition(() => setDashboard(target.dashboard));
   }
 
@@ -240,7 +245,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
           {/* versions are recorded by the Python chat only (#370); the TS chat is being removed (#314) */}
           {CHAT_URL === "/api/v1/chat" && !props.agentId && (pages.length < 2 || activeId === pages[0]?.id) && <VersionHistory workspaceId={props.workspaceId} dashboard={dashboard} onRestored={setDashboard} />}
           <PageTabs pages={pages} activeId={activeId} onSelect={openPage} disabled={busy} />
-          <DashboardView dashboard={dashboard} loading={busy} onAsk={(w) => { setTopic(w); inputRef.current?.focus(); }} onLayout={CHAT_URL === "/api/v1/chat" && !props.agentId && !busy && (pages.length < 2 || activeId === pages[0]?.id) ? changeLayout : undefined} />
+          <DashboardView dashboard={dashboard} loading={busy} focus={focus} onExitFocus={() => applyWithTransition(() => setFocus(null))} onAsk={(w) => { setTopic(w); inputRef.current?.focus(); }} onLayout={CHAT_URL === "/api/v1/chat" && !props.agentId && !busy && (pages.length < 2 || activeId === pages[0]?.id) ? changeLayout : undefined} />
           {layoutStatus && <p role="status" className="sr-only">{layoutStatus}</p>}
         </div>
       <Panel label="Conversa com a IA" className="order-1 min-w-0 lg:order-none lg:sticky lg:top-6">
