@@ -85,6 +85,20 @@ def test_a_scoped_invite_stores_the_scope_and_refuses_the_editor_role(signed_in:
     assert plain.status_code == 201 and db.tables["workspace_invites"][-1]["scope"] is None
 
 
+def test_a_scoped_invite_can_list_individual_dashboard_pages(signed_in: TestClient, db: FakeDb) -> None:
+    ws = workspace(db)
+    page = "44444444-4444-4444-8444-444444444444"
+    scope = {"kinds": ["dashboard"], "dashboardIds": [page]}
+    ok = signed_in.post(f"/v1/workspaces/{ws}/invites", json={"email": "f@example.com", "role": "reader", "scope": scope})
+    assert ok.status_code == 201
+    assert db.tables["workspace_invites"][-1]["scope"] == scope
+    bad = signed_in.post(
+        f"/v1/workspaces/{ws}/invites",
+        json={"email": "g@example.com", "role": "reader", "scope": {"kinds": ["dashboard"], "dashboardIds": ["x"]}},
+    )
+    assert bad.status_code == 422
+
+
 @pytest.mark.parametrize(
     "payload",
     [
