@@ -43,7 +43,8 @@ export async function inviteToWorkspace(page: Page, email: string, role: ShareRo
   await page.getByLabel(/Email de quem vai receber/).fill(email);
   await page.getByLabel("Papel").selectOption({ label: role });
   await page.getByRole("button", { name: "Convidar" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Convite criado" })).toBeVisible();
+  // The first submit makes `next dev` compile the server action and the redirect target (run 44897885342: blank page for >15s).
+  await expect(page.getByRole("status").filter({ hasText: "Convite criado" })).toBeVisible({ timeout: 60_000 });
 }
 
 /**
