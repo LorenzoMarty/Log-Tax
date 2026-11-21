@@ -473,6 +473,16 @@ PLANS: list[Plan] = [
     ),
     _plan(r"relat[óo]rio", [lambda _p, _t, _s: _call("generate_report")], _report_reply),
     _plan(
+        r"(crie|criar|nova) uma ia.*invent[áa]rio",
+        [lambda _p, _t, _s: _call("create_agent_from_template", templateId="inventario")],
+        lambda p, _t: (
+            'Criei a "IA do Inventário". Ela acompanha patrimônio, herdeiros, prazos e documentos do inventário. '
+            'Abra "Minhas IAs" para conversar com ela.'
+            if _ok(_first(p))
+            else "Não consegui criar a IA agora."
+        ),
+    ),
+    _plan(
         r"(crie|criar|nova) uma ia",
         [
             lambda _p, _t, _s: _call(
