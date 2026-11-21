@@ -1,5 +1,6 @@
 import { Icon } from "@/ui/log";
 import { csvFileName, widgetCsv } from "./csv";
+import { formatDecimalBrl, monthLabel, progressPercent } from "./money";
 import type { Point, Widget } from "./types";
 
 export const brl = (n: number) =>
@@ -9,7 +10,9 @@ const compactBrl = (n: number) =>
   new Intl.NumberFormat("pt-BR", { notation: "compact", maximumFractionDigits: 1 }).format(n);
 
 /** Barras do design system Log: topo arredondado de 4px, até 28px de largura, grade em `chart-grid`, série `chart-1`. */
-function BarChart({ data, label }: { data: Point[]; label: string }) {
+type BarPoint = Point & { text?: string; projected?: boolean };
+
+function BarChart({ data, label }: { data: BarPoint[]; label: string }) {
   const W = 420, H = 170, padL = 40, padB = 20, padT = 6;
   const max = Math.max(...data.map((d) => d.value), 1);
   const ih = H - padB - padT, iw = W - padL;
@@ -29,8 +32,12 @@ function BarChart({ data, label }: { data: Point[]; label: string }) {
         const cx = padL + (iw * (i + 0.5)) / data.length, x = cx - bw / 2, top = y(d.value), h = padT + ih - top, r = Math.min(4, h);
         return (
           <g key={d.label}>
-            <path className="lg-bar lg-s1" d={`M${x},${top + h}V${top + r}Q${x},${top} ${x + r},${top}H${x + bw - r}Q${x + bw},${top} ${x + bw},${top + r}V${top + h}Z`}>
-              <title>{`${d.label}: ${brl(d.value)}`}</title>
+            <path
+              className="lg-bar lg-s1"
+              fillOpacity={d.projected ? 0.4 : undefined}
+              d={`M${x},${top + h}V${top + r}Q${x},${top} ${x + r},${top}H${x + bw - r}Q${x + bw},${top} ${x + bw},${top + r}V${top + h}Z`}
+            >
+              <title>{`${d.label}${d.projected ? " (projeção)" : ""}: ${d.text ?? brl(d.value)}`}</title>
             </path>
             <text className="lg-axis" x={cx} y={H - 4} textAnchor="middle">
               {d.label}
@@ -158,6 +165,92 @@ function Body({ w }: { w: Widget }) {
       );
     case "text":
       return <p className="text-sm">{w.body}</p>;
+    case "projection":
+      // Number() only places the bars; every label shown is the exact decimal string.
+      return (
+        <div className="text-sm">
+          <BarChart data={w.points.map((p) => ({ label: p.label, value: Number(p.value), text: formatDecimalBrl(p.value), projected: p.projected }))} label={w.title} />
+          <p className="mt-2 text-xs text-ink-muted">Barras claras são projeção. {w.basis}</p>
+        </div>
+      );
+    case "payroll":
+      return (
+        <div className="text-sm">
+          <p className="mb-2 text-xs text-ink-muted">Competência: {monthLabel(w.month)}</p>
+          <table className="lg-table">
+            <thead>
+              <tr>
+                <th scope="col">Encargo</th>
+                <th scope="col" className="!text-right">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              {w.items.map((i) => (
+                <tr key={i.label}>
+                  <td>{i.label}</td>
+                  <td className="lg-num">{formatDecimalBrl(i.amount)}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr>
+                <th scope="row" className="font-semibold">Total</th>
+                <td className="lg-num font-semibold">{formatDecimalBrl(w.total)}</td>
+              </tr>
+            </tfoot>
+          </table>
+          {w.notes && w.notes.length > 0 && (
+            <ul className="mt-3 list-disc pl-5 text-xs text-ink-muted">
+              {w.notes.map((n) => (
+                <li key={n}>{n}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      );
+    case "table":
+      return (
+        <div className="overflow-x-auto text-sm" role="region" aria-label={`${w.title} (tabela, role para o lado)`} tabIndex={0}>
+          <table className="lg-table">
+            <thead>
+              <tr>
+                {w.columns.map((c) => (
+                  <th key={c} scope="col">{c}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {w.rows.map((r, ri) => (
+                <tr key={ri}>
+                  {r.map((c, ci) => (
+                    <td key={ci}>{c}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    case "goal": {
+      const pct = progressPercent(w.current, w.target);
+      const show = (v: string) => (!w.unit || w.unit === "R$" ? formatDecimalBrl(v) : formatDecimalBrl(v, w.unit));
+      return (
+        <div className="flex flex-col gap-2 text-sm">
+          <p className="lg-stat-value">{pct}%</p>
+          <div className="lg-stat-bar" role="progressbar" aria-label={w.title} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
+            <span style={{ width: `${pct}%` }} />
+          </div>
+          <p className="text-ink-muted">
+            {show(w.current)} de {show(w.target)}
+          </p>
+          {w.deadline && (
+            <p className="text-ink-muted">
+              Até <time dateTime={w.deadline}>{new Date(`${w.deadline}T12:00:00`).toLocaleDateString("pt-BR")}</time>
+            </p>
+          )}
+        </div>
+      );
+    }
   }
 }
 

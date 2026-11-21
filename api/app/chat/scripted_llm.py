@@ -364,6 +364,33 @@ def _update_agent_step(_p: list[ToolOutcome], text: str, system: str) -> dict[st
     return _call("update_agent", id=agent_id, patch={"objective": objective})
 
 
+def _goal_widget(text: str) -> dict[str, Any]:
+    target = (revenue_from(text) or Decimal(10000)).quantize(Decimal("0.01"))
+    return {
+        "id": "meta",
+        "kind": "goal",
+        "title": "Meta de economia",
+        "size": "md",
+        "current": "0.00",
+        "target": f"{target:f}",
+        "unit": "R$",
+    }
+
+
+def _block_reply(subject: str, missing: str) -> Reply:
+    def reply(p: list[ToolOutcome], _t: str) -> str:
+        r = _first(p)
+        if not _ok(r):
+            return f"Não consegui montar {subject} agora."
+        assert r is not None
+        d = r.get("data")
+        if isinstance(d, dict) and d.get("status") == "ok":
+            return f"Pronto! Adicionei {subject} ao painel. São estimativas: valide com um contador."
+        return f"Ainda não dá para montar {subject}: {missing}"
+
+    return reply
+
+
 def _plan(pattern: str, steps: list[Step], reply: Reply) -> Plan:
     return Plan(re.compile(pattern, _I), steps, reply)
 
@@ -401,6 +428,38 @@ PLANS: list[Plan] = [
         ),
     ),
     _plan(r"relat[óo]rio", [lambda _p, _t, _s: _call("generate_report")], _report_reply),
+    _plan(
+        r"previs[ãa]o|proje[çc][ãa]o",
+        [lambda _p, _t, _s: _call("add_projection_block", monthsAhead=6)],
+        _block_reply("a projeção do imposto", "faltam os dados da empresa."),
+    ),
+    _plan(
+        r"folha",
+        [lambda _p, _t, _s: _call("add_payroll_block")],
+        _block_reply("os encargos da folha", "preciso da folha de pagamento do mês. Quanto foi?"),
+    ),
+    _plan(
+        r"meta",
+        [lambda _p, text, _s: _widget(_goal_widget(text))],
+        lambda p, _t: "Pronto! Adicionei a meta ao painel." if _ok(_first(p)) else "Não consegui adicionar a meta.",
+    ),
+    _plan(
+        r"(crie|criar|nova) uma ia .*painel",  # #139: an agent allowed to keep its own panel
+        [
+            lambda _p, _t, _s: _call(
+                "create_agent",
+                name="IA do Painel",
+                objective="Manter um painel próprio com as metas da empresa",
+                tools=["dashboard_add_widget", "dashboard_update_widget"],
+            )
+        ],
+        lambda p, _t: (
+            'Criei a "IA do Painel". Ela mantém um painel próprio, separado do principal. '
+            'Abra "Minhas IAs" para conversar com ela.'
+            if _ok(_first(p))
+            else "Não consegui criar a IA agora."
+        ),
+    ),
     _plan(
         r"(crie|criar|nova) uma ia",
         [
