@@ -61,6 +61,37 @@ test("company journey through FastAPI: context → diagnosis → dashboard → w
   await expect(page.getByTestId("activity")).toContainText("Confirmou uma ação destrutiva na conversa");
 });
 
+// #124: the question picks a temporary layout (PRD §27); the saved panel is never changed and one tap brings it back.
+test("the panel adapts to the question in focus mode and goes back to the saved one", async ({ page }) => {
+  await login(page, "fastapi-focus");
+  await createAndOpen(page, /Minha Empresa/);
+  await sendChatMessage(page, "Empresa", /52\.155/);
+  await sendChatMessage(page, "Adicione prazos e documentos", /Adicionei/);
+  await sendChatMessage(page, "E se meu faturamento subir para R$ 500 mil?", /89\.250/);
+  const blocks = page.getByTestId(/^widget-(?!skeleton)/);
+  const saved = await blocks.evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")));
+  const banner = page.getByTestId("focus-banner");
+
+  for (const [question, first] of [
+    ["Quanto estou pagando de imposto?", "widget-kpi"],
+    ["Quais documentos faltam?", "widget-documentos"],
+    ["Compare o cenário com a situação atual", "widget-simulacao"],
+    ["Quais os prazos?", "widget-prazos"],
+  ] as const) {
+    await sendChatMessage(page, question, /Organizei assim porque/);
+    await expect(banner).toContainText("painel salvo não mudou");
+    await expect(blocks.first()).toHaveAttribute("data-testid", first);
+    await page.getByRole("button", { name: "Voltar ao painel salvo" }).click();
+    await expect(banner).toHaveCount(0);
+    expect(await blocks.evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")))).toEqual(saved);
+  }
+
+  await sendChatMessage(page, "Quais documentos faltam?", /Organizei assim porque/);
+  await page.reload(); // the focus was never saved
+  await expect(banner).toHaveCount(0);
+  expect(await blocks.evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")))).toEqual(saved);
+});
+
 test("personal journey through FastAPI: the real engine does not invent a 2026 income-tax result", async ({ page }) => {
   await login(page, "fastapi-pf");
   await createAndOpen(page, /Vida Pessoal/);

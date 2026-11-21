@@ -26,6 +26,7 @@ from app.chat.agent_templates import AGENT_TEMPLATES
 from app.chat.agent_templates import BY_ID as TEMPLATE_BY_ID
 from app.chat.blocks import payroll_widget, projection_widget
 from app.chat.dashboard import Widget, validate_widget
+from app.chat.focus import INTENTS, focus_layout
 from app.chat.store import Kind, Scope, ToolContext
 from app.chat.types import ToolOutcome, ToolSpec
 from app.core.br_ids import cnpj_valid, normalize_cnpj
@@ -1137,6 +1138,25 @@ async def _generate_report(ctx: ToolContext, a: NoArgs) -> Any:
 
 
 # ---- dashboard ----
+class FocusArgs(_Args):
+    intent: Literal["numbers", "documents", "comparison", "deadlines", "savings"]
+
+
+@_tool(
+    "focus_dashboard",
+    "Mostra o painel em modo foco, só na tela e sem salvar nada, quando a pergunta pede um ângulo: numbers ('quanto estou pagando'), "
+    "documents ('quais documentos faltam'), comparison ('compare'), deadlines ('prazos') ou savings ('como pagar menos'). "
+    "O painel salvo continua intacto e o usuário volta a ele com um toque.",
+    FocusArgs,
+    read_only=True,
+)  # fmt: skip
+async def _focus_dashboard(ctx: ToolContext, a: FocusArgs) -> Any:
+    focus = focus_layout(a.intent, (await ctx.store.get_dashboard())["widgets"])
+    if focus is None:
+        raise ToolError(f"O painel ainda não tem blocos sobre {INTENTS[a.intent][0]}. Peça para adicionar antes.")
+    return {"focus": focus}
+
+
 async def _find_widget(ctx: ToolContext, widget_id: str) -> dict[str, Any]:
     return _need(
         next((w for w in (await ctx.store.get_dashboard())["widgets"] if w["id"] == widget_id), None),
