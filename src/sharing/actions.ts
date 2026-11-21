@@ -80,8 +80,27 @@ export async function addComment(workspaceId: string, formData: FormData) {
   const { supabase } = await session();
   const parsed = commentInput.safeParse({ body: formData.get("body"), widgetId: formData.get("widgetId") ?? "" });
   if (!parsed.success) return back(workspaceId, "comentario-invalido");
-  const { error } = await supabase.from("comments").insert({ workspace_id: workspaceId, body: parsed.data.body, widget_id: parsed.data.widgetId ?? null });
+  const parentId = String(formData.get("parentId") ?? "");
+  const { error } = await supabase
+    .from("comments")
+    .insert({ workspace_id: workspaceId, body: parsed.data.body, widget_id: parsed.data.widgetId ?? null, parent_id: parentId || null });
   return back(workspaceId, error ? "sem-permissao" : undefined);
+}
+
+export async function resolveComment(workspaceId: string, commentId: string, resolved: boolean) {
+  const { supabase, user } = await session();
+  await supabase
+    .from("comments")
+    .update(resolved ? { resolved_at: new Date().toISOString(), resolved_by: user.id } : { resolved_at: null, resolved_by: null })
+    .eq("id", commentId)
+    .eq("workspace_id", workspaceId);
+  return back(workspaceId);
+}
+
+export async function markNoticesRead(workspaceId: string) {
+  const { supabase } = await session();
+  await supabase.from("alert_events").update({ read_at: new Date().toISOString() }).eq("workspace_id", workspaceId).is("read_at", null);
+  return back(workspaceId);
 }
 
 export async function deleteComment(workspaceId: string, commentId: string) {
