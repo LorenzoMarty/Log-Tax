@@ -25,7 +25,7 @@ export type SynthesisFactory = () => {
 export function browserSynthesis(): SynthesisFactory | undefined {
   if (
     typeof window === "undefined" ||
-    !("speechSynthesis" in window) ||
+    !window.speechSynthesis ||
     typeof SpeechSynthesisUtterance === "undefined"
   )
     return undefined;

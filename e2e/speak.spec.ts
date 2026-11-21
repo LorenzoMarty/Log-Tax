@@ -17,12 +17,12 @@ test("an answer is read on demand, 'Parar' cancels, and nothing speaks by itself
       onerror: (() => void) | null = null;
       constructor(public text: string) {}
     };
-    w.speechSynthesis = {
+    Object.defineProperty(window, "speechSynthesis", { configurable: true, value: {
       speak: (u: { text: string; lang: string }) =>
         log.spoken.push({ text: u.text, lang: u.lang }),
       cancel: () => (log.cancels += 1),
       getVoices: () => [{ lang: "pt-BR" }],
-    };
+    } });
   });
   await login(page, "speak");
   await createAndOpen(page, /Minha Empresa/);
@@ -53,11 +53,11 @@ test("automatic reading is opt-in and remembered", async ({ page }) => {
   await page.addInitScript(() => {
     const w = window as unknown as Record<string, unknown>;
     w.SpeechSynthesisUtterance = class {};
-    w.speechSynthesis = {
+    Object.defineProperty(window, "speechSynthesis", { configurable: true, value: {
       speak: () => {},
       cancel: () => {},
       getVoices: () => [],
-    };
+    } });
   });
   await login(page, "speak-auto");
   await createAndOpen(page, /Minha Empresa/);
@@ -72,7 +72,7 @@ test("without speechSynthesis the listen controls are hidden with an explanation
   page,
 }) => {
   await page.addInitScript(() => {
-    delete (window as unknown as Record<string, unknown>).speechSynthesis;
+    Object.defineProperty(window, "speechSynthesis", { configurable: true, value: undefined });
   });
   await login(page, "speak-off");
   await createAndOpen(page, /Minha Empresa/);
