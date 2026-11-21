@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
 
+from app.chat.kinds import is_personal
 from app.core.errors import error_response
 from app.db.client import UserDb, user_db
 from app.engine.irpf_bens import build_lines
@@ -34,7 +35,7 @@ async def ir_bens_direitos(workspace_id: uuid.UUID, body: IrBensBody, db: UserDb
     if role is None:
         return error_response(404, "not_found", "Não encontrei o que você pediu.")
     rows = await db.select("workspaces", select="kind", id=f"eq.{ws}")
-    if not rows or rows[0]["kind"] != "pessoal":
+    if not rows or not is_personal(rows[0]["kind"]):
         return error_response(404, "not_found", "Não encontrei o que você pediu.")
     assets = await db.select(
         "assets", select="id,kind,description,value,acquired_at", workspace_id=f"eq.{ws}", order="created_at"

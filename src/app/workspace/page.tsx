@@ -6,7 +6,8 @@ import { acceptInvite, declineInvite } from "@/sharing/actions";
 import { MESSAGES } from "@/sharing/messages";
 import { ROLE_LABEL, type Role } from "@/sharing/schema";
 import { deleteMyAccount } from "@/account/actions";
-import { askFromHome, createDefaultWorkspaces, signOut } from "./actions";
+import { SPACE_KIND_LIST, SPACE_KINDS, baseOf, specOf } from "@/workspace/kinds";
+import { askFromHome, createDefaultWorkspaces, createWorkspace, signOut } from "./actions";
 import { HOME_QUESTION_MAX } from "./intent";
 
 export const metadata = { title: "Seus espaços" };
@@ -95,7 +96,7 @@ export default async function WorkspacePage({ searchParams }: { searchParams: Pr
                     <Icon name="chevronRight" className="text-ink-muted" />
                   </span>
                   <span className="mt-3 flex flex-wrap items-center gap-2">
-                    <Badge tone={w.kind === "empresa" ? "info" : "brand"}>{w.kind === "empresa" ? "Empresa" : "Pessoal"}</Badge>
+                    <Badge tone={baseOf(w.kind) === "empresa" ? "info" : "brand"}>{specOf(w.kind).label}</Badge>
                     {w.owner_id !== user.id && role && <span className="text-xs text-ink-muted">Compartilhado com você · {ROLE_LABEL[role]}</span>}
                   </span>
                 </Link>
@@ -104,6 +105,23 @@ export default async function WorkspacePage({ searchParams }: { searchParams: Pr
           })}
         </ul>
       ) : null}
+
+      <form action={createWorkspace} className="flex flex-wrap items-end gap-2" aria-label="Criar um espaço">
+        <Input name="name" label="Nome do novo espaço (opcional)" maxLength={60} className="min-w-0" />
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Tipo de espaço</span>
+          <select name="kind" defaultValue="empresa" className="rounded-[var(--radius-md)] border border-line bg-surface px-3 py-2">
+            {SPACE_KIND_LIST.map((k) => (
+              <option key={k} value={k}>
+                {SPACE_KINDS[k].label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <Button type="submit" variant="primary" icon="plus">
+          Criar espaço
+        </Button>
+      </form>
 
       <p className="text-sm text-ink-muted">
         <Link href="/workspace/seguranca" className="underline">

@@ -6,6 +6,7 @@ import type { StoredExtraction } from "@/documents/storage";
 import { mockEngine } from "@/engine";
 import { createClient } from "@/lib/supabase/server";
 import { buildReport } from "@/report/build";
+import { isPersonal } from "@/workspace/kinds";
 import { ReportView } from "@/report/report-view";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -32,7 +33,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
     workspaceName: state.workspaceName,
     company: state.company,
     person: state.person,
-    alerts: state.kind === "pessoal" ? [] : alertStatuses(mockEngine, state.company, state.alerts),
+    alerts: isPersonal(state.kind) ? [] : alertStatuses(mockEngine, state.company, state.alerts),
     documents: (docs ?? []).map((d) => ({ name: d.name, docType: d.doc_type as DocType | null, missing: ((d.extracted as StoredExtraction | null)?.missing ?? []) })),
     engine: mockEngine,
     generatedAt: new Date(),

@@ -6,6 +6,7 @@ document of its type reached the workspace in the period (the month, or the year
 
 from typing import Any
 
+from app.chat.kinds import is_personal
 from app.documents.classify import DOC_LABEL
 
 LABEL: dict[str, str] = {
@@ -21,7 +22,7 @@ ANNUAL = {"informe_rendimentos"}
 
 
 def expected_types(kind: str, profile: dict[str, Any]) -> list[str]:
-    if kind == "pessoal":
+    if is_personal(kind):
         return ["informe_rendimentos", "holerite", "extrato"]
     out = ["nota_fiscal", "extrato", "das" if profile.get("regime") in {"simples", "mei"} else "darf"]
     if profile.get("activity") == "servico":

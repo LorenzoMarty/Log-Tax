@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { demoSeedEnabled, seedCompany, seedPerson } from "@/engine";
 import { track } from "@/lib/track";
+import { baseOf, isSpaceKind, specOf } from "@/workspace/kinds";
 import { HOME_QUESTION_MAX, spaceKindFor } from "./intent";
 
 export async function createDefaultWorkspaces() {
@@ -19,6 +20,27 @@ export async function createDefaultWorkspaces() {
     await track(supabase, "workspace_created");
   }
   redirect("/workspace");
+}
+
+/** The space picker (#177): a space of any registered kind, named by the user or by the kind's default. Opens it. */
+export async function createWorkspace(formData: FormData) {
+  const kind = formData.get("kind");
+  if (!isSpaceKind(kind)) redirect("/workspace");
+  const name = String(formData.get("name") ?? "").trim().slice(0, 60) || specOf(kind).defaultName;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  const demo = demoSeedEnabled();
+  const { data } = await supabase
+    .from("workspaces")
+    .insert({ name, kind, profile: demo ? (baseOf(kind) === "empresa" ? seedCompany : seedPerson) : {} })
+    .select("id")
+    .single();
+  if (!data?.id) redirect("/workspace");
+  await track(supabase, "workspace_created");
+  redirect(`/workspace/${data.id}`);
 }
 
 /**
@@ -41,7 +63,7 @@ export async function askFromHome(formData: FormData) {
     const demo = demoSeedEnabled();
     const { data: created } = await supabase
       .from("workspaces")
-      .insert({ name: kind === "empresa" ? "Minha Empresa" : "Vida Pessoal", kind, profile: demo ? (kind === "empresa" ? seedCompany : seedPerson) : {} })
+      .insert({ name: specOf(kind).defaultName, kind, profile: demo ? (baseOf(kind) === "empresa" ? seedCompany : seedPerson) : {} })
       .select("id")
       .single();
     id = created?.id;

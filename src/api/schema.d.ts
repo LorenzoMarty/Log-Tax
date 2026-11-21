@@ -1858,7 +1858,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "empresa" | "pessoal";
+            kind: "empresa" | "pessoal" | "prestador" | "patrimonio" | "inventario";
             /** Name */
             name: string;
         };

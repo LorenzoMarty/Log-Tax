@@ -5,6 +5,7 @@ import type { components } from "@/api/schema";
 import { Badge } from "@/ui/log";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { baseOf, specOf } from "@/workspace/kinds";
 
 type Client = components["schemas"]["PortalClient"];
 
@@ -42,7 +43,7 @@ export function PortalClients() {
               <Link href={`/workspace/${c.workspaceId}`} className="font-semibold text-ink underline">
                 {c.name}
               </Link>
-              <Badge tone={c.kind === "empresa" ? "info" : "brand"}>{c.kind === "empresa" ? "Empresa" : "Pessoal"}</Badge>
+              <Badge tone={baseOf(c.kind) === "empresa" ? "info" : "brand"}>{specOf(c.kind).label}</Badge>
             </span>
             <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
               <div>

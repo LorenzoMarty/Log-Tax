@@ -5,6 +5,7 @@ import { normalizeProfile } from "@/engine/company-schema";
 import { decryptField, encryptField } from "@/lib/crypto";
 import type { StoreState } from "./memory-store";
 import type { Agent, Alert, Memory, Msg } from "./types";
+import { baseOf, isPersonal, type SpaceKind } from "@/workspace/kinds";
 
 export interface DisplayMessage {
   role: "user" | "assistant";
@@ -13,7 +14,7 @@ export interface DisplayMessage {
 
 export interface WorkspaceState extends StoreState {
   workspaceName: string;
-  kind: "empresa" | "pessoal";
+  kind: SpaceKind;
   /** The caller's role here: only the owner may drive the chat. */
   role: "owner" | "editor" | "commenter" | "reader";
   dashboardRowId?: string;
@@ -69,9 +70,9 @@ export async function loadWorkspaceState(sb: SupabaseClient, workspaceId: string
   const raw = ws.profile && typeof ws.profile === "object" && typeof ws.profile.cnpj === "string" ? { ...ws.profile, cnpj: decryptField(ws.profile.cnpj) } : ws.profile;
   const demo = demoSeedEnabled();
   const hasData = raw && typeof raw === "object" && Object.keys(raw).length > 0;
-  const company: CompanyProfile = ws.kind === "empresa" ? normalizeProfile(hasData ? raw : demo ? seedCompany : blank, demo ? seedCompany : blank) : blank;
+  const company: CompanyProfile = baseOf(ws.kind) === "empresa" ? normalizeProfile(hasData ? raw : demo ? seedCompany : blank, demo ? seedCompany : blank) : blank;
   const blankPerson: PersonProfile = { id: ws.id, name: ws.name, kind: "pessoa" };
-  const person: PersonProfile = ws.kind === "pessoal" ? (ws.profile && Object.keys(ws.profile).length > 0 ? { ...blankPerson, ...ws.profile } : demo ? seedPerson : blankPerson) : demo ? seedPerson : blankPerson;
+  const person: PersonProfile = isPersonal(ws.kind) ? (ws.profile && Object.keys(ws.profile).length > 0 ? { ...blankPerson, ...ws.profile } : demo ? seedPerson : blankPerson) : demo ? seedPerson : blankPerson;
 
   return {
     workspaceName: ws.name,
@@ -96,7 +97,7 @@ export async function saveWorkspaceState(
   workspaceId: string,
   s: StoreState & { removedMemoryIds?: string[]; kind: WorkspaceState["kind"]; dashboardRowId?: string; agentId?: string; history: Msg[]; messages: DisplayMessage[] },
 ): Promise<Agent[]> {
-  ok(await sb.from("workspaces").update({ profile: s.kind === "pessoal" ? s.person : s.company.cnpj ? { ...s.company, cnpj: encryptField(s.company.cnpj) } : s.company }).eq("id", workspaceId), "workspaces");
+  ok(await sb.from("workspaces").update({ profile: isPersonal(s.kind) ? s.person : s.company.cnpj ? { ...s.company, cnpj: encryptField(s.company.cnpj) } : s.company }).eq("id", workspaceId), "workspaces");
 
   const dashRow = { workspace_id: workspaceId, name: s.dashboard.name, data: s.dashboard, version: s.dashboard.version, updated_at: new Date().toISOString() };
   ok(

@@ -1,8 +1,9 @@
 import type { Dashboard } from "@/dashboard/types";
+import { isPersonal, type SpaceKind } from "@/workspace/kinds";
 
 /** What the chat knows about the space when the AI finishes answering. */
 export type SpaceProgress = {
-  kind: "empresa" | "pessoal";
+  kind: SpaceKind;
   dashboard: Pick<Dashboard, "widgets">;
   alertCount: number;
   agentCount: number;
@@ -35,7 +36,7 @@ const MAX_SUGGESTIONS = 3;
  */
 export function nextQuestions(progress: SpaceProgress): string[] {
   const widgetIds = new Set(progress.dashboard.widgets.map((w) => w.id));
-  const steps = progress.kind === "empresa" ? COMPANY_STEPS : PERSON_STEPS;
+  const steps = !isPersonal(progress.kind) ? COMPANY_STEPS : PERSON_STEPS;
   const pending = steps.filter((step) => !step.done(progress, widgetIds)).map((step) => step.prompt);
   return [...pending, ALWAYS_USEFUL].slice(0, MAX_SUGGESTIONS);
 }

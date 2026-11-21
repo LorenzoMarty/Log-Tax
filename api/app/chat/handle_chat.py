@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from app.chat.alerts import alert_statuses
+from app.chat.kinds import is_personal
 from app.chat.orchestrator import PendingConfirmation, run_turn
 from app.chat.state import load_workspace_state, save_workspace_state
 from app.chat.store import Scope, ToolContext
@@ -125,7 +126,7 @@ async def handle_chat(
         if agent
         else [{"id": p.id, "name": p.history.present["name"], "dashboard": p.history.present} for p in store.pages],
         active_page_id=None if agent else store.active_page,
-        alerts=[] if state.kind == "pessoal" else alert_statuses(engine, store.company, store.alerts),
+        alerts=[] if is_personal(state.kind) else alert_statuses(engine, store.company, store.alerts),
         agents=agents,
         messages=messages,
         usage={"input": result.input_tokens, "output": result.output_tokens},
