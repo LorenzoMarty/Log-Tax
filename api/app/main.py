@@ -21,6 +21,7 @@ from app.api import (
     ir_bens,
     ir_import,
     me,
+    memories,
     missing_documents,
     nfe_import,
     organized_documents,
@@ -76,6 +77,7 @@ def create_app() -> FastAPI:
     app.include_router(workspaces.router)
     app.include_router(alert_events.router)
     app.include_router(agents.router)
+    app.include_router(memories.router)
     app.include_router(missing_documents.router)
     app.include_router(usage.router)
     app.include_router(admin.router)
