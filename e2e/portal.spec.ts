@@ -33,6 +33,8 @@ test("accountant invited to two workspaces sees both in the portal, and not a th
   await expect(guest).toHaveURL(company);
   await gotoSettled(guest, "/workspace");
   await guest.getByRole("button", { name: "Aceitar" }).click();
+  await expect(guest).toHaveURL(/\/workspace\/[0-9a-f-]{36}$/); // accepting opens the workspace
+  await gotoSettled(guest, "/workspace");
   await expect(guest.getByTestId("invite")).toHaveCount(0);
 
   await guest.getByRole("link", { name: "Portal do contador" }).click();
