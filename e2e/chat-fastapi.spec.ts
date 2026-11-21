@@ -235,3 +235,32 @@ test("dashboard pages through FastAPI: create by chat, switch, persist, remove w
   await page.reload();
   await expect(tabs).toHaveCount(0);
 });
+
+// Manual move/resize (#129): saved as a new version, so it survives a reload and "Desfazer" restores the old layout.
+test("owner reorders and resizes blocks with buttons; reload keeps it and undo restores it", async ({ page }) => {
+  await login(page, "fastapi");
+  await createAndOpen(page, /Minha Empresa/);
+  await sendChatMessage(page, "Quero organizar meus impostos", /Empresa ou Pessoal/);
+  await sendChatMessage(page, "Empresa", /52\.155/);
+
+  const order = () => page.getByTestId(/^widget-/).evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")));
+  const before = await order();
+  expect(before.length).toBeGreaterThan(1);
+  const swapped = [before[1], before[0], ...before.slice(2)];
+
+  await page.getByRole("button", { name: /^Mover para baixo: / }).first().click();
+  await expect.poll(order).toEqual(swapped);
+  await page.reload();
+  await expect.poll(order).toEqual(swapped);
+
+  await page.getByRole("button", { name: "Desfazer" }).click();
+  await expect.poll(order).toEqual(before);
+
+  const size = page.getByLabel(/^Tamanho: /).first();
+  const original = await size.inputValue();
+  await size.selectOption("lg");
+  await page.reload();
+  await expect(size).toHaveValue("lg");
+  await page.getByRole("button", { name: "Desfazer" }).click();
+  await expect(size).toHaveValue(original);
+});

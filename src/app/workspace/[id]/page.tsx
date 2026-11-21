@@ -7,6 +7,7 @@ import { AlertBar } from "@/alerts/alert-bar";
 import { alertStatuses } from "@/alerts/evaluate";
 import { ChatPanel } from "@/chat/chat-panel";
 import { loadWorkspaceState } from "@/chat/workspace-state";
+import { EditableDashboard } from "@/dashboard/editable-dashboard";
 import { DashboardView } from "@/dashboard/dashboard-view";
 import type { DashboardPage } from "@/dashboard/page-tabs";
 import type { Dashboard } from "@/dashboard/types";
@@ -174,8 +175,14 @@ export default async function WorkspaceChatPage({
             </form>
           </div>
           <AlertBar alerts={alerts} />
-          <VersionHistory workspaceId={id} dashboard={state.dashboard} readOnly />
-          <DashboardView dashboard={state.dashboard} />
+          {state.role === "editor" ? (
+            <EditableDashboard workspaceId={id} initial={state.dashboard} />
+          ) : (
+            <>
+              <VersionHistory workspaceId={id} dashboard={state.dashboard} readOnly />
+              <DashboardView dashboard={state.dashboard} />
+            </>
+          )}
           {assetsPanel}
           {inventoryPanel}
           {documentsPanel}
