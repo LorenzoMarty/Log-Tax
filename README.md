@@ -73,6 +73,7 @@ Portas do Supabase local: 55321 (API), 55322 (Postgres), 55324 (Mailpit). Para r
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Cliente do Supabase (saem de `npx supabase status -o env`). |
 | `SUPABASE_SERVICE_ROLE_KEY` | Só para os testes de integração; **nunca** no navegador. |
+| `NEXT_PUBLIC_SUPPORT_EMAIL` | Email do canal de suporte mostrado em "O que posso pedir?" (#158); vazio esconde o link. |
 | `OPENAI_API_KEY`, `OPENAI_MODEL` | IA real (Responses API com `store:false`: nada fica retido na OpenAI). Há um modelo padrão em `src/chat/openai-llm.ts`. |
 | `LOG_TAX_LLM=scripted` | IA roteirizada por palavras-chave, **bloqueada em produção**. |
 | `SUPABASE_AUTH_GOOGLE_CLIENT_ID`, `SUPABASE_AUTH_GOOGLE_SECRET` | Login com Google, em `supabase/.env` (opcional). Redirect do Google: `http://127.0.0.1:55321/auth/v1/callback`. |

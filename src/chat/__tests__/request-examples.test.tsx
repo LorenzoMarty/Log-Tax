@@ -20,4 +20,13 @@ describe("RequestExamples", () => {
     render(<RequestExamples onPick={vi.fn()} disabled />);
     for (const button of screen.getAllByRole("button")) expect(button).toBeDisabled();
   });
+
+  it("offers the support channel only when asked for and configured (#158)", () => {
+    const { rerender } = render(<RequestExamples onPick={vi.fn()} disabled={false} showContact contactEmail="ajuda@exemplo.com" />);
+    expect(screen.getByRole("link", { name: "Fale com o suporte" })).toHaveAttribute("href", expect.stringContaining("mailto:ajuda@exemplo.com"));
+    rerender(<RequestExamples onPick={vi.fn()} disabled={false} showContact contactEmail="" />);
+    expect(screen.queryByRole("link")).toBeNull();
+    rerender(<RequestExamples onPick={vi.fn()} disabled={false} contactEmail="ajuda@exemplo.com" />);
+    expect(screen.queryByRole("link")).toBeNull();
+  });
 });
