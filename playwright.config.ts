@@ -50,5 +50,5 @@ export default defineConfig({
       },
     },
   ],
-  use: { baseURL: `http://localhost:${port}` },
+  use: { baseURL: `http://localhost:${port}`, screenshot: "only-on-failure" },
 });
