@@ -29,7 +29,7 @@ export default async function AgentPage({ params }: { params: Promise<{ id: stri
           Voltar ao espaço
         </Link>
       </header>
-      <AgentEditor key={`${agent.name}|${agent.objective}`} workspaceId={id} agent={agent} allTools={TOOL_NAMES} />
+      <AgentEditor workspaceId={id} agent={agent} allTools={TOOL_NAMES} />
     </main>
   );
 }
