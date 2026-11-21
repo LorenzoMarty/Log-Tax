@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { createAndOpen, login } from "./helpers";
 
-test.setTimeout(180_000);
+test.setTimeout(300_000);
 
 const nfe = (n: number, month: string) =>
   `<?xml version="1.0"?><nfeProc><NFe><infNFe Id="NFe3526${String(n).padStart(2, "0")}12345678000190550010000012341000${String(10000 + n)}">
@@ -36,9 +36,9 @@ test("15 mixed files are uploaded together and grouped by type and period", asyn
   await docs.getByLabel(/Autorizo o Log Tax/).check();
   await docs.getByRole("button", { name: "Anexar documento" }).click();
 
-  await expect(docs.getByRole("alert")).toContainText("14 de 15 enviados.");
+  await expect(docs.getByRole("alert")).toContainText("15 de 16 enviados.", { timeout: 180_000 });
   await expect(docs.getByRole("alert")).toContainText("nota-repetida.xml: Este documento já foi enviado");
-  await expect(docs.getByTestId("document")).toHaveCount(14);
+  await expect(docs.getByTestId("document")).toHaveCount(15);
 
   const group = (title: string) => docs.getByTestId("doc-group").filter({ has: page.getByRole("heading", { name: title, exact: true }) });
   const nota = group("Nota fiscal");

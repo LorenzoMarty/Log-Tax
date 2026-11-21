@@ -28,7 +28,15 @@ export function UploadForm({ workspaceId }: { workspaceId: string }) {
       for (const [k, v] of fixed.entries()) body.append(k, v);
       body.append("file", file);
       try {
-        const res = await fetch("/api/documents", { method: "POST", body });
+        let res = await fetch("/api/documents", { method: "POST", body });
+        // the upload budget is per minute: a big batch waits for it instead of failing the rest
+        for (let tries = 0; res.status === 429 && tries < 3; tries++) {
+          const wait = Number(res.headers.get("Retry-After")) || 30;
+          setProgress(`Muitos envios seguidos: retomando em ${wait} s (${i + 1} de ${files.length})`);
+          await new Promise((r) => setTimeout(r, wait * 1000));
+          setProgress(`Enviando ${i + 1} de ${files.length}: ${file.name}`);
+          res = await fetch("/api/documents", { method: "POST", body });
+        }
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? "Não foi possível enviar.");
         sent++;
