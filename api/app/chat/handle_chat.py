@@ -55,6 +55,8 @@ class ChatReply:
     alerts: list[dict[str, Any]]
     agents: list[Agent]
     messages: list[dict[str, str]]
+    focus: dict[str, Any] | None = None
+    """Temporary layout for this answer (#124); never saved."""
     usage: dict[str, int] = field(default_factory=dict)
     """Model tokens spent on this turn."""
 
@@ -129,5 +131,13 @@ async def handle_chat(
         alerts=[] if is_personal(state.kind) else alert_statuses(engine, store.company, store.alerts),
         agents=agents,
         messages=messages,
+        focus=next(
+            (
+                e.outcome["data"]["focus"]
+                for e in reversed(result.events)
+                if e.name == "focus_dashboard" and e.outcome["status"] == "ok"
+            ),
+            None,
+        ),
         usage={"input": result.input_tokens, "output": result.output_tokens},
     )

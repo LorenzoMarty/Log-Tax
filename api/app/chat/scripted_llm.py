@@ -584,6 +584,37 @@ def _prestador_reply(p: list[ToolOutcome], _t: str) -> str:
     )
 
 
+def _focus_plan(pattern: str, intent: str) -> Plan:
+    def reply(p: list[ToolOutcome], _t: str) -> str:
+        r = _first(p)
+        if _ok(r):
+            return str(cast(dict[str, Any], r["data"])["focus"]["reason"])  # type: ignore[index]
+        return str(r.get("message")) if r else "Não consegui reorganizar a visão agora."
+
+    return _plan(pattern, [lambda _p, _t, _s: _call("focus_dashboard", intent=intent)], reply)
+
+
+def _seed_steps() -> list[Step]:
+    deadlines = {
+        "id": "prazos",
+        "kind": "deadlines",
+        "title": "Próximos prazos",
+        "size": "md",
+        "items": [{"label": "DAS do mês", "date": "2026-12-20"}],
+    }
+    docs = {
+        "id": "documentos",
+        "kind": "checklist",
+        "title": "Documentos",
+        "size": "md",
+        "items": [{"label": "Notas fiscais do mês", "done": False}, {"label": "Extrato bancário", "done": True}],
+    }
+    return [
+        lambda _p, _t, _s: _call("dashboard_add_widget", widget=deadlines),
+        lambda _p, _t, _s: _call("dashboard_add_widget", widget=docs),
+    ]
+
+
 PLANS: list[Plan] = [
     _plan(r"prestador", [_prestador_step], _prestador_reply),
     _plan(
@@ -596,6 +627,17 @@ PLANS: list[Plan] = [
         _new_page_reply,
     ),
     _plan(_PAGE_DELETE, [lambda _p, _t, _s: _call("dashboard_list_pages"), _delete_page_step], _delete_page_reply),
+    _plan(
+        r"^adicione prazos e documentos",
+        _seed_steps(),
+        lambda p, _t: (
+            "Adicionei os prazos e os documentos ao painel." if all(_ok(o) for o in p) else "Esses blocos já estão no painel."
+        ),
+    ),
+    _focus_plan(r"quanto (estou|eu estou) pagando", "numbers"),
+    _focus_plan(r"quais documentos faltam", "documents"),
+    _focus_plan(r"^compare\b", "comparison"),
+    _focus_plan(r"^quais (s[ãa]o )?os prazos", "deadlines"),
     _plan(r"acompanhar.*(apartamento|im[óo]vel|casa|carro|ve[íi]culo|moto)", [_track_asset_step], _asset_reply),
     _plan(
         r"^abrir o esp[óo]lio",

@@ -56,6 +56,7 @@ def public_reply(reply: ChatReply) -> dict[str, Any]:
         "alerts": reply.alerts,
         "agents": reply.agents,
         "messages": reply.messages,
+        "focus": reply.focus,
     }
 
 
