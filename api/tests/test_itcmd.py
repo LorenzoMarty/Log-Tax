@@ -38,3 +38,16 @@ def test_route(signed_in: TestClient, anonymous: TestClient) -> None:
     assert v["tax"] == "10000.02" and v["rate"] == "0.04" and v["rulesUsed"]
     assert signed_in.post("/v1/engine/itcmd", json={**body, "uf": "BA"}).json()["status"] != "ok"
     assert signed_in.post("/v1/engine/itcmd", json={**body, "uf": "XXX"}).status_code == 422
+
+
+def test_mg_inheritance_states_the_deadline_and_late_fine_read_in_the_law() -> None:
+    """Lei 14.941/2003 art. 13, I (180 days) and art. 22, I (0,15% a day to day 30; 9%; 12%): docs/fontes-legais.md."""
+    r = compute_itcmd(BOOK, "2026-11", ItcmdInput("MG", "heranca", D("1000000")))
+    assert isinstance(r, Ok)
+    text = " ".join(r.value.assumptions)
+    assert "180 dias" in text and "0,15% ao dia" in text and "9% do 31º ao 60º dia" in text and "12% depois do 60º" in text
+    assert "fontes-legais" in BOOK.at("itcmd-aliquotas", "2026-11").source  # type: ignore[union-attr]
+    # donation and UFs without the read law carry no deadline sentence
+    for uf, kind in (("MG", "doacao"), ("SP", "heranca")):
+        other = compute_itcmd(BOOK, "2026-11", ItcmdInput(uf, kind, D("1000000")))  # type: ignore[arg-type]
+        assert isinstance(other, Ok) and "Prazo de pagamento" not in " ".join(other.value.assumptions)

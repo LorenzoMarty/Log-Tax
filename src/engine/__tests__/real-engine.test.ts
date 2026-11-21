@@ -53,19 +53,30 @@ describe("real engine: IRPF by calendar year (competence)", () => {
     expect(refs.find((r) => r.id === "irpf-tabela-anual")!.source).toContain("gov.br/receitafederal");
   });
 
-  it("refuses to calculate years without a conferred table, 2026 included, and says why", () => {
+  it("2026 annual: the table, the deductions and the Lei 15.270/2025 reducer read on the official page (docs/fontes-legais.md)", () => {
+    const at = (gross: number) => createRealEngine({ competence: "2026-03" }).diagnosePerson({ ...seedPerson, annualGrossIncome: gross, inssPaid: 0, dependents: 0, healthExpenses: 0, educationExpenses: 0, privatePension: 0 });
+    const tax = (gross: number) => (at(gross) as { value: { simplified: { tax: number } } }).value.simplified.tax;
+    expect(tax(60_000)).toBe(0); // base 48.000: 22,5% x 48.000 - 8.105,85 = 2.694,15, exactly the reducer
+    expect(tax(80_000)).toBe(5911.61); // 6.695,34 minus (8.429,73 - 0,095575 x 80.000)
+    expect(tax(200_000)).toBeGreaterThan(0); // above R$ 88.200 there is no reducer
+    const r = at(100_000) as { value: { assumptions: string[]; rulesUsed: { id: string; validFrom: string }[] } };
+    expect(r.value.assumptions.join(" ")).toContain("redutor anual");
+    expect(r.value.rulesUsed.find((x) => x.id === "irpf-anual-deducoes")!.validFrom).toBe("2026-01");
+  });
+
+  it("refuses to calculate years without a conferred table (2027 on) and says why", () => {
     const r2019 = createRealEngine({ competence: "2019-01" }).diagnosePerson(seedPerson);
     expect(r2019).toMatchObject({ status: "not_applicable" });
-    const r2026 = createRealEngine({ competence: "2026-03" }).diagnosePerson(seedPerson);
-    expect(r2026.status).toBe("not_applicable");
-    expect((r2026 as { reason: string }).reason).toMatch(/ano-calendário 2026.*isenção até R\$ 5 mil/);
+    const r2027 = createRealEngine({ competence: "2027-03" }).diagnosePerson(seedPerson);
+    expect(r2027.status).toBe("not_applicable");
+    expect((r2027 as { reason: string }).reason).toMatch(/ano-calendário 2027/);
   });
 
   it("keeps the TaxEngine contract: missing data is explicit and no regime is silently claimed", () => {
     const engine = createRealEngine({ competence: "2025-05" });
     expect(engine.diagnosePerson({ ...seedPerson, annualGrossIncome: undefined })).toEqual({ status: "insufficient_data", missing: ["annualGrossIncome"] });
     expect(engine.opportunities({ id: "c", name: "x", regime: "real", activity: "comercio" }).status).toBe("none_found");
-    expect(engine.rules().filter((r) => r.id === "irpf-tabela-anual")).toHaveLength(2);
+    expect(engine.rules().filter((r) => r.id === "irpf-tabela-anual")).toHaveLength(3);
   });
 });
 

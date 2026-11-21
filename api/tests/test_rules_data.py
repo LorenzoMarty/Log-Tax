@@ -49,10 +49,11 @@ def test_the_book_picks_the_same_table_the_typescript_engine_does() -> None:
     assert book.at("irpf-tabela-anual", "2010-01") is None
 
 
-def test_the_real_rule_data_already_reports_what_is_missing_for_2026() -> None:
-    """Ported from the TypeScript lifecycle test: the annual IRPF tables only run until 2025-12."""
-    _, lapsed = default_rulebook().lifecycle(date(2026, 11, 11), 60)
-    assert sorted(r.id for r in lapsed) == ["irpf-anual-deducoes", "irpf-tabela-anual"]
+def test_the_annual_irpf_of_2026_is_about_to_end_not_lapsed() -> None:
+    """Ported from the TypeScript lifecycle test: the 2026 annual versions (read 2026-11-21) run until 2026-12."""
+    expiring, lapsed = default_rulebook().lifecycle(date(2026, 11, 11), 60)
+    assert lapsed == []
+    assert sorted(r.id for r in expiring) == ["irpf-anual-deducoes", "irpf-tabela-anual"]
 
 
 def test_a_file_edited_without_the_manifest_is_refused(tmp_path: Path) -> None:

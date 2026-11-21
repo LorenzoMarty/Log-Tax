@@ -106,11 +106,26 @@ def test_every_result_says_which_rules_it_used_and_has_a_calculation_memory() ->
     assert d.disclaimer.startswith("Estimativa ilustrativa")
 
 
-def test_years_without_a_conferred_table_say_why_2026_included() -> None:
+def test_2026_annual_table_deductions_and_reducer_read_on_the_official_page() -> None:
+    """Tributação de 2026 (docs/fontes-legais.md): table to R$ 29.145,60 free; reducer R$ 2.694,15 up to R$ 60.000,00."""
+
+    def simplified(income: str) -> D:
+        r = diagnose_person(BOOK, "2026-03", PersonProfile(annual_gross_income=D(income)))
+        assert isinstance(r, Ok)
+        return r.value.simplified.tax
+
+    r = diagnose_person(BOOK, "2026-03", PersonProfile(annual_gross_income=D(400_000)))
+    assert isinstance(r, Ok) and r.value.simplified.deductions == D("17640")  # cap of the simplified discount
+    assert simplified("60000") == 0  # base 48.000: 22,5% x 48.000 - 8.105,85 = 2.694,15, exactly the reducer
+    assert simplified("80000") == D("5911.61")  # base 64.000: 17.600 - 10.904,66 = 6.695,34 minus (8.429,73 - 0,095575 x 80.000)
+    assert simplified("200000") > 0 and "redutor anual" in " ".join(r.value.assumptions)
+
+
+def test_years_without_a_conferred_table_say_why_2027_on() -> None:
     assert isinstance(diagnose_person(BOOK, "2019-01", SEED), NotApplicable)
-    result = diagnose_person(BOOK, "2026-03", SEED)
+    result = diagnose_person(BOOK, "2027-03", SEED)
     assert isinstance(result, NotApplicable)
-    assert "ano-calendário 2026" in result.reason and "isenção até R$ 5 mil" in result.reason
+    assert "ano-calendário 2027" in result.reason
 
 
 def test_missing_income_is_explicit() -> None:

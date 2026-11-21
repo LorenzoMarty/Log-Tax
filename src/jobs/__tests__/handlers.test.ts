@@ -24,7 +24,7 @@ describe("engine.rules_check job", () => {
       vi.useRealTimers();
     }
     const lapsed = err.mock.calls.map((c) => JSON.parse(String(c[0]))).filter((e) => e.event === "rule_lapsed").map((e) => e.rule);
-    expect(lapsed.sort()).toEqual(["irpf-anual-deducoes", "irpf-tabela-anual"]);
+    expect(lapsed).toEqual([]);
     expect(out.mock.calls.map((c) => String(c[0])).some((l) => l.includes('"event":"rules_checked"'))).toBe(true);
     expect(RECURRING.some((r) => r.type === "engine.rules_check" && r.every === "day")).toBe(true);
     vi.restoreAllMocks();
