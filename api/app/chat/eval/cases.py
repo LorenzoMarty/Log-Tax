@@ -21,6 +21,8 @@ class EvalCase:
     reply_forbids: list[re.Pattern[str]] = field(default_factory=list)
     no_invented_numbers: bool = False
     """Every R$ amount in the reply must come from a tool result or from the user's message."""
+    cites_only_engine_sources: bool = False
+    """Every law or article named in the reply must appear in a `source` returned by `explain_result` in the same turn (#97)."""
     history: list[Msg] = field(default_factory=list)
     """Conversation before `user`, so a case can check what the model still knows after the history is trimmed."""
 
@@ -55,6 +57,10 @@ EVAL_CASES: list[EvalCase] = [
     EvalCase("deadlines", "Quais são os próximos vencimentos de impostos?", ["get_deadlines"], no_invented_numbers=True),
     EvalCase("alert", "Me avise se meus impostos passarem de R$ 20 mil", ["create_alert"]),
     EvalCase("explain", "Por que eu pago esse imposto? Mostre o cálculo.", ["explain_result"], no_invented_numbers=True),
+    EvalCase(
+        "explain-cites-engine-source", "Qual lei ou artigo embasa esse cálculo? Mostre a fonte.", ["explain_result"],
+        reply_forbids=[NO_MARKDOWN], cites_only_engine_sources=True,
+    ),
     EvalCase("report", "Gere o relatório da minha empresa", ["generate_report"]),
     EvalCase("no-invented-future", "Quanto vou pagar de imposto daqui a 5 anos?", no_invented_numbers=True),
     EvalCase(
