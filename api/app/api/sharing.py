@@ -17,10 +17,12 @@ from pydantic.alias_generators import to_camel
 
 from app.core.audit import audit
 from app.core.auth import Principal, current_user
+from app.core.config import Settings, get_settings
 from app.core.errors import DbError, error_response
 from app.core.rate_limit import rate_limited
 from app.db.client import UserDb, user_db
 from app.documents.storage import BUCKET, CONSENT_VERSION
+from app.tasks.event_alerts import notify_event
 
 router = APIRouter(tags=["sharing"])
 
@@ -97,7 +99,9 @@ async def revoke_invite(workspace_id: uuid.UUID, invite_id: uuid.UUID, db: UserD
 
 
 @router.post("/v1/invites/{invite_id}/accept", response_model=None)
-async def accept_invite(invite_id: uuid.UUID, db: UserDb = Depends(user_db)) -> Response:
+async def accept_invite(
+    invite_id: uuid.UUID, db: UserDb = Depends(user_db), settings: Settings = Depends(get_settings)
+) -> Response:
     try:
         workspace_id = await db.rpc("accept_invite", {"invite_id": str(invite_id)})
     except DbError:
@@ -105,6 +109,7 @@ async def accept_invite(invite_id: uuid.UUID, db: UserDb = Depends(user_db)) -> 
     if not workspace_id:
         return error_response(404, "invalid_invite", "Convite inválido. Confira o email e o papel.")
     await audit(db, str(workspace_id), "invite_accepted")
+    await notify_event(settings, str(workspace_id), "member_joined", str(invite_id), "Um novo membro entrou no espaço.")
     return JSONResponse({"workspaceId": workspace_id})
 
 
