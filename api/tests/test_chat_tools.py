@@ -108,7 +108,7 @@ def test_specs_follow_the_workspace_kind_and_the_agent_allow_list() -> None:
     assert not {"get_tax_diagnosis", "run_simulation", "create_alert"} & set(names("pessoal"))
     assert "get_tax_diagnosis" in names("empresa") and not {"get_ir_diagnosis", "save_person_data"} & set(names("empresa"))
     assert names("empresa", ("get_tax_diagnosis", "get_ir_diagnosis")) == ["get_tax_diagnosis"]
-    assert len(names(None)) == 66
+    assert len(names(None)) == 67
 
 
 async def test_unknown_wrong_kind_and_not_allowed_tools_are_refused_at_runtime() -> None:
