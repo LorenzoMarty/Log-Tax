@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { AssetsPanel, type AssetRow } from "@/assets/assets-panel";
 import { AlertBar } from "@/alerts/alert-bar";
 import { alertStatuses } from "@/alerts/evaluate";
 import { ChatPanel } from "@/chat/chat-panel";
@@ -48,6 +49,10 @@ export default async function WorkspaceChatPage({
     .select("id, name, doc_type, extracted, size_bytes, mime_type, created_at")
     .eq("workspace_id", id)
     .order("created_at", { ascending: false });
+  const { data: assets } =
+    state.kind === "pessoal"
+      ? await supabase.from("assets").select("id, kind, description, value, acquired_at").eq("workspace_id", id).order("created_at")
+      : { data: null };
   const { data: comments } = await supabase
     .from("comments")
     .select("id, author_id, author_email, widget_id, body, created_at")
@@ -65,6 +70,7 @@ export default async function WorkspaceChatPage({
   const alerts = state.kind === "pessoal" ? [] : alertStatuses(mockEngine, state.company, state.alerts);
   const notice = msg ? MESSAGES[msg] : undefined;
   const documentsPanel = <DocumentsPanel workspaceId={id} documents={((documents ?? []) as DocumentRow[]).map((d) => ({ ...d, extracted: openStored(d.extracted) }))} canEdit={isOwner} />;
+  const assetsPanel = state.kind === "pessoal" ? <AssetsPanel assets={(assets ?? []) as AssetRow[]} /> : null;
   const commentsPanel = (
     <Comments
       workspaceId={id}
@@ -112,6 +118,7 @@ export default async function WorkspaceChatPage({
             initialPrompt={pergunta?.slice(0, 1000)}
           />
           <SharePanel workspaceId={id} defaultOpen={Boolean(notice)} members={(members ?? []) as MemberRow[]} invites={(invites ?? []) as InviteRow[]} />
+          {assetsPanel}
           {documentsPanel}
           {commentsPanel}
           <ActivityPanel events={(activity ?? []) as ActivityRow[]} />
@@ -130,6 +137,7 @@ export default async function WorkspaceChatPage({
           </div>
           <AlertBar alerts={alerts} />
           <DashboardView dashboard={state.dashboard} />
+          {assetsPanel}
           {documentsPanel}
           {commentsPanel}
         </>
