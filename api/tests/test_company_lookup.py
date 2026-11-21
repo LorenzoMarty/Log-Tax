@@ -95,3 +95,18 @@ def test_the_route_returns_camel_case_and_only_the_digits_leave(
     r = signed_in.get("/v1/company/lookup", params={"cnpj": "00.000.000/0001-91"})
     assert r.status_code == 200 and seen == [BB]
     assert r.json()["company"]["openedAt"] == "1966-08-01" and r.json()["status"] == "found"
+
+
+def test_the_route_keeps_the_letters_of_an_alphanumeric_cnpj(
+    signed_in: TestClient, db: FakeDb, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    seen: list[str] = []
+
+    async def fake_fetch(cnpj: str, client: Any = None) -> Any:
+        seen.append(cnpj)
+        return await fetch_company(cnpj, client_for())
+
+    monkeypatch.setattr(company_lookup, "fetch_company", fake_fetch)
+    r = signed_in.get("/v1/company/lookup", params={"cnpj": "12.abc.345/01de-35"})
+    assert r.status_code == 200 and seen == ["12ABC34501DE35"]  # #328: letters survive, upper-cased
+    assert signed_in.get("/v1/company/lookup", params={"cnpj": "12.ABC.345/01DE-36"}).status_code == 400  # wrong check digit

@@ -72,11 +72,12 @@ def _found(raw: dict[str, Any]) -> Found | None:
     )
 
 
-STUB_CNPJ = "11222333000181"  # with the stub on, only this CNPJ is found; any other behaves like a service that is down
+# With the stub on, only these CNPJs are found (the second is alphanumeric, #328); any other behaves like a service that is down.
+STUB_CNPJS = {"11222333000181", "12ABC34501DE35"}
 
 
 def _stub(cnpj: str) -> Lookup:
-    if cnpj != STUB_CNPJ:
+    if cnpj not in STUB_CNPJS:
         return Lookup(status="unavailable", message="A base de CNPJ está fora do ar. Me diga os dados da empresa.")
     return Lookup(
         status="found",
