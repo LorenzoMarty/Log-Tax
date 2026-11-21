@@ -414,7 +414,8 @@ def _heir_step(_p: list[ToolOutcome], text: str, _s: str) -> dict[str, Any]:
 
 
 def _inventory_reply(p: list[ToolOutcome], _t: str) -> str:
-    d = data_of(_first(p))
+    r = _first(p)
+    d = r["data"] if r and _ok(r) else None  # get_inventory answers plain JSON, not an engine envelope
     if not d:
         return "Ainda não consegui abrir o inventário. Me diga o nome do falecido e a data do óbito, com calma."
     heirs = ", ".join(f"{h['name']} {_num(h['share']):.0f}% ({money(h['amount'])})" for h in d["heirs"])

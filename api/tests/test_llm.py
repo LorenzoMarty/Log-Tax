@@ -356,5 +356,5 @@ async def test_scripted_inventory_journey_calls_the_estate_asset_and_heir_tools(
     assert tools.args[0] == {"name": "Ana Silva", "relationship": "filha", "share": 50.0}
     heirs = [{"name": "Ana", "share": "50.00", "amount": "240000.00"}]
     inv = {"netEstate": "480000.00", "assets": [{}, {}], "heirs": heirs, "pendencias": []}
-    text, tools = await turn("Mostrar o resumo do inventário", {"get_inventory": value(inv)})
+    text, tools = await turn("Mostrar o resumo do inventário", {"get_inventory": inv})
     assert tools.names == ["get_inventory"] and "R$ 480.000" in text and "Ana 50% (R$ 240.000)" in text
