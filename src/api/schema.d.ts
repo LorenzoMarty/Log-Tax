@@ -101,6 +101,124 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Rules
+         * @description Built-in rules (changelog) and runtime versions with validity, source and status. 403 unless a platform admin.
+         */
+        get: operations["list_rules_v1_admin_rules_get"];
+        put?: never;
+        /**
+         * Propose Rule
+         * @description Proposes a new version (status `proposed`). It changes nothing in the engine until another admin approves it.
+         */
+        post: operations["propose_rule_v1_admin_rules_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/rules/cases/{case_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove Case */
+        delete: operations["remove_case_v1_admin_rules_cases__case_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/rules/{rule_id}/cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add Case
+         * @description Attaches a reference case (inputs and expected outputs) to a rule id. Cases are evaluated at approval.
+         */
+        post: operations["add_case_v1_admin_rules__rule_id__cases_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/rules/{version_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Rule
+         * @description One runtime version with payload, reference cases and the latest evaluation.
+         */
+        get: operations["get_rule_v1_admin_rules__version_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/rules/{version_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve Rule
+         * @description Approves a proposed version. 403 for the proposer; 422 (with the case results) when a reference case fails.
+         */
+        post: operations["approve_rule_v1_admin_rules__version_id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/rules/{version_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject Rule */
+        post: operations["reject_rule_v1_admin_rules__version_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/admin/users/{user_id}/support": {
         parameters: {
             query?: never;
@@ -1663,6 +1781,21 @@ export interface components {
              */
             tax: "iptu" | "ipva" | "itr";
         };
+        /** CaseIn */
+        CaseIn: {
+            /** Competence */
+            competence: string;
+            /** Expected */
+            expected: {
+                [key: string]: unknown;
+            };
+            /** Inputs */
+            inputs: {
+                [key: string]: unknown;
+            };
+            /** Name */
+            name: string;
+        };
         /** ChangelogEntry */
         ChangelogEntry: {
             confidence: components["schemas"]["Confidence"];
@@ -1861,6 +1994,11 @@ export interface components {
             kind: "empresa" | "pessoal" | "prestador" | "patrimonio" | "inventario";
             /** Name */
             name: string;
+        };
+        /** Created */
+        Created: {
+            /** Id */
+            id: string;
         };
         /** DeadlineList */
         DeadlineList: {
@@ -2397,6 +2535,37 @@ export interface components {
             netMonthly: string;
             option: components["schemas"]["Option"];
         };
+        /** ProposeIn */
+        ProposeIn: {
+            /**
+             * Confidence
+             * @enum {string}
+             */
+            confidence: "low" | "medium" | "high";
+            /** Jurisdiction */
+            jurisdiction: string;
+            /** Name */
+            name: string;
+            /** Notes */
+            notes?: string | null;
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            };
+            /**
+             * Requiresvalidation
+             * @default true
+             */
+            requiresValidation: boolean;
+            /** Ruleid */
+            ruleId: string;
+            /** Sourceurl */
+            sourceUrl: string;
+            /** Validfrom */
+            validFrom: string;
+            /** Validuntil */
+            validUntil?: string | null;
+        };
         /** RatingIn */
         RatingIn: {
             /** Messageindex */
@@ -2445,6 +2614,11 @@ export interface components {
             /** Year */
             year: number;
         };
+        /** RejectIn */
+        RejectIn: {
+            /** Reason */
+            reason: string;
+        };
         /** ResolveIn */
         ResolveIn: {
             /** Resolved */
@@ -2460,6 +2634,38 @@ export interface components {
             industria?: number | string | null;
             /** Servico */
             servico?: number | string | null;
+        };
+        /** RuleCase */
+        RuleCase: {
+            /** Competence */
+            competence: string;
+            /** Expected */
+            expected: {
+                [key: string]: unknown;
+            };
+            /** Id */
+            id: string;
+            /** Inputs */
+            inputs: {
+                [key: string]: unknown;
+            };
+            /** Name */
+            name: string;
+        };
+        /** RuleEvaluation */
+        RuleEvaluation: {
+            /** Caseshash */
+            casesHash: string;
+            /** Createdat */
+            createdAt: string;
+            /** Passed */
+            passed: boolean;
+            /** Payloadhash */
+            payloadHash: string;
+            /** Results */
+            results: {
+                [key: string]: unknown;
+            }[];
         };
         /**
          * RuleRef
@@ -2486,6 +2692,100 @@ export interface components {
             name: string;
             /** Validuntil */
             validUntil: string;
+        };
+        /** RuleVersionDetail */
+        RuleVersionDetail: {
+            /** Approvedby */
+            approvedBy: string | null;
+            /** Cases */
+            cases: components["schemas"]["RuleCase"][];
+            /** Caseshash */
+            casesHash: string;
+            /** Confidence */
+            confidence: string;
+            /** Createdat */
+            createdAt: string;
+            /** Createdby */
+            createdBy: string;
+            /** Decidedat */
+            decidedAt: string | null;
+            evaluation: components["schemas"]["RuleEvaluation"] | null;
+            /** Id */
+            id: string;
+            /** Jurisdiction */
+            jurisdiction: string;
+            /** Name */
+            name: string;
+            /** Notes */
+            notes: string | null;
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            };
+            /** Payloadhash */
+            payloadHash: string;
+            /** Rejectreason */
+            rejectReason: string | null;
+            /** Requiresvalidation */
+            requiresValidation: boolean;
+            /** Ruleid */
+            ruleId: string;
+            /** Sourceurl */
+            sourceUrl: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "proposed" | "approved" | "rejected";
+            /** Validfrom */
+            validFrom: string;
+            /** Validuntil */
+            validUntil: string | null;
+            /** Version */
+            version: number;
+        };
+        /** RuleVersionSummary */
+        RuleVersionSummary: {
+            /** Approvedby */
+            approvedBy: string | null;
+            /** Confidence */
+            confidence: string;
+            /** Createdat */
+            createdAt: string;
+            /** Createdby */
+            createdBy: string;
+            /** Decidedat */
+            decidedAt: string | null;
+            /** Id */
+            id: string;
+            /** Jurisdiction */
+            jurisdiction: string;
+            /** Name */
+            name: string;
+            /** Requiresvalidation */
+            requiresValidation: boolean;
+            /** Ruleid */
+            ruleId: string;
+            /** Sourceurl */
+            sourceUrl: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "proposed" | "approved" | "rejected";
+            /** Validfrom */
+            validFrom: string;
+            /** Validuntil */
+            validUntil: string | null;
+            /** Version */
+            version: number;
+        };
+        /** RulesList */
+        RulesList: {
+            /** Builtin */
+            builtin: components["schemas"]["ChangelogEntry"][];
+            /** Runtime */
+            runtime: components["schemas"]["RuleVersionSummary"][];
         };
         /** RulesOut */
         RulesOut: {
@@ -2843,6 +3143,241 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["AdminOverview"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_rules_v1_admin_rules_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RulesList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    propose_rule_v1_admin_rules_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Created"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_case_v1_admin_rules_cases__case_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_case_v1_admin_rules__rule_id__cases_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                rule_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaseIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Created"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_rule_v1_admin_rules__version_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleVersionDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_rule_v1_admin_rules__version_id__approve_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleVersionDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_rule_v1_admin_rules__version_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

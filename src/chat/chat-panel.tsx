@@ -13,6 +13,9 @@ import { VersionHistory } from "@/dashboard/version-history";
 import { applyWithTransition } from "@/dashboard/view-transition";
 import type { Dashboard } from "@/dashboard/types";
 import { Button, Input, Panel } from "@/ui/log";
+import { CONSENT_TEXT } from "@/documents/upload-form";
+import { uploadFiles } from "@/documents/upload-files";
+import { wrapUntrusted } from "./untrusted";
 import type { PendingConfirmation } from "./orchestrator";
 import { nextQuestions, type SpaceProgress } from "./next-questions";
 import { clearConversation, rateAnswer } from "./actions";
@@ -150,6 +153,36 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
     if (autoRead && messages.length > spokenUpTo.current && last?.role === "assistant") speakNow(messages.length - 1, last.text);
     spokenUpTo.current = messages.length;
   }, [messages, autoRead, speakNow]);
+
+  // Attach (#122): same upload path and same LGPD consent as the documents panel; then the AI is told, in a wrapped note, what arrived.
+  const [attachOpen, setAttachOpen] = useState(false);
+  const [consent, setConsent] = useState(false);
+  const [chips, setChips] = useState<{ name: string; status: "enviando" | "enviado" }[]>([]);
+  const [attachProgress, setAttachProgress] = useState("");
+  const [attachErrors, setAttachErrors] = useState<string[]>([]);
+
+  async function attach(files: File[]) {
+    if (files.length === 0) return;
+    if (!consent) {
+      setAttachErrors(["Marque a autorização para anexar documentos."]);
+      return;
+    }
+    setAttachErrors([]);
+    setChips(files.map((f) => ({ name: f.name, status: "enviando" })));
+    const fixed = new FormData();
+    fixed.set("workspaceId", props.workspaceId);
+    fixed.set("consent", "on");
+    const { sent, failures } = await uploadFiles(files, fixed, setAttachProgress);
+    setAttachProgress("");
+    setChips(sent.map((d) => ({ name: d.name, status: "enviado" as const })));
+    setAttachErrors(failures);
+    if (sent.length === 0) return;
+    setAttachOpen(false);
+    router.refresh();
+    const names = sent.map((d) => d.name).join(", ");
+    const note = `[Anexo] Documento(s) enviado(s) pelo usuário e já organizado(s): ${wrapUntrusted("anexo", sent.map((d) => `${d.name} (id: ${d.id})`).join("; "))} Comente o que reconheceu lendo com get_document; se a confiança for baixa, peça para o usuário conferir os valores.`;
+    await send(note, undefined, `Anexei: ${names}`);
+  }
 
   async function send(message: string, approve?: string[], display = message) {
     speech.stop();
@@ -372,6 +405,55 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
             </Button>
           </p>
         )}
+        {attachOpen && (
+          <div role="group" aria-label="Anexar documentos" className="flex flex-col gap-2 rounded-[var(--radius-md)] border border-line p-3 text-sm">
+            <label className="flex items-start gap-2 text-xs text-ink-muted">
+              <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5" />
+              <span>{CONSENT_TEXT}</span>
+            </label>
+            <label className="flex flex-col gap-1">
+              Arquivos (PDF, XML, PNG, JPG ou TXT, até 10 MB cada)
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.xml,.png,.jpg,.jpeg,.txt"
+                disabled={busy}
+                onChange={(e) => {
+                  const files = Array.from(e.currentTarget.files ?? []);
+                  e.currentTarget.value = "";
+                  void attach(files);
+                }}
+                className="rounded-xl border border-line px-3 py-2"
+              />
+            </label>
+          </div>
+        )}
+        {attachProgress && (
+          <p aria-live="polite" className="text-xs text-ink-muted">
+            {attachProgress}
+          </p>
+        )}
+        {chips.length > 0 && (
+          <ul aria-label="Anexos" className="flex flex-wrap gap-2 text-xs">
+            {chips.map((c) => (
+              <li key={c.name} data-testid="attachment-chip" className="rounded-full bg-brand-tint px-3 py-1 text-brand-ink">
+                {c.name}: {c.status === "enviando" ? "enviando…" : "enviado e organizado"}
+              </li>
+            ))}
+          </ul>
+        )}
+        {attachErrors.length > 0 && (
+          <p role="alert" className="rounded-[var(--radius-sm)] bg-danger-tint px-3 py-2 text-xs text-danger-ink">
+            {attachErrors.map((l) => (
+              <span key={l} className="block">
+                {l}
+              </span>
+            ))}
+          </p>
+        )}
+        <Button type="button" variant="ghost" size="sm" className="self-start" aria-expanded={attachOpen} disabled={busy} onClick={() => setAttachOpen((o) => !o)}>
+          Anexar arquivo
+        </Button>
         <form onSubmit={submit} className="flex gap-2">
           <Input ref={inputRef} aria-label="Mensagem" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Quero entender meus impostos..." className="min-w-0 flex-1" />
           <Button type="button" variant="ghost" disabled={!voice.supported || busy} aria-describedby="voice-help" aria-pressed={voice.listening} onClick={toggleVoice}>
