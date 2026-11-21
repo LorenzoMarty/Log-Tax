@@ -45,6 +45,7 @@ test("edit an agent on its detail screen and delete it with confirmation", async
   await page.getByRole("navigation", { name: "Minhas IAs" }).getByRole("link", { name: /IA da Empresa/ }).click();
   await page.getByRole("link", { name: "Editar esta IA" }).click();
   await expect(page.getByRole("heading", { name: "IA da Empresa", level: 1 })).toBeVisible();
+  await page.waitForLoadState("networkidle"); // hydrate before submitting, or the form posts natively
   await page.getByLabel("Objetivo").fill("Vigiar o caixa");
   await page.getByLabel("run_simulation").uncheck();
   await page.getByRole("button", { name: "Salvar alterações" }).click();
