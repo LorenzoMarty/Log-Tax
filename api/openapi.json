@@ -548,6 +548,40 @@
         "title": "CarryingTaxIn",
         "type": "object"
       },
+      "CaseIn": {
+        "properties": {
+          "competence": {
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+            "title": "Competence",
+            "type": "string"
+          },
+          "expected": {
+            "additionalProperties": true,
+            "minProperties": 1,
+            "title": "Expected",
+            "type": "object"
+          },
+          "inputs": {
+            "additionalProperties": true,
+            "title": "Inputs",
+            "type": "object"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "competence",
+          "inputs",
+          "expected"
+        ],
+        "title": "CaseIn",
+        "type": "object"
+      },
       "ChangelogEntry": {
         "properties": {
           "confidence": {
@@ -1545,6 +1579,19 @@
           "kind"
         ],
         "title": "CreateIn",
+        "type": "object"
+      },
+      "Created": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "Created",
         "type": "object"
       },
       "DeadlineList": {
@@ -3427,6 +3474,92 @@
         "title": "PrestadorOption",
         "type": "object"
       },
+      "ProposeIn": {
+        "properties": {
+          "confidence": {
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Confidence",
+            "type": "string"
+          },
+          "jurisdiction": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Jurisdiction",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          },
+          "requiresValidation": {
+            "default": true,
+            "title": "Requiresvalidation",
+            "type": "boolean"
+          },
+          "ruleId": {
+            "pattern": "^[a-z0-9][a-z0-9-]{1,80}$",
+            "title": "Ruleid",
+            "type": "string"
+          },
+          "sourceUrl": {
+            "maxLength": 500,
+            "pattern": "^https?://\\S+$",
+            "title": "Sourceurl",
+            "type": "string"
+          },
+          "validFrom": {
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+            "title": "Validfrom",
+            "type": "string"
+          },
+          "validUntil": {
+            "anyOf": [
+              {
+                "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Validuntil"
+          }
+        },
+        "required": [
+          "ruleId",
+          "name",
+          "jurisdiction",
+          "payload",
+          "sourceUrl",
+          "validFrom",
+          "confidence"
+        ],
+        "title": "ProposeIn",
+        "type": "object"
+      },
       "RatingIn": {
         "additionalProperties": false,
         "properties": {
@@ -3612,6 +3745,21 @@
         "title": "ReformYear",
         "type": "object"
       },
+      "RejectIn": {
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "RejectIn",
+        "type": "object"
+      },
       "ResolveIn": {
         "additionalProperties": false,
         "properties": {
@@ -3697,6 +3845,78 @@
         "title": "Revenue",
         "type": "object"
       },
+      "RuleCase": {
+        "properties": {
+          "competence": {
+            "title": "Competence",
+            "type": "string"
+          },
+          "expected": {
+            "additionalProperties": true,
+            "title": "Expected",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "inputs": {
+            "additionalProperties": true,
+            "title": "Inputs",
+            "type": "object"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "competence",
+          "inputs",
+          "expected"
+        ],
+        "title": "RuleCase",
+        "type": "object"
+      },
+      "RuleEvaluation": {
+        "properties": {
+          "casesHash": {
+            "title": "Caseshash",
+            "type": "string"
+          },
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string"
+          },
+          "passed": {
+            "title": "Passed",
+            "type": "boolean"
+          },
+          "payloadHash": {
+            "title": "Payloadhash",
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "required": [
+          "passed",
+          "payloadHash",
+          "casesHash",
+          "results",
+          "createdAt"
+        ],
+        "title": "RuleEvaluation",
+        "type": "object"
+      },
       "RuleRef": {
         "description": "What a result says about each rule it used, so any number traces back to a law and a date.",
         "properties": {
@@ -3756,6 +3976,309 @@
           "endsAt"
         ],
         "title": "RuleStatus",
+        "type": "object"
+      },
+      "RuleVersionDetail": {
+        "properties": {
+          "approvedBy": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approvedby"
+          },
+          "cases": {
+            "items": {
+              "$ref": "#/components/schemas/RuleCase"
+            },
+            "title": "Cases",
+            "type": "array"
+          },
+          "casesHash": {
+            "title": "Caseshash",
+            "type": "string"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "string"
+          },
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string"
+          },
+          "createdBy": {
+            "title": "Createdby",
+            "type": "string"
+          },
+          "decidedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decidedat"
+          },
+          "evaluation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RuleEvaluation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "jurisdiction": {
+            "title": "Jurisdiction",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          },
+          "payloadHash": {
+            "title": "Payloadhash",
+            "type": "string"
+          },
+          "rejectReason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rejectreason"
+          },
+          "requiresValidation": {
+            "title": "Requiresvalidation",
+            "type": "boolean"
+          },
+          "ruleId": {
+            "title": "Ruleid",
+            "type": "string"
+          },
+          "sourceUrl": {
+            "title": "Sourceurl",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "proposed",
+              "approved",
+              "rejected"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "validFrom": {
+            "title": "Validfrom",
+            "type": "string"
+          },
+          "validUntil": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Validuntil"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "ruleId",
+          "version",
+          "name",
+          "jurisdiction",
+          "sourceUrl",
+          "validFrom",
+          "validUntil",
+          "confidence",
+          "requiresValidation",
+          "status",
+          "createdBy",
+          "approvedBy",
+          "createdAt",
+          "decidedAt",
+          "payload",
+          "notes",
+          "rejectReason",
+          "payloadHash",
+          "casesHash",
+          "cases",
+          "evaluation"
+        ],
+        "title": "RuleVersionDetail",
+        "type": "object"
+      },
+      "RuleVersionSummary": {
+        "properties": {
+          "approvedBy": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approvedby"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "string"
+          },
+          "createdAt": {
+            "title": "Createdat",
+            "type": "string"
+          },
+          "createdBy": {
+            "title": "Createdby",
+            "type": "string"
+          },
+          "decidedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decidedat"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "jurisdiction": {
+            "title": "Jurisdiction",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "requiresValidation": {
+            "title": "Requiresvalidation",
+            "type": "boolean"
+          },
+          "ruleId": {
+            "title": "Ruleid",
+            "type": "string"
+          },
+          "sourceUrl": {
+            "title": "Sourceurl",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "proposed",
+              "approved",
+              "rejected"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "validFrom": {
+            "title": "Validfrom",
+            "type": "string"
+          },
+          "validUntil": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Validuntil"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "ruleId",
+          "version",
+          "name",
+          "jurisdiction",
+          "sourceUrl",
+          "validFrom",
+          "validUntil",
+          "confidence",
+          "requiresValidation",
+          "status",
+          "createdBy",
+          "approvedBy",
+          "createdAt",
+          "decidedAt"
+        ],
+        "title": "RuleVersionSummary",
+        "type": "object"
+      },
+      "RulesList": {
+        "properties": {
+          "builtin": {
+            "items": {
+              "$ref": "#/components/schemas/ChangelogEntry"
+            },
+            "title": "Builtin",
+            "type": "array"
+          },
+          "runtime": {
+            "items": {
+              "$ref": "#/components/schemas/RuleVersionSummary"
+            },
+            "title": "Runtime",
+            "type": "array"
+          }
+        },
+        "required": [
+          "builtin",
+          "runtime"
+        ],
+        "title": "RulesList",
         "type": "object"
       },
       "RulesOut": {
@@ -4623,6 +5146,418 @@
           }
         },
         "summary": "Overview",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/rules": {
+      "get": {
+        "description": "Built-in rules (changelog) and runtime versions with validity, source and status. 403 unless a platform admin.",
+        "operationId": "list_rules_v1_admin_rules_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RulesList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Rules",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "description": "Proposes a new version (status `proposed`). It changes nothing in the engine until another admin approves it.",
+        "operationId": "propose_rule_v1_admin_rules_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Created"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Propose Rule",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/rules/cases/{case_id}": {
+      "delete": {
+        "operationId": "remove_case_v1_admin_rules_cases__case_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Case Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Case",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/rules/{rule_id}/cases": {
+      "post": {
+        "description": "Attaches a reference case (inputs and expected outputs) to a rule id. Cases are evaluated at approval.",
+        "operationId": "add_case_v1_admin_rules__rule_id__cases_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rule_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z0-9][a-z0-9-]{1,80}$",
+              "title": "Rule Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Created"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Case",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/rules/{version_id}": {
+      "get": {
+        "description": "One runtime version with payload, reference cases and the latest evaluation.",
+        "operationId": "get_rule_v1_admin_rules__version_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleVersionDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Rule",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/rules/{version_id}/approve": {
+      "post": {
+        "description": "Approves a proposed version. 403 for the proposer; 422 (with the case results) when a reference case fails.",
+        "operationId": "approve_rule_v1_admin_rules__version_id__approve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleVersionDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Approve Rule",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/rules/{version_id}/reject": {
+      "post": {
+        "operationId": "reject_rule_v1_admin_rules__version_id__reject_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Version Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reject Rule",
         "tags": [
           "admin"
         ]
