@@ -95,6 +95,58 @@ test("edit an agent on its detail screen and delete it with confirmation", async
   await expect(page.getByRole("navigation", { name: "Minhas IAs" })).toHaveCount(0);
 });
 
+// #127: the AI adds the new blocks (projection, payroll, goal) and the page renders them from decimal strings.
+test("the AI adds projection, payroll and goal blocks", async ({ page }) => {
+  await login(page, "blocks");
+  await createAndOpen(page, /Minha Empresa/);
+
+  await sendChatMessage(page, "Adicione uma previsão dos impostos", /Adicionei a projeção do imposto/);
+  const projection = page.getByTestId("widget-projecao-imposto");
+  await expect(projection).toBeVisible();
+  await expect(projection.getByRole("img", { name: "Projeção do imposto" })).toBeVisible();
+  await expect(projection).toContainText("Barras claras são projeção");
+  await expect(projection).toContainText(/estimativa ilustrativa/i);
+
+  await sendChatMessage(page, "Mostra também minha folha", /encargos da folha/);
+  await sendChatMessage(page, "Crie uma meta de R$ 5 mil", /Adicionei a meta/);
+  const goal = page.getByTestId("widget-meta");
+  await expect(goal.getByRole("progressbar", { name: "Meta de economia" })).toHaveAttribute("aria-valuenow", "0");
+  await expect(goal).toContainText("R$ 5.000,00");
+
+  await page.reload();
+  await expect(page.getByTestId("widget-projecao-imposto")).toBeVisible();
+  await expect(page.getByTestId("widget-meta")).toBeVisible();
+});
+
+// #139: an AI that may edit the panel keeps its own page, linked to it, and the page goes away with the AI.
+test("an AI keeps its own panel, and deleting the AI removes it", async ({ page }) => {
+  await login(page, "agentpanel");
+  await createAndOpen(page, /Minha Empresa/);
+  await sendChatMessage(page, "Crie uma IA com painel próprio", /Criei a "IA do Painel"/);
+  const wsId = /\/workspace\/([0-9a-f-]{36})/.exec(page.url())![1];
+  const nav = page.getByRole("navigation", { name: "Minhas IAs" });
+  await nav.getByRole("link", { name: /IA do Painel/ }).click();
+  await expect(page.getByRole("heading", { name: "Painel de IA do Painel", level: 2 })).toBeVisible();
+
+  await sendChatMessage(page, "Crie uma meta de R$ 5 mil", /Adicionei a meta/);
+  await expect(page.getByTestId("widget-meta")).toBeVisible();
+  await page.reload();
+  await expect(page.getByTestId("widget-meta")).toBeVisible(); // saved on the AI's own panel
+  await page.getByRole("link", { name: /Assistente geral/ }).click();
+  await expect(page.getByTestId("widget-meta")).toHaveCount(0); // the main panel is untouched
+
+  const panels = async () => (await page.request.get(`/api/v1/workspaces/${wsId}/agent-dashboards`)).json();
+  expect(await panels()).toHaveLength(1);
+
+  await nav.getByRole("link", { name: /IA do Painel/ }).click();
+  await page.getByRole("link", { name: "Editar esta IA" }).click();
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("button", { name: "Excluir IA" }).click();
+  await page.getByRole("button", { name: "Confirmar exclusão" }).click();
+  await expect(page).toHaveURL(/\/workspace\/[0-9a-f-]{36}$/);
+  expect(await panels()).toEqual([]);
+});
+
 test("the Python chat is closed without a session and keeps the contract's error shape", async ({ request }) => {
   const res = await request.post("/api/v1/chat", { data: { workspaceId: "00000000-0000-0000-0000-000000000000", message: "oi" } });
   expect(res.status()).toBe(401);

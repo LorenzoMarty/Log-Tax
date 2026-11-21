@@ -365,7 +365,7 @@ const TOOLS: Tool[] = [
   }),
   defineTool({
     name: "dashboard_add_widget",
-    description: "Adiciona um bloco ao painel. Tipos: kpi, bar, line, breakdown, opportunities, deadlines, compare, checklist, text.",
+    description: "Adiciona um bloco ao painel. Tipos: kpi, bar, line, breakdown, opportunities, deadlines, compare, checklist, text, projection, payroll, table, goal. Valores em reais nos 4 últimos são strings decimais (\"1234.56\").",
     schema: z.strictObject({ widget: widgetSchema, index: z.int().min(0).optional() }),
     run(ctx, a) {
       const before = ctx.store.getDashboard();

@@ -344,3 +344,8 @@ async def test_scripted_update_agent_reads_the_agent_id_from_the_system_prompt()
     assert tools.args[0] == {"id": "a1", "patch": {"objective": "cuidar do caixa"}} and "atualizei o objetivo" in r.text
     none, tools2 = await turn("troque o objetivo para algo", {})  # no agent in the default system prompt
     assert tools2.names == [] and "Não encontrei essa IA" in none
+
+
+async def test_scripted_agent_with_its_own_panel_gets_the_dashboard_tools() -> None:
+    text, tools = await turn("crie uma IA com painel próprio", {})
+    assert tools.args[0]["tools"] == ["dashboard_add_widget", "dashboard_update_widget"] and "painel próprio" in text
