@@ -142,3 +142,14 @@ test("criar um inventário com 2 bens e 3 herdeiros pela conversa e ver o painel
   await page.reload();
   await expect(page.getByTestId("inventory-heir")).toHaveCount(3);
 });
+
+// #186: "crie uma IA para o inventário do meu pai" produces the PRD §10 configuration (template Inventário).
+test("criar a IA do Inventário pelo chat a partir do modelo", async ({ page }) => {
+  await login(page, "agentinv");
+  await createAndOpen(page, /Vida Pessoal/);
+  await sendChatMessage(page, "Crie uma IA para o inventário do meu pai", /Criei a "IA do Inventário"/);
+  const nav = page.getByRole("navigation", { name: "Minhas IAs" });
+  await expect(nav).toContainText("IA do Inventário");
+  await expect(nav).toContainText("Acompanhar patrimônio, documentos, impostos e obrigações do inventário");
+  await expect(nav).toContainText("9 ferramentas");
+});
