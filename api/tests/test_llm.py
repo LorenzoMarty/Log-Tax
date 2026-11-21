@@ -346,6 +346,12 @@ async def test_scripted_update_agent_reads_the_agent_id_from_the_system_prompt()
     assert tools2.names == [] and "Não encontrei essa IA" in none
 
 
+async def test_scripted_inventory_agent_uses_the_template() -> None:
+    text, tools = await turn("Crie uma IA para o inventário do meu pai", {"create_agent_from_template": {"id": "a1"}})
+    assert tools.names == ["create_agent_from_template"] and tools.args[0] == {"templateId": "inventario"}
+    assert 'Criei a "IA do Inventário"' in text
+
+
 async def test_scripted_inventory_journey_calls_the_estate_asset_and_heir_tools() -> None:
     _, tools = await turn("Abrir o espólio de João Silva, falecido em 15/10/2026, em sp", {})
     assert tools.names == ["set_estate"]

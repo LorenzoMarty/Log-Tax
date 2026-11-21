@@ -38,6 +38,17 @@ test("create an agent by chat, talk to it inside its scope, edit it by chat", as
   await expect(page.getByRole("navigation", { name: "Minhas IAs" })).toContainText("Cuidar do planejamento tributário");
 });
 
+// #186: "crie uma IA para o inventário do meu pai" produces the PRD §10 configuration.
+test("create the Inventário agent by chat from the template", async ({ page }) => {
+  await login(page, "agentinv");
+  await createAndOpen(page, /Vida Pessoal/);
+  await sendChatMessage(page, "Crie uma IA para o inventário do meu pai", /Criei a "IA do Inventário"/);
+  const nav = page.getByRole("navigation", { name: "Minhas IAs" });
+  await expect(nav).toContainText("IA do Inventário");
+  await expect(nav).toContainText("Acompanhar patrimônio, documentos, impostos e obrigações do inventário");
+  await expect(nav).toContainText("9 ferramentas");
+});
+
 test("an agent id that is not yours returns 404", async ({ page }) => {
   await login(page, "agents404");
   await createAndOpen(page, /Minha Empresa/);
