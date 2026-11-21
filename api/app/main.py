@@ -22,6 +22,7 @@ from app.api import (
     nfe_import,
     organized_documents,
     report,
+    report_links,
     sharing,
     usage,
     vitals,
@@ -61,6 +62,7 @@ def create_app() -> FastAPI:
     app.include_router(cron.router)
     app.include_router(account.router)
     app.include_router(report.router)
+    app.include_router(report_links.router)
     app.include_router(sharing.router)
     app.include_router(workspaces.router)
     app.include_router(alert_events.router)

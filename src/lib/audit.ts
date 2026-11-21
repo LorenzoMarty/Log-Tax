@@ -16,7 +16,10 @@ export type AuditAction =
   | "account_deleted"
   | "mfa_enabled"
   | "mfa_disabled"
-  | "mfa_recovery_used";
+  | "mfa_recovery_used"
+  | "report_link_created"
+  | "report_link_revoked"
+  | "report_link_opened";
 
 export const AUDIT_LABEL: Record<AuditAction, string> = {
   login: "Entrou no Log Tax",
@@ -33,6 +36,9 @@ export const AUDIT_LABEL: Record<AuditAction, string> = {
   mfa_enabled: "Ativou a verificação em duas etapas",
   mfa_disabled: "Desativou a verificação em duas etapas",
   mfa_recovery_used: "Usou um código de recuperação",
+  report_link_created: "Criou um link do relatório",
+  report_link_revoked: "Revogou um link do relatório",
+  report_link_opened: "Alguém abriu um link do relatório",
 };
 
 /**
