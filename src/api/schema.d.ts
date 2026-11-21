@@ -1983,6 +1983,7 @@ export interface components {
              * @enum {string}
              */
             role: "editor" | "commenter" | "reader";
+            scope?: components["schemas"]["ScopeIn"] | null;
         };
         /** IrBensBody */
         IrBensBody: {
@@ -2439,6 +2440,16 @@ export interface components {
             expiring: components["schemas"]["RuleStatus"][];
             /** Lapsed */
             lapsed: components["schemas"]["RuleStatus"][];
+        };
+        /**
+         * ScopeIn
+         * @description The parts of the space the invitee may see; no scope means the whole space.
+         */
+        ScopeIn: {
+            /** Documentids */
+            documentIds?: string[] | null;
+            /** Kinds */
+            kinds: ("dashboard" | "documents" | "report")[];
         };
         /** SearchHitOut */
         SearchHitOut: {
