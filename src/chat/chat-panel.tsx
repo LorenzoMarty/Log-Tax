@@ -21,6 +21,7 @@ import { RequestExamples } from "./request-examples";
 import { useVoiceInput } from "./voice";
 import type { Agent } from "./types";
 import type { DisplayMessage } from "./workspace-state";
+import { isPersonal } from "@/workspace/kinds";
 
 const REPORT_PATH = /(?<![\w.:/-])(\/workspace\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?:\/relatorio)?)(?![\w/-])/g;
 
@@ -148,7 +149,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
       setAlerts(data.alerts ?? []);
       setAgents(data.agents ?? agents);
       setPending(data.pendingConfirmations ?? []);
-      if (props.workspaceKind === "pessoal") router.refresh(); // server panels (inventory) re-read what the tools saved
+      if (isPersonal(props.workspaceKind)) router.refresh(); // server panels (inventory) re-read what the tools saved
     } catch (e) {
       if (controller.signal.aborted) setMessages((m) => [...m, { role: "assistant", text: "Parei. Pode me dizer o que prefere fazer agora." }]);
       else setError(e instanceof Error ? e.message : "Algo deu errado.");

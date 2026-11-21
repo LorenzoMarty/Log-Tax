@@ -14,6 +14,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from fastapi.responses import JSONResponse, Response
 
+from app.chat.kinds import is_personal
 from app.chat.state import _person_from, profile_to_json
 from app.core.errors import error_response
 from app.core.rate_limit import rate_limited
@@ -38,7 +39,7 @@ async def import_ir(
     if await db.rpc("my_role", {"ws": ws}) != "owner":
         return error_response(403, "forbidden", "Só quem é dono do espaço importa a declaração.")
     rows = await db.select("workspaces", select="kind,profile", id=f"eq.{ws}")
-    if not rows or rows[0]["kind"] != "pessoal":
+    if not rows or not is_personal(rows[0]["kind"]):
         return error_response(404, "not_found", "Não encontrei o que você pediu.")
 
     data = await file.read(MAX_BYTES + 1)

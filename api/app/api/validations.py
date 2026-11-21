@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, StringConstraints
 from pydantic.alias_generators import to_camel
 
+from app.chat.kinds import is_personal
 from app.chat.state import load_workspace_state
 from app.core.auth import Principal, current_user
 from app.core.config import Settings, get_settings
@@ -34,7 +35,7 @@ async def _current(db: UserDb, ws: str, settings: Settings) -> tuple[str, str] |
     state = await load_workspace_state(db, ws, settings)
     if state is None:
         return None
-    profile = state.store.person if state.kind == "pessoal" else state.store.company
+    profile = state.store.person if is_personal(state.kind) else state.store.company
     return fingerprint(profile, RealEngine())
 
 

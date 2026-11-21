@@ -26,8 +26,9 @@ from app.chat.agent_templates import AGENT_TEMPLATES
 from app.chat.agent_templates import BY_ID as TEMPLATE_BY_ID
 from app.chat.blocks import payroll_widget, projection_widget
 from app.chat.dashboard import Widget, validate_widget
+from app.chat.kinds import Kind, kind_allows, spec_of
 from app.chat.prestador_panel import prestador_widgets
-from app.chat.store import Kind, Scope, ToolContext
+from app.chat.store import Scope, ToolContext
 from app.chat.types import ToolOutcome, ToolSpec
 from app.core.br_ids import cnpj_valid, normalize_cnpj
 from app.documents.classify import DOC_LABEL
@@ -1168,7 +1169,7 @@ async def _remove_workspace(ctx: ToolContext, a: RemoveWorkspaceArgs) -> Any:
     read_only=True,
 )
 async def _generate_report(ctx: ToolContext, a: NoArgs) -> Any:
-    title = "Relatório de Imposto de Renda" if ctx.scope.kind == "pessoal" else "Relatório tributário"
+    title = spec_of(ctx.scope.kind).report_title
     return {"title": title, "url": f"/workspace/{ctx.scope.workspace_id}/relatorio"}
 
 
@@ -1458,7 +1459,7 @@ def _check_agent_tools(scope: Scope, requested: list[str]) -> None:
 
 
 def _in_kind(scope: Scope, tool: Tool) -> bool:
-    return tool.kinds is None or scope.kind is None or scope.kind in tool.kinds
+    return kind_allows(scope.kind, tool.name, tool.kinds)
 
 
 def _allowed(scope: Scope, tool: Tool) -> bool:

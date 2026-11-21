@@ -1525,7 +1525,10 @@
           "kind": {
             "enum": [
               "empresa",
-              "pessoal"
+              "pessoal",
+              "prestador",
+              "patrimonio",
+              "inventario"
             ],
             "title": "Kind",
             "type": "string"

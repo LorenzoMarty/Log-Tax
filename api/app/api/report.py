@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse, RedirectResponse, Response
 
 from app.chat.alerts import alert_statuses
+from app.chat.kinds import is_personal
 from app.chat.state import load_workspace_state
 from app.core.audit import audit
 from app.core.config import Settings, get_settings
@@ -44,13 +45,13 @@ async def _build(ws: str, settings: Settings, db: UserDb) -> dict[str, Any] | No
         workspace_name=state.workspace_name,
         company=store.company,
         person=store.person,
-        alerts=[] if state.kind == "pessoal" else alert_statuses(engine, store.company, store.alerts),
+        alerts=[] if is_personal(state.kind) else alert_statuses(engine, store.company, store.alerts),
         documents=documents,
         engine=engine,
         generated_at=datetime.now(UTC),
     )
     reviews = await db.select("validations", select="*", workspace_id=f"eq.{ws}", order="created_at.desc")
-    profile = store.person if state.kind == "pessoal" else store.company
+    profile = store.person if is_personal(state.kind) else store.company
     attach(data, latest(reviews, *fingerprint(profile, engine)))
     return data
 

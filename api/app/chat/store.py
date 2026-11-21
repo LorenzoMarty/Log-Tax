@@ -6,15 +6,15 @@ only know this protocol.
 
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Literal, Protocol
+from typing import Any, Protocol
 
 from app.chat.dashboard import Action, Dashboard, History, new_dashboard, reduce
+from app.chat.kinds import Kind
 from app.chat.types import Agent
 from app.documents.search import DocumentSearch
 from app.engine.real_engine import RealEngine
 from app.engine.types import CompanyProfile, PersonProfile
 
-Kind = Literal["empresa", "pessoal"]
 Alert = dict[str, Any]  # {"id", "rule": {"metric", "operator", "threshold"}, "active"}
 Memory = dict[str, str]  # {"id", "text"}
 Asset = dict[str, Any]  # {"id", "kind", "description", "value" (decimal string), "acquired_at" (ISO date | None), "extra"}

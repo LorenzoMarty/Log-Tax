@@ -13,7 +13,8 @@ from typing import Any, Literal
 from pydantic.alias_generators import to_camel
 
 from app.chat.dashboard import Dashboard, History
-from app.chat.store import Kind, MemoryStore, Page
+from app.chat.kinds import Kind, base_of, is_personal
+from app.chat.store import MemoryStore, Page
 from app.chat.types import Agent, Msg
 from app.chat.versions import get_version, list_versions, record_versions
 from app.core.config import Settings
@@ -155,8 +156,8 @@ async def load_workspace_state(
         raw = {**raw, "cnpj": decrypt_field(raw["cnpj"], settings)}  # the CNPJ is stored encrypted and opened here
     has_data = isinstance(raw, dict) and len(raw) > 0
     fallback = seed_company() if demo else blank
-    company = (normalize_profile(raw, fallback) if has_data else fallback) if ws["kind"] == "empresa" else blank
-    if ws["kind"] == "pessoal":
+    company = (normalize_profile(raw, fallback) if has_data else fallback) if base_of(ws["kind"]) == "empresa" else blank
+    if is_personal(ws["kind"]):
         person = _person_from(raw) if has_data and isinstance(raw, dict) else (seed_person() if demo else PersonProfile())
     else:
         person = seed_person() if demo else PersonProfile()
@@ -216,7 +217,7 @@ async def save_workspace_state(
 ) -> list[Agent]:
     """Saves the turn. Returns the agents as persisted, so brand-new ones come back with their real ids."""
     store = state.store
-    if state.kind == "pessoal":
+    if is_personal(state.kind):
         profile = profile_to_json(store.person)
     else:
         profile = profile_to_json(store.company)
@@ -225,7 +226,7 @@ async def save_workspace_state(
     before = await db.select("workspaces", select="profile", id=f"eq.{workspace_id}")
     await db.update("workspaces", {"profile": profile}, id=f"eq.{workspace_id}")
     old, new = ((before[0].get("profile") if before else None) or {}).get("regime"), str(profile.get("regime"))
-    if state.kind == "empresa" and old and old != new:
+    if base_of(state.kind) == "empresa" and old and old != new:
         await notify_event(
             settings,
             workspace_id,

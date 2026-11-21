@@ -1,6 +1,7 @@
 import type { AlertStatus } from "@/alerts/evaluate";
 import { DOC_LABEL, type DocType } from "@/documents/classify";
 import { MISSING_LABEL } from "@/documents/storage";
+import { isPersonal, type SpaceKind } from "@/workspace/kinds";
 import { DISCLAIMER, sealOf, type CalcStep, type CompanyProfile, type EngineResult, type PersonProfile, type TaxEngine } from "@/engine";
 
 /** The calculation memory as a report section, or none when the engine does not provide steps (the mock engine). */
@@ -27,7 +28,7 @@ export interface Report {
 }
 
 export interface ReportInput {
-  kind: "empresa" | "pessoal";
+  kind: SpaceKind;
   workspaceName: string;
   company: CompanyProfile;
   person: PersonProfile;
@@ -246,4 +247,4 @@ function personReport(i: ReportInput): Report {
 const date = (d: Date) => d.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
 
 /** Pure and deterministic: everything comes from the engine and the saved data, nothing is filled in. */
-export const buildReport = (i: ReportInput): Report => (i.kind === "pessoal" ? personReport(i) : companyReport(i));
+export const buildReport = (i: ReportInput): Report => (isPersonal(i.kind) ? personReport(i) : companyReport(i));

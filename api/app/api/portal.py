@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 
+from app.chat.kinds import base_of
 from app.core.auth import Principal, current_user
 from app.db.client import UserDb, user_db
 from app.documents.expected import checklist
@@ -87,7 +88,7 @@ async def portal_clients(principal: Principal = Depends(current_user), db: UserD
         raw: Any = w.get("profile")
         profile: dict[str, Any] = raw if isinstance(raw, dict) else {}
         deadline = None
-        if wid in full and w["kind"] == "empresa" and isinstance(profile.get("regime"), str):
+        if wid in full and base_of(w["kind"]) == "empresa" and isinstance(profile.get("regime"), str):
             found = upcoming_deadlines(profile["regime"], today).deadlines
             deadline = Deadline(label=found[0].label, date=found[0].date) if found else None
         missing = sum(not i["done"] for i in checklist(w["kind"], profile, month, arrived[wid])) if wid in doc_ids else None
