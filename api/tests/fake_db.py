@@ -47,6 +47,8 @@ class FakeDb:
                 return False
             if op == "is" and value == "null" and row.get(column) is not None:
                 return False
+            if op == "not" and value == "is.null" and row.get(column) is None:
+                return False
             if op == "in" and str(row.get(column)) not in value.strip("()").split(","):
                 return False
         return True
