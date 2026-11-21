@@ -86,6 +86,16 @@ export function ReportView({ report, backHref, workspaceId }: { report: Report; 
               Selo: {s.seal.text}
             </p>
           )}
+          {s.validation && (
+            <p
+              role="note"
+              data-validation={s.validation.valid ? s.validation.status : "outdated"}
+              className="rounded-xl border border-neutral-300 px-3 py-2 text-xs"
+            >
+              {s.validation.text}
+              {s.validation.valid && s.validation.note ? <> Observação: {s.validation.note}</> : null}
+            </p>
+          )}
           {s.table && <Table {...s.table} />}
           {s.items && (
             <ul className="list-disc space-y-1 pl-5 text-sm">

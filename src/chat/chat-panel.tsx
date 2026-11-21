@@ -48,13 +48,17 @@ function withReportLinks(text: string): React.ReactNode[] {
   );
 }
 
-/** Reads the NDJSON stream: tool lines update the progress text, the last line carries the reply (or an error). */
 /** `NEXT_PUBLIC_CHAT_API=fastapi` sends the chat to the Python backend (via the same-origin proxy); unset keeps the Next.js route (#307). */
+const WRITING = "Escrevendo a resposta…";
 const CHAT_URL = process.env.NEXT_PUBLIC_CHAT_API === "fastapi" ? "/api/v1/chat" : "/api/chat";
 /** The Next.js route answers `{ error: "text" }`; the FastAPI backend answers `{ error: { code, message } }`. */
 const errorText = (e: unknown): string | undefined => (typeof e === "string" ? e : e && typeof e === "object" && "message" in e ? String((e as { message: unknown }).message) : undefined);
 
-async function readStream(res: Response, onProgress: (text: string) => void) {
+/**
+ * Reads the NDJSON stream: tool lines update the progress text, text lines grow the draft (a tool line drops it: that was
+ * a preamble, the final text comes in the last line), the last line carries the reply (or an error).
+ */
+async function readStream(res: Response, onProgress: (text: string) => void, onText: (delta: string | null) => void) {
   const reader = res.body!.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
@@ -62,7 +66,13 @@ async function readStream(res: Response, onProgress: (text: string) => void) {
   const handle = (raw: string) => {
     if (!raw.trim()) return;
     const line = JSON.parse(raw) as ChatStreamLine;
-    if (line.type === "tool") onProgress(toolProgressLabel(line.name));
+    if (line.type === "tool") {
+      onText(null);
+      onProgress(toolProgressLabel(line.name));
+    } else if (line.type === "text") {
+      onProgress(WRITING);
+      onText(line.delta);
+    }
     else if (line.type === "done") result = line.reply;
     else throw new Error(line.error);
   };
@@ -93,6 +103,8 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [progress, setProgress] = useState("");
+  /** The answer as it is being written (#110). Never read aloud token by token: see aria-hidden where it is shown. */
+  const [streamed, setStreamed] = useState("");
   const abort = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   // The block the user chose with "Perguntar sobre isto": it goes with the next message as context.
@@ -199,7 +211,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
         body: JSON.stringify({ workspaceId: props.workspaceId, agentId: props.agentId, pageId: activeId, message, approve, context }),
         signal: controller.signal,
       });
-      const data = res.headers.get("content-type")?.includes(NDJSON) ? await readStream(res, setProgress) : await res.json();
+      const data = res.headers.get("content-type")?.includes(NDJSON) ? await readStream(res, setProgress, (d) => setStreamed((t) => (d === null ? "" : t + d))) : await res.json();
       if (!res.ok) throw new Error(errorText(data.error) ?? "Algo deu errado.");
       setMessages((m) => [...m, { role: "assistant", text: data.text }]);
       applyWithTransition(() => {
@@ -222,6 +234,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
     } finally {
       setBusy(false);
       setProgress("");
+      setStreamed("");
       abort.current = null;
     }
   }
@@ -315,7 +328,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
           {layoutStatus && <p role="status" className="sr-only">{layoutStatus}</p>}
         </div>
       <Panel label="Conversa com a IA" className="order-1 min-w-0 lg:order-none lg:sticky lg:top-6">
-        <div role="log" aria-label="Mensagens da conversa" aria-live="polite" tabIndex={0} className="flex max-h-[28rem] flex-col gap-3 overflow-y-auto p-1">
+        <div role="log" aria-label="Mensagens da conversa" aria-live="polite" aria-busy={busy} tabIndex={0} className="flex max-h-[28rem] flex-col gap-3 overflow-y-auto p-1">
           {messages.length === 0 && (
             <>
               <p className="text-sm text-ink-muted">O que você precisa resolver?</p>
@@ -364,6 +377,13 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
               )}
             </div>
           ))}
+          {/* The draft is hidden from assistive tech on purpose: the live region would read every token. The final message
+              is added to the log in one piece when the answer ends, and that is what gets announced. */}
+          {busy && streamed && (
+            <p aria-hidden="true" data-role="assistant-draft" className="lg-msg lg-msg-assistant whitespace-pre-line">
+              {streamed}
+            </p>
+          )}
           {busy && <p className="text-sm text-ink-subtle">{progress || "Pensando…"}</p>}
           {suggestions.length > 0 && <RequestExamples title="Sugestões" prompts={suggestions} disabled={busy} onPick={(text) => void send(text)} />}
         </div>

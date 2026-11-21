@@ -149,6 +149,50 @@ describe("ChatPanel", () => {
     expect(screen.queryByText("calculando o diagnóstico…")).not.toBeInTheDocument();
   });
 
+  it("grows the answer as text arrives, keeps it out of the live region, and announces the final message once (#110)", async () => {
+    const enc = new TextEncoder();
+    const line = (o: unknown) => enc.encode(`${JSON.stringify(o)}\n`);
+    let step!: () => void;
+    let next = new Promise<void>((r) => (step = r));
+    const pause = async () => {
+      await next;
+      next = new Promise<void>((r) => (step = r));
+    };
+    const body = new ReadableStream({
+      async start(c) {
+        c.enqueue(line({ type: "text", delta: "Você " }));
+        await pause();
+        c.enqueue(line({ type: "text", delta: "paga " }));
+        await pause();
+        c.enqueue(line({ type: "tool", name: "get_tax_diagnosis" })); // a preamble before a tool is dropped
+        await pause();
+        c.enqueue(line({ type: "text", delta: "R$ 42.800." }));
+        await pause();
+        c.enqueue(line({ type: "done", reply: { text: "R$ 42.800. Valide com um contador.", pendingConfirmations: [], dashboard: sampleDashboard } }));
+        c.close();
+      },
+    });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, headers: new Headers({ "content-type": "application/x-ndjson" }), body }));
+    setup();
+    send("quanto pago?");
+    const draft = () => document.querySelector('[data-role="assistant-draft"]');
+    await waitFor(() => expect(draft()).toHaveTextContent("Você"));
+    expect(draft()).toHaveAttribute("aria-hidden", "true"); // the live region does not read it token by token
+    expect(screen.getByRole("log")).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByText("Escrevendo a resposta…")).toBeInTheDocument();
+    step();
+    await waitFor(() => expect(draft()).toHaveTextContent("Você paga"));
+    step();
+    await waitFor(() => expect(draft()).toBeNull());
+    step();
+    await waitFor(() => expect(draft()).toHaveTextContent("R$ 42.800."));
+    step();
+    const final = await screen.findByText("R$ 42.800. Valide com um contador.");
+    expect(final.closest('[aria-hidden="true"]')).toBeNull(); // the finished message is announced, in one piece
+    expect(draft()).toBeNull();
+    expect(screen.getByRole("log")).toHaveAttribute("aria-busy", "false");
+  });
+
   it("shows the error line of a stream", async () => {
     const body = new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode('{"type":"error","error":"Falhou aqui."}\n')); c.close(); } });
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, headers: new Headers({ "content-type": "application/x-ndjson" }), body }));

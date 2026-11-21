@@ -236,3 +236,51 @@ def test_wrap_untrusted_fences_defuses_and_caps() -> None:
     assert out.count("</dados_externos>") == 1 and out.count("<dados_externos") == 1
     assert 'fonte="xy"' in out and len(out) < 6_200
     assert has_untrusted(out) and not has_untrusted("conversa normal")
+
+
+# ---- streaming text (#110) ----
+class StreamingLlm(FakeLlm):
+    async def respond_stream(self, *, system: str, history: list[Msg], tools: list[ToolSpec], on_text: Any) -> LlmTurn:
+        turn = await self.respond(system=system, history=history, tools=tools)
+        for word in turn.text.split(" "):
+            on_text(word + " ")
+        return turn
+
+
+async def test_text_is_pushed_while_the_model_writes_and_the_final_text_is_unchanged() -> None:
+    got: list[str] = []
+    llm = StreamingLlm([say("Você paga pouco")])
+    r = await run_turn(llm=llm, tools=FakeTools(), history=[], user_message="x", on_text=got.append)
+    assert got == ["Você ", "paga ", "pouco "] and r.text == "Você paga pouco"
+
+
+async def test_a_client_without_streaming_still_answers_when_text_is_requested() -> None:
+    got: list[str] = []
+    r = await run_turn(llm=FakeLlm([say("ok")]), tools=FakeTools(), history=[], user_message="x", on_text=got.append)
+    assert got == [] and r.text == "ok"
+
+
+async def test_streaming_is_not_used_when_nobody_listens() -> None:
+    class Strict(StreamingLlm):
+        async def respond_stream(self, **_: Any) -> LlmTurn:
+            raise AssertionError("no listener: plain respond")
+
+    assert (await run_turn(llm=Strict([say("ok")]), tools=FakeTools(), history=[], user_message="x")).text == "ok"
+
+
+async def test_cancelling_a_streaming_call_drops_it() -> None:
+    cancelled, started = asyncio.Event(), asyncio.Event()
+
+    class Hanging(StreamingLlm):
+        async def respond_stream(self, **_: Any) -> LlmTurn:
+            started.set()
+            await asyncio.sleep(30)
+            raise AssertionError("should have been cancelled")
+
+    task = asyncio.ensure_future(
+        run_turn(llm=Hanging([]), tools=FakeTools(), history=[], user_message="x", on_text=lambda _: None, cancelled=cancelled)
+    )
+    await started.wait()
+    cancelled.set()
+    with pytest.raises(TurnCancelledError):
+        await asyncio.wait_for(task, 2)

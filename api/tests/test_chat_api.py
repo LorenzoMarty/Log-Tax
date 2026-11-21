@@ -96,6 +96,27 @@ def test_the_stream_sends_one_line_per_tool_then_the_reply(signed_in: TestClient
     assert lines[-1]["reply"]["text"].endswith("valide com um contador antes de decidir.") and "usage" not in lines[-1]["reply"]
 
 
+def test_the_stream_sends_the_text_as_it_is_written_before_the_reply(
+    signed_in: TestClient, db: FakeDb, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class Streaming:
+        async def respond(self, **_: Any) -> LlmTurn:
+            return LlmTurn(text="Olá mundo")
+
+        async def respond_stream(self, *, on_text: Any, **_: Any) -> LlmTurn:
+            on_text("Olá ")
+            on_text("mundo")
+            return LlmTurn(text="Olá mundo")
+
+    monkeypatch.setattr(chat_module, "get_llm", lambda s: Streaming())
+    ws = workspace(db)
+    r = signed_in.post("/v1/chat", json={"workspaceId": ws, "message": "oi"}, headers={"Accept": "application/x-ndjson"})
+    lines = [json.loads(line) for line in r.text.splitlines()]
+    assert [line["type"] for line in lines] == ["text", "text", "done"]
+    assert [line["delta"] for line in lines[:2]] == ["Olá ", "mundo"] and lines[-1]["reply"]["text"] == "Olá mundo"
+    assert post(signed_in, ws, "oi").json()["text"] == "Olá mundo"  # the JSON mode never streams
+
+
 def test_a_workspace_that_is_not_visible_is_not_found_in_both_modes(signed_in: TestClient, db: FakeDb) -> None:
     ghost = WS
     assert post(signed_in, ghost).status_code == 404
@@ -203,7 +224,7 @@ def test_a_failure_never_leaks_its_cause_and_logs_metrics_without_the_text(
 async def test_a_client_that_goes_away_cancels_the_turn(db: FakeDb) -> None:
     started, finished = asyncio.Event(), asyncio.Event()
 
-    async def run(_db: UserDb, cancelled: asyncio.Event, on_tool_start: Any = None) -> None:
+    async def run(_db: UserDb, cancelled: asyncio.Event, on_tool_start: Any = None, on_text: Any = None) -> None:
         started.set()
         try:
             await cancelled.wait()

@@ -105,3 +105,29 @@ describe("ReportView with the API's 12 sections (#146)", () => {
     expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(list.length);
   });
 });
+
+describe("ReportView professional review (#418)", () => {
+  const base = { title: "R", subtitle: "s", disclaimer: "Estimativa ilustrativa" };
+  const impostos = (validation?: ReportSection["validation"]): ReportSection => ({ id: "impostos", title: "Impostos", paragraphs: ["x"], validation });
+
+  it("shows who reviewed, the note and that it is not a certification", () => {
+    const text = "Estimativa revisada pelo profissional (c@x.com). É a revisão de um profissional sobre uma estimativa, não uma certificação.";
+    render(<ReportView report={{ ...base, sections: [impostos({ status: "validated", text, note: "Conferi o anexo III", valid: true, createdAt: "2026-11-01" })] }} />);
+    const note = within(screen.getByRole("region", { name: "Impostos" })).getByRole("note");
+    expect(note).toHaveAttribute("data-validation", "validated");
+    expect(note).toHaveTextContent(/revisada pelo profissional.*não uma certificação.*Observação: Conferi o anexo III/);
+  });
+
+  it("marks an outdated review as outdated and hides its note", () => {
+    const text = "A revisão profissional perdeu a validade: os dados ou as regras mudaram desde então.";
+    render(<ReportView report={{ ...base, sections: [impostos({ status: "validated", text, note: "antiga", valid: false, createdAt: "2026-11-01" })] }} />);
+    const note = screen.getByRole("note");
+    expect(note).toHaveAttribute("data-validation", "outdated");
+    expect(note).not.toHaveTextContent("antiga");
+  });
+
+  it("renders nothing extra without a review", () => {
+    render(<ReportView report={{ ...base, sections: [impostos()] }} />);
+    expect(screen.queryByRole("note")).toBeNull();
+  });
+});

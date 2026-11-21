@@ -23,6 +23,8 @@ export interface ReportSection {
   items?: string[];
   /** Result badge: how firm the rules behind the numbers are. */
   seal?: { level: string; text: string };
+  /** A professional's review of this estimate (#154), attached by the API; `valid` is false once data or rules changed. */
+  validation?: { status: "validated" | "contested"; text: string; note: string; valid: boolean; createdAt: string; validatorEmail?: string | null };
 }
 
 export interface Report {
