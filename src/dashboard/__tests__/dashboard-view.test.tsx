@@ -5,6 +5,20 @@ import { sampleDashboard } from "../fixtures";
 import { ESTIMATE_KINDS } from "../types";
 
 describe("DashboardView", () => {
+  it("shows what is missing, and no number, while the panel is empty (#109)", () => {
+    const empty = { ...sampleDashboard, widgets: [] };
+    render(<DashboardView dashboard={empty} baseKind="empresa" />);
+    const hint = screen.getByTestId("empty-hint");
+    expect(hint).toHaveTextContent(/regime tributário/i);
+    expect(hint).toHaveTextContent(/faturamento mensal/i);
+    expect(hint.textContent).not.toMatch(/R\$|\d/);
+  });
+
+  it("asks for the income data in a personal space (#109)", () => {
+    render(<DashboardView dashboard={{ ...sampleDashboard, widgets: [] }} baseKind="pessoal" />);
+    expect(screen.getByTestId("empty-hint")).toHaveTextContent(/renda bruta anual/i);
+  });
+
   it("asks about one line of a block with a button reachable by keyboard (#118)", () => {
     const onAsk = vi.fn();
     render(<DashboardView dashboard={sampleDashboard} onAsk={onAsk} />);

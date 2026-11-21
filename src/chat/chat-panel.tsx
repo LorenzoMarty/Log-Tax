@@ -324,7 +324,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
           {/* versions are recorded by the Python chat only (#370); the TS chat is being removed (#314) */}
           {CHAT_URL === "/api/v1/chat" && !props.agentId && (pages.length < 2 || activeId === pages[0]?.id) && <VersionHistory workspaceId={props.workspaceId} dashboard={dashboard} onRestored={setDashboard} />}
           <PageTabs pages={pages} activeId={activeId} onSelect={openPage} disabled={busy} />
-          <DashboardView dashboard={dashboard} loading={busy} focus={focus} onExitFocus={() => applyWithTransition(() => setFocus(null))} onAsk={(w, row) => { setTopic({ widget: w, row }); inputRef.current?.focus(); }} onLayout={CHAT_URL === "/api/v1/chat" && !props.agentId && !busy && (pages.length < 2 || activeId === pages[0]?.id) ? changeLayout : undefined} />
+          <DashboardView dashboard={dashboard} baseKind={isPersonal(props.workspaceKind) ? "pessoal" : "empresa"} loading={busy} focus={focus} onExitFocus={() => applyWithTransition(() => setFocus(null))} onAsk={(w, row) => { setTopic({ widget: w, row }); inputRef.current?.focus(); }} onLayout={CHAT_URL === "/api/v1/chat" && !props.agentId && !busy && (pages.length < 2 || activeId === pages[0]?.id) ? changeLayout : undefined} />
           {layoutStatus && <p role="status" className="sr-only">{layoutStatus}</p>}
         </div>
       <Panel label="Conversa com a IA" className="order-1 min-w-0 lg:order-none lg:sticky lg:top-6">
