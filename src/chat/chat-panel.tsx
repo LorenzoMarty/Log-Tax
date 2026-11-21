@@ -417,10 +417,10 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
             ))}
           </p>
         )}
+        <Button type="button" variant="ghost" size="sm" className="self-start" aria-expanded={attachOpen} disabled={busy} onClick={() => setAttachOpen((o) => !o)}>
+          Anexar arquivo
+        </Button>
         <form onSubmit={submit} className="flex gap-2">
-          <Button type="button" variant="ghost" aria-expanded={attachOpen} disabled={busy} onClick={() => setAttachOpen((o) => !o)}>
-            Anexar arquivo
-          </Button>
           <Input ref={inputRef} aria-label="Mensagem" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Quero entender meus impostos..." className="min-w-0 flex-1" />
           <Button type="button" variant="ghost" disabled={!voice.supported || busy} aria-describedby="voice-help" aria-pressed={voice.listening} onClick={toggleVoice}>
             {voice.listening ? "Parar de falar" : "Falar"}
