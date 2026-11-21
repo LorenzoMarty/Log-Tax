@@ -27,7 +27,7 @@ describe("DashboardView layout controls (#129)", () => {
   it("moves and resizes by keyboard-reachable controls; labels contain the visible text", () => {
     const onLayout = vi.fn();
     render(<DashboardView dashboard={sampleDashboard} onLayout={onLayout} />);
-    expect(screen.getByRole("button", { name: `Mover para cima: ${first.title}` })).toBeDisabled();
+    expect(screen.getByRole("button", { name: `Mover para cima: ${first.title}` })).toHaveAttribute("aria-disabled", "true");
     fireEvent.click(screen.getByRole("button", { name: `Mover para baixo: ${first.title}` }));
     expect(onLayout).toHaveBeenCalledWith({ id: first.id, toIndex: 1 });
     fireEvent.change(screen.getByRole("combobox", { name: `Tamanho: ${second.title}` }), { target: { value: "lg" } });

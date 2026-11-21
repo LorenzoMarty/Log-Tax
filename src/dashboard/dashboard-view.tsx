@@ -97,7 +97,7 @@ export function DashboardView({ dashboard, loading = false, onAsk, onLayout: lay
                     const to = moveTarget(dashboard.widgets, w.id, delta);
                     const text = delta < 0 ? "Mover para cima" : "Mover para baixo";
                     return (
-                      <button key={delta} type="button" aria-label={`${text}: ${w.title}`} disabled={to === undefined} onClick={() => to !== undefined && onLayout({ id: w.id, toIndex: to })} className="lg-btn lg-btn-soft lg-btn-sm">
+                      <button key={delta} type="button" aria-label={`${text}: ${w.title}`} aria-disabled={to === undefined || undefined} onClick={() => to !== undefined && onLayout({ id: w.id, toIndex: to })} className="lg-btn lg-btn-soft lg-btn-sm">
                         {text}
                       </button>
                     );
