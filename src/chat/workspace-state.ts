@@ -1,3 +1,4 @@
+import { agentConfig, agentFromRow } from "@/agents/config";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Dashboard } from "@/dashboard/types";
 import { demoSeedEnabled, seedCompany, seedPerson, type CompanyProfile, type PersonProfile } from "@/engine";
@@ -63,7 +64,7 @@ export async function loadWorkspaceState(sb: SupabaseClient, workspaceId: string
   ]);
   for (const [res, what] of [[dash, "dashboards"], [alerts, "alerts"], [agents, "agents"], [conv, "conversations"], [mems, "workspace_memories"]] as const) ok(res, what);
 
-  const agentList: Agent[] = (agents.data ?? []).map((a) => ({ id: a.id, name: a.name, objective: a.objective, tools: a.config?.tools ?? [] }));
+  const agentList: Agent[] = (agents.data ?? []).map(agentFromRow);
   const agent = agentId ? agentList.find((a) => a.id === agentId) : undefined;
   if (agentId && !agent) return null;
 
@@ -115,7 +116,7 @@ export async function saveWorkspaceState(
 
   const saved: Agent[] = [];
   for (const a of s.agents) {
-    const row = { name: a.name, objective: a.objective, config: { tools: a.tools } };
+    const row = { name: a.name, objective: a.objective, config: agentConfig(a) };
     if (UUID.test(a.id)) {
       ok(await sb.from("agents").update(row).eq("id", a.id), "agents");
       saved.push(a);
