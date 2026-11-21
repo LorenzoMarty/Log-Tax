@@ -7,10 +7,11 @@ untrusted. Visibility is the caller's own session (RLS) plus the workspace filte
 import re
 import unicodedata
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Any, Protocol
 
 from app.chat.untrusted import wrap_untrusted
 from app.db.client import UserDb
+from app.documents.classify import DOC_LABEL
 
 MAX_SEARCH_CHARS = 200_000
 SNIPPET_CHARS = 240
@@ -20,6 +21,7 @@ _CNPJ = re.compile(
     r"(?<![0-9A-Za-z])[0-9A-Z]{2}\.?[0-9A-Z]{3}\.?[0-9A-Z]{3}/?[0-9A-Z]{4}-?\d{2}(?!\d)"
 )  # alnum since 2026-07 (#328)
 _CPF = re.compile(r"(?<!\d)\d{3}\.?\d{3}\.?\d{3}-?\d{2}(?!\d)")
+_IDENTIFIER_KEY = re.compile(r"(^|_)(cpf|cnpj)$", re.IGNORECASE)
 _SPACES = re.compile(r"\s+")
 
 
@@ -54,6 +56,7 @@ class DocumentSearch(Protocol):
     async def search(self, query: str) -> list[Hit]: ...
     async def names(self) -> list[str]: ...
     async def arrived(self) -> list[tuple[str, str]]: ...
+    async def get(self, document_id: str) -> dict[str, Any] | None: ...
 
 
 class DbDocumentSearch:
@@ -81,6 +84,39 @@ class DbDocumentSearch:
         """(doc_type, created_at) of every document, what the missing-documents checklist ticks from (#143)."""
         rows = await self._db.select("documents", select="doc_type,created_at", workspace_id=f"eq.{self._workspace_id}")
         return [(str(r["doc_type"]), str(r["created_at"])) for r in rows]
+
+    async def get(self, document_id: str) -> dict[str, Any] | None:
+        """One document of THIS workspace as the model may read it: type, fields with confidence, untrusted text."""
+        rows = await self._db.select(
+            "documents",
+            select="id,name,doc_type,extracted,search_text",
+            id=f"eq.{document_id}",
+            workspace_id=f"eq.{self._workspace_id}",
+            limit="1",
+        )
+        if not rows:
+            return None
+        row = rows[0]
+        ex = row.get("extracted") or {}
+        # CNPJ/CPF fields are sealed in the database and never shown to the model (same rule as the search index).
+        fields = {k: v for k, v in (ex.get("fields") or {}).items() if not _IDENTIFIER_KEY.search(k)}
+        to_confirm = list(ex.get("toConfirm") or [])
+        name = str(row["name"])
+        out: dict[str, Any] = {
+            "documentId": str(row["id"]),
+            "name": name,
+            "type": DOC_LABEL.get(str(row.get("doc_type")), str(row.get("doc_type"))),
+            "confidence": ex.get("confidence"),
+            "fields": fields,
+            "fieldConfidence": ex.get("fieldConfidence") or {},
+            "toConfirm": to_confirm,
+            "missing": list(ex.get("missing") or []),
+            "notes": list(ex.get("notes") or []),
+            "needsConfirmation": ex.get("confidence") == "baixa" or bool(to_confirm),
+        }
+        if row.get("search_text"):
+            out["text"] = wrap_untrusted(f"documento {name}", snippet(str(row["search_text"]), ""))
+        return out
 
 
 def cited_for_model(hits: list[Hit]) -> list[dict[str, str]]:

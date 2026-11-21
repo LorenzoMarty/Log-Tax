@@ -6,18 +6,22 @@ import type { Widget } from "@/dashboard/types";
 import { AgentList } from "@/agents/agent-list";
 import { AlertBar } from "@/alerts/alert-bar";
 import type { AlertStatus } from "@/alerts/evaluate";
-import { DashboardView } from "@/dashboard/dashboard-view";
+import { DashboardView, type Focus } from "@/dashboard/dashboard-view";
 import { postLayout, type LayoutChange } from "@/dashboard/layout";
 import { PageTabs, type DashboardPage } from "@/dashboard/page-tabs";
 import { VersionHistory } from "@/dashboard/version-history";
 import { applyWithTransition } from "@/dashboard/view-transition";
 import type { Dashboard } from "@/dashboard/types";
 import { Button, Input, Panel } from "@/ui/log";
+import { CONSENT_TEXT } from "@/documents/upload-form";
+import { uploadFiles } from "@/documents/upload-files";
+import { wrapUntrusted } from "./untrusted";
 import type { PendingConfirmation } from "./orchestrator";
 import { nextQuestions, type SpaceProgress } from "./next-questions";
 import { clearConversation, rateAnswer } from "./actions";
 import { NDJSON, toolProgressLabel, type ChatStreamLine } from "./progress";
 import { RequestExamples } from "./request-examples";
+import { useSpeech } from "./speak";
 import { useVoiceInput } from "./voice";
 import type { Agent } from "./types";
 import type { DisplayMessage } from "./workspace-state";
@@ -79,6 +83,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
   const router = useRouter();
   const [messages, setMessages] = useState(props.initialMessages);
   const [dashboard, setDashboard] = useState(props.initialDashboard);
+  const [focus, setFocus] = useState<Focus | null>(null); // temporary layout for one answer (#124); the saved panel is `dashboard`
   const [pages, setPages] = useState(props.initialPages ?? []);
   const [activeId, setActiveId] = useState<string | undefined>(props.initialPages?.[0]?.id);
   const [alerts, setAlerts] = useState(props.initialAlerts ?? []);
@@ -122,7 +127,65 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
     voice.start();
   }
 
+  // Listening to answers (#188): off by default, the choice stays in this browser, nothing speaks unless it is on or "Ouvir" is pressed.
+  const speech = useSpeech();
+  const [autoRead, setAutoRead] = useState(false);
+  const spokenUpTo = useRef(props.initialMessages.length);
+  useEffect(() => {
+    try {
+      setAutoRead(localStorage.getItem("speak-auto") === "1");
+    } catch {
+      /* storage blocked: stays off */
+    }
+  }, []);
+  function toggleAutoRead(on: boolean) {
+    setAutoRead(on);
+    if (!on) speech.stop();
+    try {
+      localStorage.setItem("speak-auto", on ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }
+  const speakNow = speech.speak;
+  useEffect(() => {
+    const last = messages.at(-1);
+    if (autoRead && messages.length > spokenUpTo.current && last?.role === "assistant") speakNow(messages.length - 1, last.text);
+    spokenUpTo.current = messages.length;
+  }, [messages, autoRead, speakNow]);
+
+  // Attach (#122): same upload path and same LGPD consent as the documents panel; then the AI is told, in a wrapped note, what arrived.
+  const [attachOpen, setAttachOpen] = useState(false);
+  const [consent, setConsent] = useState(false);
+  const [chips, setChips] = useState<{ name: string; status: "enviando" | "enviado" }[]>([]);
+  const [attachProgress, setAttachProgress] = useState("");
+  const [attachErrors, setAttachErrors] = useState<string[]>([]);
+
+  async function attach(files: File[]) {
+    if (files.length === 0) return;
+    if (!consent) {
+      setAttachErrors(["Marque a autorização para anexar documentos."]);
+      return;
+    }
+    setAttachErrors([]);
+    setChips(files.map((f) => ({ name: f.name, status: "enviando" })));
+    const fixed = new FormData();
+    fixed.set("workspaceId", props.workspaceId);
+    fixed.set("consent", "on");
+    const { sent, failures } = await uploadFiles(files, fixed, setAttachProgress);
+    setAttachProgress("");
+    setChips(sent.map((d) => ({ name: d.name, status: "enviado" as const })));
+    setAttachErrors(failures);
+    if (sent.length === 0) return;
+    setAttachOpen(false);
+    router.refresh();
+    const names = sent.map((d) => d.name).join(", ");
+    const note = `[Anexo] Documento(s) enviado(s) pelo usuário e já organizado(s): ${wrapUntrusted("anexo", sent.map((d) => `${d.name} (id: ${d.id})`).join("; "))} Comente o que reconheceu lendo com get_document; se a confiança for baixa, peça para o usuário conferir os valores.`;
+    await send(note, undefined, `Anexei: ${names}`);
+  }
+
   async function send(message: string, approve?: string[], display = message) {
+    speech.stop();
     setBusy(true);
     setError("");
     setPending([]);
@@ -139,7 +202,10 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
       const data = res.headers.get("content-type")?.includes(NDJSON) ? await readStream(res, setProgress) : await res.json();
       if (!res.ok) throw new Error(errorText(data.error) ?? "Algo deu errado.");
       setMessages((m) => [...m, { role: "assistant", text: data.text }]);
-      applyWithTransition(() => setDashboard(data.dashboard));
+      applyWithTransition(() => {
+        setDashboard(data.dashboard);
+        setFocus(data.focus ?? null);
+      });
       if (data.pages?.length) {
         const added = data.pages.length > pages.length;
         setPages(data.pages);
@@ -165,6 +231,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
     if (!target) return;
     setPages((all) => all.map((p) => (p.id === activeId ? { ...p, dashboard } : p))); // keep this page's latest edits (undo/restore)
     setActiveId(id);
+    setFocus(null);
     applyWithTransition(() => setDashboard(target.dashboard));
   }
 
@@ -240,7 +307,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
           {/* versions are recorded by the Python chat only (#370); the TS chat is being removed (#314) */}
           {CHAT_URL === "/api/v1/chat" && !props.agentId && (pages.length < 2 || activeId === pages[0]?.id) && <VersionHistory workspaceId={props.workspaceId} dashboard={dashboard} onRestored={setDashboard} />}
           <PageTabs pages={pages} activeId={activeId} onSelect={openPage} disabled={busy} />
-          <DashboardView dashboard={dashboard} loading={busy} onAsk={(w) => { setTopic(w); inputRef.current?.focus(); }} onLayout={CHAT_URL === "/api/v1/chat" && !props.agentId && !busy && (pages.length < 2 || activeId === pages[0]?.id) ? changeLayout : undefined} />
+          <DashboardView dashboard={dashboard} loading={busy} focus={focus} onExitFocus={() => applyWithTransition(() => setFocus(null))} onAsk={(w) => { setTopic(w); inputRef.current?.focus(); }} onLayout={CHAT_URL === "/api/v1/chat" && !props.agentId && !busy && (pages.length < 2 || activeId === pages[0]?.id) ? changeLayout : undefined} />
           {layoutStatus && <p role="status" className="sr-only">{layoutStatus}</p>}
         </div>
       <Panel label="Conversa com a IA" className="order-1 min-w-0 lg:order-none lg:sticky lg:top-6">
@@ -256,11 +323,16 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
               <p data-role={m.role} className={`lg-msg lg-msg-${m.role === "user" ? "user" : "assistant"} whitespace-pre-line`}>
                 {m.role === "assistant" ? withReportLinks(m.text) : m.text}
               </p>
-              {m.role === "assistant" && i > 0 && (
+              {m.role === "assistant" && (speech.supported || i > 0) && (
                 <div className="flex flex-wrap items-center gap-2 text-sm text-ink">
-                  {rated[i] ? (
+                  {speech.supported && (
+                    <button type="button" className="underline underline-offset-2" aria-label={speech.speakingId === i ? "Parar leitura" : "Ouvir resposta"} onClick={() => (speech.speakingId === i ? speech.stop() : speech.speak(i, m.text))}>
+                      {speech.speakingId === i ? "Parar" : "Ouvir"}
+                    </button>
+                  )}
+                  {i > 0 && rated[i] ? (
                     <span role="status">Obrigado pela avaliação.</span>
-                  ) : (
+                  ) : i > 0 && (
                     <>
                       <button type="button" className="underline underline-offset-2" aria-label="Resposta útil" onClick={() => void rate(i, 1)}>
                         Útil
@@ -333,6 +405,55 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
             </Button>
           </p>
         )}
+        {attachOpen && (
+          <div role="group" aria-label="Anexar documentos" className="flex flex-col gap-2 rounded-[var(--radius-md)] border border-line p-3 text-sm">
+            <label className="flex items-start gap-2 text-xs text-ink-muted">
+              <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5" />
+              <span>{CONSENT_TEXT}</span>
+            </label>
+            <label className="flex flex-col gap-1">
+              Arquivos (PDF, XML, PNG, JPG ou TXT, até 10 MB cada)
+              <input
+                type="file"
+                multiple
+                accept=".pdf,.xml,.png,.jpg,.jpeg,.txt"
+                disabled={busy}
+                onChange={(e) => {
+                  const files = Array.from(e.currentTarget.files ?? []);
+                  e.currentTarget.value = "";
+                  void attach(files);
+                }}
+                className="rounded-xl border border-line px-3 py-2"
+              />
+            </label>
+          </div>
+        )}
+        {attachProgress && (
+          <p aria-live="polite" className="text-xs text-ink-muted">
+            {attachProgress}
+          </p>
+        )}
+        {chips.length > 0 && (
+          <ul aria-label="Anexos" className="flex flex-wrap gap-2 text-xs">
+            {chips.map((c) => (
+              <li key={c.name} data-testid="attachment-chip" className="rounded-full bg-brand-tint px-3 py-1 text-brand-ink">
+                {c.name}: {c.status === "enviando" ? "enviando…" : "enviado e organizado"}
+              </li>
+            ))}
+          </ul>
+        )}
+        {attachErrors.length > 0 && (
+          <p role="alert" className="rounded-[var(--radius-sm)] bg-danger-tint px-3 py-2 text-xs text-danger-ink">
+            {attachErrors.map((l) => (
+              <span key={l} className="block">
+                {l}
+              </span>
+            ))}
+          </p>
+        )}
+        <Button type="button" variant="ghost" size="sm" className="self-start" aria-expanded={attachOpen} disabled={busy} onClick={() => setAttachOpen((o) => !o)}>
+          Anexar arquivo
+        </Button>
         <form onSubmit={submit} className="flex gap-2">
           <Input ref={inputRef} aria-label="Mensagem" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Quero entender meus impostos..." className="min-w-0 flex-1" />
           <Button type="button" variant="ghost" disabled={!voice.supported || busy} aria-describedby="voice-help" aria-pressed={voice.listening} onClick={toggleVoice}>
@@ -356,6 +477,18 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
         </p>
         <p aria-live="polite" className={voice.listening ? "text-sm text-brand-ink" : "sr-only"}>
           {voice.listening ? "Ouvindo… fale agora." : ""}
+        </p>
+        <p className="text-xs text-ink-muted">
+          {speech.supported ? "As respostas são lidas pela voz do seu navegador; nada sai do seu aparelho." : "Seu navegador não consegue ler as respostas em voz alta."}
+        </p>
+        {speech.supported && (
+          <label className="flex items-center gap-2 text-sm text-ink">
+            <input type="checkbox" checked={autoRead} onChange={(e) => toggleAutoRead(e.target.checked)} />
+            Ler respostas automaticamente
+          </label>
+        )}
+        <p aria-live="polite" className="sr-only">
+          {speech.speakingId !== null ? "Lendo a resposta em voz alta." : ""}
         </p>
         {voice.error && (
           <p role="alert" className="rounded-[var(--radius-sm)] bg-danger-tint px-4 py-3 text-sm text-danger-ink">

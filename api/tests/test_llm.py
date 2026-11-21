@@ -376,6 +376,11 @@ async def test_scripted_inventory_journey_calls_the_estate_asset_and_heir_tools(
     assert tools.names == ["get_inventory"] and "R$ 480.000" in text and "Ana 50% (R$ 240.000)" in text
 
 
+async def test_scripted_agent_with_its_own_panel_gets_the_dashboard_tools() -> None:
+    text, tools = await turn("crie uma IA com painel próprio", {})
+    assert tools.args[0]["tools"] == ["dashboard_add_widget", "dashboard_update_widget"] and "painel próprio" in text
+
+
 async def test_scripted_cancel_alert_lists_then_deletes_the_first_and_confirm_repeats_it() -> None:
     class Alerts(Canned):
         async def invoke(self, name: str, args: str, *, untrusted_in_context: bool) -> ToolOutcome:

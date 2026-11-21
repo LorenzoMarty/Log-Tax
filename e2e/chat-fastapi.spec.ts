@@ -64,6 +64,37 @@ test("company journey through FastAPI: context → diagnosis → dashboard → w
   await expect(page.getByTestId("activity")).toContainText("Confirmou uma ação destrutiva na conversa");
 });
 
+// #124: the question picks a temporary layout (PRD §27); the saved panel is never changed and one tap brings it back.
+test("the panel adapts to the question in focus mode and goes back to the saved one", async ({ page }) => {
+  await login(page, "fastapi-focus");
+  await createAndOpen(page, /Minha Empresa/);
+  await sendChatMessage(page, "Empresa", /52\.155/);
+  await sendChatMessage(page, "Adicione prazos e documentos", /Adicionei/);
+  await sendChatMessage(page, "E se meu faturamento subir para R$ 500 mil?", /89\.250/);
+  const blocks = page.getByTestId(/^widget-(?!skeleton)/);
+  const saved = await blocks.evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")));
+  const banner = page.getByTestId("focus-banner");
+
+  for (const [question, first] of [
+    ["Quanto estou pagando de imposto?", "widget-kpi"],
+    ["Quais documentos faltam?", "widget-documentos"],
+    ["Compare o cenário com a situação atual", "widget-simulacao"],
+    ["Quais os prazos?", "widget-prazos"],
+  ] as const) {
+    await sendChatMessage(page, question, /Organizei assim porque/);
+    await expect(banner).toContainText("painel salvo não mudou");
+    await expect(blocks.first()).toHaveAttribute("data-testid", first);
+    await page.getByRole("button", { name: "Voltar ao painel salvo" }).click();
+    await expect(banner).toHaveCount(0);
+    expect(await blocks.evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")))).toEqual(saved);
+  }
+
+  await sendChatMessage(page, "Quais documentos faltam?", /Organizei assim porque/);
+  await page.reload(); // the focus was never saved
+  await expect(banner).toHaveCount(0);
+  expect(await blocks.evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")))).toEqual(saved);
+});
+
 test("personal journey through FastAPI: the real engine does not invent a 2026 income-tax result", async ({ page }) => {
   await login(page, "fastapi-pf");
   await createAndOpen(page, /Vida Pessoal/);
@@ -100,6 +131,58 @@ test("edit an agent on its detail screen and delete it with confirmation", async
   await page.getByRole("button", { name: "Confirmar exclusão" }).click();
   await expect(page).toHaveURL(/\/workspace\/[0-9a-f-]{36}$/);
   await expect(page.getByRole("navigation", { name: "Minhas IAs" })).toHaveCount(0);
+});
+
+// #127: the AI adds the new blocks (projection, payroll, goal) and the page renders them from decimal strings.
+test("the AI adds projection, payroll and goal blocks", async ({ page }) => {
+  await login(page, "blocks");
+  await createAndOpen(page, /Minha Empresa/);
+
+  await sendChatMessage(page, "Adicione uma previsão dos impostos", /Adicionei a projeção do imposto/);
+  const projection = page.getByTestId("widget-projecao-imposto");
+  await expect(projection).toBeVisible();
+  await expect(projection.getByRole("img", { name: "Projeção do imposto" })).toBeVisible();
+  await expect(projection).toContainText("Barras claras são projeção");
+  await expect(projection).toContainText(/estimativa ilustrativa/i);
+
+  await sendChatMessage(page, "Mostra também minha folha", /encargos da folha/);
+  await sendChatMessage(page, "Crie uma meta de R$ 5 mil", /Adicionei a meta/);
+  const goal = page.getByTestId("widget-meta");
+  await expect(goal.getByRole("progressbar", { name: "Meta de economia" })).toHaveAttribute("aria-valuenow", "0");
+  await expect(goal).toContainText("R$ 5.000,00");
+
+  await page.reload();
+  await expect(page.getByTestId("widget-projecao-imposto")).toBeVisible();
+  await expect(page.getByTestId("widget-meta")).toBeVisible();
+});
+
+// #139: an AI that may edit the panel keeps its own page, linked to it, and the page goes away with the AI.
+test("an AI keeps its own panel, and deleting the AI removes it", async ({ page }) => {
+  await login(page, "agentpanel");
+  await createAndOpen(page, /Minha Empresa/);
+  await sendChatMessage(page, "Crie uma IA com painel próprio", /Criei a "IA do Painel"/);
+  const wsId = /\/workspace\/([0-9a-f-]{36})/.exec(page.url())![1];
+  const nav = page.getByRole("navigation", { name: "Minhas IAs" });
+  await nav.getByRole("link", { name: /IA do Painel/ }).click();
+  await expect(page.getByRole("heading", { name: "Painel de IA do Painel", level: 2 })).toBeVisible();
+
+  await sendChatMessage(page, "Crie uma meta de R$ 5 mil", /Adicionei a meta/);
+  await expect(page.getByTestId("widget-meta")).toBeVisible();
+  await page.reload();
+  await expect(page.getByTestId("widget-meta")).toBeVisible(); // saved on the AI's own panel
+  await page.getByRole("link", { name: /Assistente geral/ }).click();
+  await expect(page.getByTestId("widget-meta")).toHaveCount(0); // the main panel is untouched
+
+  const panels = async () => (await page.request.get(`/api/v1/workspaces/${wsId}/agent-dashboards`)).json();
+  expect(await panels()).toHaveLength(1);
+
+  await nav.getByRole("link", { name: /IA do Painel/ }).click();
+  await page.getByRole("link", { name: "Editar esta IA" }).click();
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("button", { name: "Excluir IA" }).click();
+  await page.getByRole("button", { name: "Confirmar exclusão" }).click();
+  await expect(page).toHaveURL(/\/workspace\/[0-9a-f-]{36}$/);
+  expect(await panels()).toEqual([]);
 });
 
 test("the Python chat is closed without a session and keeps the contract's error shape", async ({ request }) => {
@@ -266,6 +349,28 @@ test("owner reorders and resizes blocks with buttons; reload keeps it and undo r
   await expect(size).toHaveValue("lg");
   await page.getByRole("button", { name: "Desfazer" }).click();
   await expect(size).toHaveValue(original);
+});
+
+// #122: attach an NF-e in the chat (same upload path and consent), the AI reads it and answers about it.
+const NFE = `<?xml version="1.0"?><nfeProc><NFe><infNFe>
+<ide><nNF>1234</nNF><dhEmi>2026-10-05T10:30:00-03:00</dhEmi></ide>
+<emit><CNPJ>12345678000190</CNPJ></emit>
+<total><ICMSTot><vNF>1500.00</vNF></ICMSTot></total></infNFe></NFe></nfeProc>`;
+
+test("attach an NF-e in the conversation and ask about it", async ({ page }) => {
+  await login(page, "chatattach");
+  await createAndOpen(page, /Minha Empresa/);
+  await page.getByRole("button", { name: "Anexar arquivo" }).click();
+  const tray = page.getByRole("group", { name: "Anexar documentos" });
+  const file = { name: "nota.xml", mimeType: "application/xml", buffer: Buffer.from(NFE) };
+  // without the LGPD authorization nothing is sent
+  await tray.getByLabel(/Arquivos \(PDF/).setInputFiles(file);
+  await expect(page.getByRole("alert").filter({ hasText: "Marque a autorização" })).toBeVisible();
+  await tray.getByRole("checkbox").check();
+  await tray.getByLabel(/Arquivos \(PDF/).setInputFiles(file);
+  await expect(page.getByTestId("attachment-chip")).toContainText("nota.xml");
+  await expect(page.locator('[data-role="assistant"]').filter({ hasText: /Reconheci "nota\.xml".*1\.500/ }).last()).toBeVisible();
+  await sendChatMessage(page, "O que tem nesse documento?", /Número 1234\. Valor total R\$ 1\.500/);
 });
 
 // #179: the service provider's journey in a personal space: missing data becomes a question, then the three options show up

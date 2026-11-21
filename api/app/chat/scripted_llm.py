@@ -398,6 +398,33 @@ def _asset_reply(p: list[ToolOutcome], text: str) -> str:
     return base if revenue_from(text) else f"{base} Qual é o valor dele hoje? Deixei R$ 0 por enquanto."
 
 
+def _goal_widget(text: str) -> dict[str, Any]:
+    target = (revenue_from(text) or Decimal(10000)).quantize(Decimal("0.01"))
+    return {
+        "id": "meta",
+        "kind": "goal",
+        "title": "Meta de economia",
+        "size": "md",
+        "current": "0.00",
+        "target": f"{target:f}",
+        "unit": "R$",
+    }
+
+
+def _block_reply(subject: str, missing: str) -> Reply:
+    def reply(p: list[ToolOutcome], _t: str) -> str:
+        r = _first(p)
+        if not _ok(r):
+            return f"Não consegui montar {subject} agora."
+        assert r is not None
+        d = r.get("data")
+        if isinstance(d, dict) and d.get("status") == "ok":
+            return f"Pronto! Adicionei {subject} ao painel. São estimativas: valide com um contador."
+        return f"Ainda não dá para montar {subject}: {missing}"
+
+    return reply
+
+
 def _plan(pattern: str, steps: list[Step], reply: Reply) -> Plan:
     return Plan(re.compile(pattern, _I), steps, reply)
 
@@ -584,7 +611,65 @@ def _prestador_reply(p: list[ToolOutcome], _t: str) -> str:
     )
 
 
+def _focus_plan(pattern: str, intent: str) -> Plan:
+    def reply(p: list[ToolOutcome], _t: str) -> str:
+        r = _first(p)
+        if _ok(r):
+            return str(cast(dict[str, Any], r["data"])["focus"]["reason"])  # type: ignore[index]
+        return str(r.get("message")) if r else "Não consegui reorganizar a visão agora."
+
+    return _plan(pattern, [lambda _p, _t, _s: _call("focus_dashboard", intent=intent)], reply)
+
+
+def _seed_steps() -> list[Step]:
+    deadlines = {
+        "id": "prazos",
+        "kind": "deadlines",
+        "title": "Próximos prazos",
+        "size": "md",
+        "items": [{"label": "DAS do mês", "date": "2026-12-20"}],
+    }
+    docs = {
+        "id": "documentos",
+        "kind": "checklist",
+        "title": "Documentos",
+        "size": "md",
+        "items": [{"label": "Notas fiscais do mês", "done": False}, {"label": "Extrato bancário", "done": True}],
+    }
+    return [
+        lambda _p, _t, _s: _call("dashboard_add_widget", widget=deadlines),
+        lambda _p, _t, _s: _call("dashboard_add_widget", widget=docs),
+    ]
+
+
+_ATTACH_ID = re.compile(r"\(id: ([0-9a-f-]{36})\)")
+_ASK_DOC = re.compile(r"(o que|que) (tem|h[áa]|diz).*(documento|anexo|nota)", _I)
+
+
+def _document_step(_p: list[ToolOutcome], text: str, _s: str) -> dict[str, Any] | None:
+    m = _ATTACH_ID.search(text)
+    return _call("get_document", id=m.group(1)) if m else None
+
+
+def _document_reply(p: list[ToolOutcome], _t: str) -> str:
+    d = _first(p)["data"] if _ok(_first(p)) else None  # type: ignore[index]
+    if not isinstance(d, dict) or "documentId" not in d:
+        return "Não consegui ler esse documento agora."
+    f = d["fields"]
+    parts = [f'Reconheci "{d["name"]}" como {d["type"]}.']
+    if "numero" in f:
+        parts.append(f"Número {f['numero']}.")
+    if "valor_total" in f:
+        parts.append(f"Valor total {money(f['valor_total'])}.")
+    if "emissao" in f:
+        parts.append(f"Emissão {f['emissao']}.")
+    if d["needsConfirmation"]:
+        parts.append("A leitura teve confiança baixa: confira os valores antes de usar.")
+    return " ".join(parts)
+
+
 PLANS: list[Plan] = [
+    _plan(r"^\[anexo\]|" + _ASK_DOC.pattern, [_document_step], _document_reply),
     _plan(r"prestador", [_prestador_step], _prestador_reply),
     _plan(
         r"^(crie|criar|nova) uma p[áa]gina",
@@ -596,6 +681,17 @@ PLANS: list[Plan] = [
         _new_page_reply,
     ),
     _plan(_PAGE_DELETE, [lambda _p, _t, _s: _call("dashboard_list_pages"), _delete_page_step], _delete_page_reply),
+    _plan(
+        r"^adicione prazos e documentos",
+        _seed_steps(),
+        lambda p, _t: (
+            "Adicionei os prazos e os documentos ao painel." if all(_ok(o) for o in p) else "Esses blocos já estão no painel."
+        ),
+    ),
+    _focus_plan(r"quanto (estou|eu estou) pagando", "numbers"),
+    _focus_plan(r"quais documentos faltam", "documents"),
+    _focus_plan(r"^compare\b", "comparison"),
+    _focus_plan(r"^quais (s[ãa]o )?os prazos", "deadlines"),
     _plan(r"acompanhar.*(apartamento|im[óo]vel|casa|carro|ve[íi]culo|moto)", [_track_asset_step], _asset_reply),
     _plan(
         r"^abrir o esp[óo]lio",
@@ -620,6 +716,38 @@ PLANS: list[Plan] = [
         ),
     ),
     _plan(r"relat[óo]rio", [lambda _p, _t, _s: _call("generate_report")], _report_reply),
+    _plan(
+        r"previs[ãa]o|proje[çc][ãa]o",
+        [lambda _p, _t, _s: _call("add_projection_block", monthsAhead=6)],
+        _block_reply("a projeção do imposto", "faltam os dados da empresa."),
+    ),
+    _plan(
+        r"\bfolha\b",
+        [lambda _p, _t, _s: _call("add_payroll_block")],
+        _block_reply("os encargos da folha", "preciso da folha de pagamento do mês. Quanto foi?"),
+    ),
+    _plan(
+        r"\bmeta\b",
+        [lambda _p, text, _s: _widget(_goal_widget(text))],
+        lambda p, _t: "Pronto! Adicionei a meta ao painel." if _ok(_first(p)) else "Não consegui adicionar a meta.",
+    ),
+    _plan(
+        r"(crie|criar|nova) uma ia .*painel",  # #139: an agent allowed to keep its own panel
+        [
+            lambda _p, _t, _s: _call(
+                "create_agent",
+                name="IA do Painel",
+                objective="Manter um painel próprio com as metas da empresa",
+                tools=["dashboard_add_widget", "dashboard_update_widget"],
+            )
+        ],
+        lambda p, _t: (
+            'Criei a "IA do Painel". Ela mantém um painel próprio, separado do principal. '
+            'Abra "Minhas IAs" para conversar com ela.'
+            if _ok(_first(p))
+            else "Não consegui criar a IA agora."
+        ),
+    ),
     _plan(
         r"(crie|criar|nova) uma ia.*invent[áa]rio",
         [lambda _p, _t, _s: _call("create_agent_from_template", templateId="inventario")],
@@ -735,6 +863,8 @@ class ScriptedLlm:
         earlier = [str(cast(dict[str, Any], m)["content"]) for m in history[:last_user] if m["role"] == "user"]
         if re.match(r"sim\b", user_text.strip(), _I) and earlier and re.search(_PAGE_DELETE, earlier[-1].strip(), _I):
             user_text = earlier[-1]  # the user's "Confirmar" click answers the page removal just asked about
+        if _ASK_DOC.search(user_text) and (att := [e for e in earlier if e.startswith("[Anexo]")]):
+            user_text = f"{user_text} {att[-1]}"  # the question is about the last attachment of this conversation
         plan = next((p for p in PLANS if p.match.search(user_text.strip())), FALLBACK)
         if DELETE_ALERT.match.search(user_text.strip()) and (
             not user_text.strip().lower().startswith("sim") or _last_call(history) in ("delete_alert", "list_alerts")

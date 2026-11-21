@@ -12,6 +12,20 @@ const SPAN: Record<WidgetSize, string> = {
   lg: "sm:col-span-2 xl:col-span-4",
 };
 
+/** A temporary layout the AI chose for one answer (#124): order and sizes only, never saved. */
+export type Focus = { intent: string; reason: string; blocks: { id: string; size: WidgetSize }[] };
+
+/** The saved widgets in the focus order and sizes; blocks the focus does not mention keep their place at the end. */
+export function applyFocus(widgets: Widget[], focus: Focus): Widget[] {
+  const byId = new Map(widgets.map((w) => [w.id, w]));
+  const chosen = focus.blocks.flatMap((b) => {
+    const w = byId.get(b.id);
+    return w ? [{ ...w, size: b.size }] : [];
+  });
+  const ids = new Set(focus.blocks.map((b) => b.id));
+  return [...chosen, ...widgets.filter((w) => !ids.has(w.id))];
+}
+
 /** Painel do espaço: um Panel do design system Log; `theme` troca os tokens só aqui dentro. */
 /** Placeholder card while the AI is working on the dashboard; hidden from assistive tech (the chat says "Pensando…"). */
 function WidgetSkeleton() {
@@ -24,7 +38,9 @@ function WidgetSkeleton() {
 }
 
 /** `onAsk` adds a "Perguntar sobre isto" button to every block: the chat uses the chosen block as context. */
-export function DashboardView({ dashboard, loading = false, onAsk, onLayout }: { dashboard: Dashboard; loading?: boolean; onAsk?: (widget: Widget) => void; onLayout?: (change: LayoutChange) => void }) {
+export function DashboardView({ dashboard, loading = false, onAsk, onLayout: layoutEdits, focus, onExitFocus }: { dashboard: Dashboard; loading?: boolean; onAsk?: (widget: Widget) => void; onLayout?: (change: LayoutChange) => void; focus?: Focus | null; onExitFocus?: () => void }) {
+  const widgets = focus ? applyFocus(dashboard.widgets, focus) : dashboard.widgets;
+  const onLayout = focus ? undefined : layoutEdits; // the temporary view is never edited: positions would not match the saved panel
   const compact = dashboard.density === "compact";
   const gap = compact ? "var(--space-2)" : "var(--space-4)";
   return (
@@ -39,11 +55,19 @@ export function DashboardView({ dashboard, loading = false, onAsk, onLayout }: {
         <h2 className="lg-heading-1">{dashboard.name}</h2>
         <DashboardExportMenu title={dashboard.name} widgets={dashboard.widgets} />
       </div>
-      {dashboard.widgets.length === 0 && !loading ? (
+      {focus && (
+        <div data-testid="focus-banner" role="status" className="flex flex-wrap items-center justify-between gap-2 text-sm text-ink-muted">
+          <p className="min-w-0">{focus.reason}</p>
+          <button type="button" onClick={onExitFocus} className="font-medium text-ink underline underline-offset-2">
+            Voltar ao painel salvo
+          </button>
+        </div>
+      )}
+      {widgets.length === 0 && !loading ? (
         <p className="text-sm text-ink-muted">Nenhum bloco ainda. Peça à IA para adicionar algo.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4" style={{ gap }}>
-          {dashboard.widgets.map((w, index) => (
+          {widgets.map((w, index) => (
             <div
               key={w.id}
               className={`lg-widget-enter ${SPAN[w.size]}`}

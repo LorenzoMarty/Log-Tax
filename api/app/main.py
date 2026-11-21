@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import (
     account,
     admin,
+    admin_rules,
     agent_dashboards,
     agent_templates,
     agents,
@@ -78,6 +79,7 @@ def create_app() -> FastAPI:
     app.include_router(missing_documents.router)
     app.include_router(usage.router)
     app.include_router(admin.router)
+    app.include_router(admin_rules.router)
     app.include_router(integrations.router)
     app.include_router(dashboard_versions.router)
     return app
