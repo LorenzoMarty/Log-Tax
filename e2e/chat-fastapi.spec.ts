@@ -299,6 +299,28 @@ test("owner reorders and resizes blocks with buttons; reload keeps it and undo r
   await expect(size).toHaveValue(original);
 });
 
+// #122: attach an NF-e in the chat (same upload path and consent), the AI reads it and answers about it.
+const NFE = `<?xml version="1.0"?><nfeProc><NFe><infNFe>
+<ide><nNF>1234</nNF><dhEmi>2026-10-05T10:30:00-03:00</dhEmi></ide>
+<emit><CNPJ>12345678000190</CNPJ></emit>
+<total><ICMSTot><vNF>1500.00</vNF></ICMSTot></total></infNFe></NFe></nfeProc>`;
+
+test("attach an NF-e in the conversation and ask about it", async ({ page }) => {
+  await login(page, "chatattach");
+  await createAndOpen(page, /Minha Empresa/);
+  await page.getByRole("button", { name: "Anexar arquivo" }).click();
+  const tray = page.getByRole("group", { name: "Anexar documentos" });
+  const file = { name: "nota.xml", mimeType: "application/xml", buffer: Buffer.from(NFE) };
+  // without the LGPD authorization nothing is sent
+  await tray.getByLabel(/Arquivos \(PDF/).setInputFiles(file);
+  await expect(page.getByRole("alert").filter({ hasText: "Marque a autorização" })).toBeVisible();
+  await tray.getByRole("checkbox").check();
+  await tray.getByLabel(/Arquivos \(PDF/).setInputFiles(file);
+  await expect(page.getByTestId("attachment-chip")).toContainText("nota.xml");
+  await expect(page.locator('[data-role="assistant"]').filter({ hasText: /Reconheci "nota\.xml".*1\.500/ }).last()).toBeVisible();
+  await sendChatMessage(page, "O que tem nesse documento?", /Número 1234\. Valor total R\$ 1\.500/);
+});
+
 // #179: the service provider's journey in a personal space: missing data becomes a question, then the three options show up
 // in the panel with their premises, the deadlines and the checklist; the medium-confidence rules keep the validation note.
 test("prestador de serviço: conversa, comparação PF x MEI x Simples e painel com premissas", async ({ page }) => {
