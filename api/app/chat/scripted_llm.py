@@ -504,12 +504,12 @@ PLANS: list[Plan] = [
         _block_reply("a projeção do imposto", "faltam os dados da empresa."),
     ),
     _plan(
-        r"folha",
+        r"\bfolha\b",
         [lambda _p, _t, _s: _call("add_payroll_block")],
         _block_reply("os encargos da folha", "preciso da folha de pagamento do mês. Quanto foi?"),
     ),
     _plan(
-        r"meta",
+        r"\bmeta\b",
         [lambda _p, text, _s: _widget(_goal_widget(text))],
         lambda p, _t: "Pronto! Adicionei a meta ao painel." if _ok(_first(p)) else "Não consegui adicionar a meta.",
     ),
