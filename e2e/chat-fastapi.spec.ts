@@ -69,6 +69,32 @@ test("personal journey through FastAPI: the real engine does not invent a 2026 i
   await sendChatMessage(page, "Empresa", /Não consegui calcular/);
 });
 
+// #133: the agent detail screen talks to PATCH/DELETE /v1/workspaces/{ws}/agents/{id} on the Python API.
+test("edit an agent on its detail screen and delete it with confirmation", async ({ page }) => {
+  await login(page, "agentedit");
+  await createAndOpen(page, /Minha Empresa/);
+  await sendChatMessage(page, "Crie uma IA para minha empresa", /Criei a "IA da Empresa"/);
+  const nav = page.getByRole("navigation", { name: "Minhas IAs" });
+  await nav.getByRole("link", { name: /IA da Empresa/ }).click();
+  await page.getByRole("link", { name: "Editar esta IA" }).click();
+  await expect(page.getByRole("heading", { name: "IA da Empresa", level: 1 })).toBeVisible();
+  await page.waitForLoadState("networkidle"); // hydrate before submitting, or the form posts natively
+  await page.getByLabel("Objetivo").fill("Vigiar o caixa");
+  await page.getByRole("checkbox").first().click();
+  await page.getByRole("button", { name: "Salvar alterações" }).click();
+  await expect(page.getByText("Alterações salvas.")).toBeVisible();
+  await page.getByRole("link", { name: "Voltar ao espaço" }).click();
+  await expect(nav).toContainText("Vigiar o caixa");
+
+  await nav.getByRole("link", { name: /IA da Empresa/ }).click();
+  await page.getByRole("link", { name: "Editar esta IA" }).click();
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("button", { name: "Excluir IA" }).click();
+  await page.getByRole("button", { name: "Confirmar exclusão" }).click();
+  await expect(page).toHaveURL(/\/workspace\/[0-9a-f-]{36}$/);
+  await expect(page.getByRole("navigation", { name: "Minhas IAs" })).toHaveCount(0);
+});
+
 test("the Python chat is closed without a session and keeps the contract's error shape", async ({ request }) => {
   const res = await request.post("/api/v1/chat", { data: { workspaceId: "00000000-0000-0000-0000-000000000000", message: "oi" } });
   expect(res.status()).toBe(401);
