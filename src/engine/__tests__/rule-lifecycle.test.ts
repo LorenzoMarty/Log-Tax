@@ -33,9 +33,10 @@ describe("rule lifecycle", () => {
     expect(log.every((e) => e.source.length > 0 && typeof e.requiresValidation === "boolean")).toBe(true);
   });
 
-  it("the real rule data already reports what is missing for 2026 (the annual IRPF)", () => {
-    const { lapsed } = DEFAULT_RULEBOOK.lifecycle(new Date("2026-11-11"), 60);
-    expect(lapsed.map((r) => r.id).sort()).toEqual(["irpf-anual-deducoes", "irpf-tabela-anual"]);
+  it("the real rule data reports the annual IRPF of 2026 as about to end, not lapsed (the 2026 version was read on 2026-11-21)", () => {
+    const { lapsed, expiring } = DEFAULT_RULEBOOK.lifecycle(new Date("2026-11-11"), 60);
+    expect(lapsed).toEqual([]);
+    expect(expiring.map((r) => r.id).sort()).toEqual(["irpf-anual-deducoes", "irpf-tabela-anual"]);
   });
 });
 

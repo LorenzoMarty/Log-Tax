@@ -180,7 +180,7 @@ def test_without_the_tax_withheld_it_does_not_claim_a_refund_and_the_2026_table_
     assert "Informe o imposto retido na fonte para calcular restituição ou imposto a pagar." in section(r, "resumo")["paragraphs"]
     assert any("imposto retido na fonte (informe de rendimentos)" in i for i in section(r, "validar")["items"])
     assert section(r, "impostos")["table"]["rows"][3][1] == "—"
-    now = report("pessoal", engine=RealEngine("2026-06"))
+    now = report("pessoal", engine=RealEngine("2027-06"))
     assert section(now, "resumo")["paragraphs"][1].startswith("Não foi possível calcular o Imposto de Renda.")
     assert section(now, "economia")["paragraphs"] == ["Sem dados suficientes para estimar a economia."]
     assert section(now, "impostos")["paragraphs"][0].startswith("Não foi possível calcular os impostos.")
