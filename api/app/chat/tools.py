@@ -46,6 +46,7 @@ from app.integrations.cnpj import fetch_company
 
 MAX_WORKSPACES = 10
 MAX_MEMORIES = 30
+MAX_PAGES = 10
 MAX_ASSETS = 200
 MAX_HEIRS = 50
 AssetKind = Literal["imovel", "veiculo", "investimento", "participacao", "bem", "divida"]
@@ -250,6 +251,18 @@ class RestoreArgs(_Args):
 
 class IdArgs(_Args):
     id: str = Field(min_length=1)
+
+
+_PageName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)]
+
+
+class PageNameArgs(_Args):
+    name: _PageName
+
+
+class RenamePageArgs(_Args):
+    id: str = Field(min_length=1)
+    name: _PageName
 
 
 class CreateWorkspaceArgs(_Args):
@@ -1212,6 +1225,77 @@ async def _dashboard_restore_version(ctx: ToolContext, a: RestoreArgs) -> Any:
     if restored is None:
         raise ToolError(f"Versão {a.version} não encontrada. Liste as versões com dashboard_list_versions.")
     return {"version": restored["version"], "widgets": [w["id"] for w in restored["widgets"]]}
+
+
+# ---- dashboard pages (#123) ----
+def _main_conversation(ctx: ToolContext) -> None:
+    if ctx.scope.agent_id:
+        raise ToolError("As páginas do painel ficam na conversa principal do espaço, não na de uma IA.")
+
+
+async def _page_named(ctx: ToolContext, page_id: str) -> dict[str, Any]:
+    return _need(
+        next((p for p in await ctx.store.list_pages() if p["id"] == page_id), None), f'Página "{page_id}" não encontrada.'
+    )
+
+
+@_tool(
+    "dashboard_list_pages",
+    "Lista as páginas do painel deste espaço (com o id de cada uma e qual está aberta). Os próximos blocos vão para a página aberta.",
+    NoArgs,
+    read_only=True,
+)
+async def _dashboard_list_pages(ctx: ToolContext, a: NoArgs) -> Any:
+    _main_conversation(ctx)
+    return await ctx.store.list_pages()
+
+
+@_tool(
+    "dashboard_create_page",
+    f'Cria uma nova página de painel com o nome dado (ex.: "só de oportunidades") e a abre: os próximos blocos vão para ela. Máximo de {MAX_PAGES} páginas por espaço.',
+    PageNameArgs,
+)
+async def _dashboard_create_page(ctx: ToolContext, a: PageNameArgs) -> Any:
+    _main_conversation(ctx)
+    if len(await ctx.store.list_pages()) >= MAX_PAGES:
+        raise ToolError(f"Este espaço já tem {MAX_PAGES} páginas de painel. Remova alguma antes de criar outra.")
+    return await ctx.store.add_page(a.name)
+
+
+@_tool("dashboard_rename_page", "Renomeia uma página do painel (use o id de dashboard_list_pages).", RenamePageArgs)
+async def _dashboard_rename_page(ctx: ToolContext, a: RenamePageArgs) -> Any:
+    _main_conversation(ctx)
+    await _page_named(ctx, a.id)
+    await ctx.store.rename_page(a.id, a.name)
+    return {"id": a.id, "name": a.name}
+
+
+@_tool(
+    "dashboard_switch_page",
+    "Abre outra página do painel: os próximos blocos vão para ela (use o id de dashboard_list_pages).",
+    IdArgs,
+)
+async def _dashboard_switch_page(ctx: ToolContext, a: IdArgs) -> Any:
+    _main_conversation(ctx)
+    await _page_named(ctx, a.id)
+    await ctx.store.switch_page(a.id)
+    return {"id": a.id}
+
+
+@_tool(
+    "dashboard_delete_page",
+    "Remove uma página do painel e os blocos dela (use o id de dashboard_list_pages). A primeira página não pode ser removida. Exige confirmação do usuário.",
+    IdArgs,
+    destructive=True,
+)
+async def _dashboard_delete_page(ctx: ToolContext, a: IdArgs) -> Any:
+    _main_conversation(ctx)
+    pages = await ctx.store.list_pages()
+    await _page_named(ctx, a.id)
+    if pages[0]["id"] == a.id:
+        raise ToolError("A primeira página é o painel principal e não pode ser removida.")
+    await ctx.store.remove_page(a.id)
+    return {"removed": a.id}
 
 
 # ---- alerts and agents ----

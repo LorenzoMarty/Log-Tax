@@ -48,6 +48,9 @@ class ChatReply:
     events: list[dict[str, str]]
     pending_confirmations: list[PendingConfirmation]
     dashboard: dict[str, Any]
+    pages: list[dict[str, Any]]
+    """The workspace's dashboard pages [{id, name, dashboard}] (empty in a specialised agent's conversation)."""
+    active_page_id: str | None
     alerts: list[dict[str, Any]]
     agents: list[Agent]
     messages: list[dict[str, str]]
@@ -64,11 +67,12 @@ async def handle_chat(
     workspace_id: str,
     message: str,
     agent_id: str | None = None,
+    page_id: str | None = None,
     approve: frozenset[str] = frozenset(),
     on_tool_start: Callable[[str], None] | None = None,
     cancelled: asyncio.Event | None = None,
 ) -> ChatReply | None:
-    state = await load_workspace_state(db, workspace_id, settings, agent_id)
+    state = await load_workspace_state(db, workspace_id, settings, agent_id, page_id)
     if state is None:
         return None
     if state.role != "owner":
@@ -117,6 +121,10 @@ async def handle_chat(
         events=[{"name": e.name, "status": e.outcome["status"]} for e in result.events],
         pending_confirmations=result.pending_confirmations,
         dashboard=store.history.present,
+        pages=[]
+        if agent
+        else [{"id": p.id, "name": p.history.present["name"], "dashboard": p.history.present} for p in store.pages],
+        active_page_id=None if agent else store.active_page,
         alerts=[] if state.kind == "pessoal" else alert_statuses(engine, store.company, store.alerts),
         agents=agents,
         messages=messages,
