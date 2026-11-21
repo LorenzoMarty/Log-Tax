@@ -611,6 +611,34 @@ def _prestador_reply(p: list[ToolOutcome], _t: str) -> str:
     )
 
 
+_PANEL = re.compile(r"<contexto_painel>.*?bloco: (?P<block>.*?) \(tipo .*?\)\n(?:linha escolhida: (?P<row>.*?)\n)?", re.DOTALL)
+_ROW_DATA = re.compile(r"^dados da linha: (\{.*\})$", re.MULTILINE)
+
+
+def _panel_line(text: str) -> str:
+    """What the clicked line says, read from the context block the server put before the question (#118)."""
+    m = _PANEL.search(text)
+    if not m:
+        return "Não encontrei esse bloco no painel."
+    block, row = m.group("block"), m.group("row")
+    if row is None:
+        return f'Sobre o bloco "{block}":'
+    data = _ROW_DATA.search(text)
+    fields = json.loads(data.group(1)) if data else {}
+    value = next(
+        (money(v) if isinstance(v, int | float) else str(v) for k, v in fields.items() if k not in ("label", "title")), None
+    )
+    shown = f"{row}: {value}" if value is not None else row
+    return f'Sobre a linha "{shown}" do bloco "{block}":'
+
+
+def _panel_reply(p: list[ToolOutcome], text: str) -> str:
+    """Explains the clicked line with the premises the tool returns for the diagnosis (the data stays in the context block)."""
+    r = _first(p)
+    assumptions = r["data"]["assumptions"] if r and r["status"] == "ok" else []
+    return f"{_panel_line(text)} {' '.join(assumptions)}".strip()
+
+
 def _focus_plan(pattern: str, intent: str) -> Plan:
     def reply(p: list[ToolOutcome], _t: str) -> str:
         r = _first(p)
@@ -669,6 +697,7 @@ def _document_reply(p: list[ToolOutcome], _t: str) -> str:
 
 
 PLANS: list[Plan] = [
+    _plan(r"^<contexto_painel>", [lambda _p, _t, _s: _call("explain_result", subject="diagnosis")], _panel_reply),
     _plan(r"^\[anexo\]|" + _ASK_DOC.pattern, [_document_step], _document_reply),
     _plan(r"prestador", [_prestador_step], _prestador_reply),
     _plan(

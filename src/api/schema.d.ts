@@ -1856,6 +1856,7 @@ export interface components {
              * @default []
              */
             approve: string[];
+            context?: components["schemas"]["PanelContext"] | null;
             /** Message */
             message: string;
             /** Pageid */
@@ -2446,6 +2447,16 @@ export interface components {
         };
         /** @enum {string} */
         Option: "pessoa_fisica" | "mei" | "simples";
+        /**
+         * PanelContext
+         * @description What the client sends: the block id and, optionally, the label of one line of it.
+         */
+        PanelContext: {
+            /** Blockid */
+            blockId: string;
+            /** Row */
+            row?: string | null;
+        };
         /** PersonDiagnosis */
         PersonDiagnosis: {
             /** Annualgrossincome */

@@ -108,7 +108,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
   const abort = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   // The block the user chose with "Perguntar sobre isto": it goes with the next message as context.
-  const [topic, setTopic] = useState<Widget | null>(null);
+  const [topic, setTopic] = useState<{ widget: Widget; row?: string } | null>(null);
   const [confirmingClear, setConfirmingClear] = useState(false);
   // Ratings given in this session, by message position; `reasonFor` is the answer whose "what was missing?" box is open.
   const [rated, setRated] = useState<Record<number, 1 | -1>>({});
@@ -196,7 +196,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
     await send(note, undefined, `Anexei: ${names}`);
   }
 
-  async function send(message: string, approve?: string[], display = message) {
+  async function send(message: string, approve?: string[], display = message, context?: { blockId: string; row?: string }) {
     speech.stop();
     setBusy(true);
     setError("");
@@ -208,7 +208,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
       const res = await fetch(CHAT_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: NDJSON },
-        body: JSON.stringify({ workspaceId: props.workspaceId, agentId: props.agentId, pageId: activeId, message, approve }),
+        body: JSON.stringify({ workspaceId: props.workspaceId, agentId: props.agentId, pageId: activeId, message, approve, context }),
         signal: controller.signal,
       });
       const data = res.headers.get("content-type")?.includes(NDJSON) ? await readStream(res, setProgress, (d) => setStreamed((t) => (d === null ? "" : t + d))) : await res.json();
@@ -307,7 +307,11 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
     setDraft("");
     if (topic) {
       setTopic(null);
-      void send(`[Contexto: o usuário está perguntando sobre o bloco "${topic.title}" do painel. Dados do bloco: ${JSON.stringify(topic).slice(0, 800)}] ${text}`, undefined, `Sobre "${topic.title}": ${text}`);
+      const { widget, row } = topic;
+      const display = `Sobre ${row ? `"${row}" em ` : ""}"${widget.title}": ${text}`;
+      // The Python API reads the block from the saved panel by id (never the client's copy) and treats it as data (#118).
+      if (CHAT_URL === "/api/v1/chat") void send(text, undefined, display, { blockId: widget.id, row });
+      else void send(`[Contexto: o usuário está perguntando sobre o bloco "${widget.title}" do painel${row ? `, linha "${row}"` : ""}. Dados do bloco: ${JSON.stringify(widget).slice(0, 800)}] ${text}`, undefined, display);
     } else void send(text);
   }
 
@@ -320,7 +324,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
           {/* versions are recorded by the Python chat only (#370); the TS chat is being removed (#314) */}
           {CHAT_URL === "/api/v1/chat" && !props.agentId && (pages.length < 2 || activeId === pages[0]?.id) && <VersionHistory workspaceId={props.workspaceId} dashboard={dashboard} onRestored={setDashboard} />}
           <PageTabs pages={pages} activeId={activeId} onSelect={openPage} disabled={busy} />
-          <DashboardView dashboard={dashboard} loading={busy} focus={focus} onExitFocus={() => applyWithTransition(() => setFocus(null))} onAsk={(w) => { setTopic(w); inputRef.current?.focus(); }} onLayout={CHAT_URL === "/api/v1/chat" && !props.agentId && !busy && (pages.length < 2 || activeId === pages[0]?.id) ? changeLayout : undefined} />
+          <DashboardView dashboard={dashboard} loading={busy} focus={focus} onExitFocus={() => applyWithTransition(() => setFocus(null))} onAsk={(w, row) => { setTopic({ widget: w, row }); inputRef.current?.focus(); }} onLayout={CHAT_URL === "/api/v1/chat" && !props.agentId && !busy && (pages.length < 2 || activeId === pages[0]?.id) ? changeLayout : undefined} />
           {layoutStatus && <p role="status" className="sr-only">{layoutStatus}</p>}
         </div>
       <Panel label="Conversa com a IA" className="order-1 min-w-0 lg:order-none lg:sticky lg:top-6">
@@ -419,7 +423,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
         )}
         {topic && (
           <p role="status" className="flex items-center justify-between gap-2 rounded-[var(--radius-sm)] bg-brand-tint px-3 py-2 text-sm text-brand-ink">
-            <span>Perguntando sobre: <strong>{topic.title}</strong></span>
+            <span>Perguntando sobre: <strong>{topic.row ? `${topic.row} (${topic.widget.title})` : topic.widget.title}</strong></span>
             <Button type="button" variant="ghost" size="sm" aria-label="Remover o bloco da pergunta" onClick={() => setTopic(null)}>
               Remover
             </Button>
