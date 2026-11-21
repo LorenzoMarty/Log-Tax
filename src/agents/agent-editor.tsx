@@ -6,11 +6,26 @@ import { ApiError, apiDelete, apiPatch } from "@/api/client";
 import type { Agent } from "@/chat/types";
 
 /** Detail screen of a specialised agent: edit name, objective and allowed tools, or delete it (with confirmation). */
-export function AgentEditor({ workspaceId, agent, allTools }: { workspaceId: string; agent: Agent; allTools: string[] }) {
+export function AgentEditor({
+  workspaceId,
+  agent,
+  allTools,
+  documents = [],
+}: {
+  workspaceId: string;
+  agent: Agent;
+  allTools: string[];
+  documents?: { id: string; name: string }[];
+}) {
   const router = useRouter();
   const [name, setName] = useState(agent.name);
   const [objective, setObjective] = useState(agent.objective);
   const [tools, setTools] = useState(new Set(agent.tools));
+  // Which documents the AI may read (#134): all (no restriction), none, or a chosen list.
+  const [docMode, setDocMode] = useState<"all" | "none" | "some">(
+    agent.documents == null ? "all" : agent.documents.length === 0 ? "none" : "some",
+  );
+  const [docIds, setDocIds] = useState(new Set(agent.documents ?? []));
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
   const [confirming, setConfirming] = useState(false);
   const url = `/v1/workspaces/${workspaceId}/agents/${agent.id}`;
@@ -19,7 +34,12 @@ export function AgentEditor({ workspaceId, agent, allTools }: { workspaceId: str
   async function save(e: React.FormEvent) {
     e.preventDefault();
     try {
-      await apiPatch(url, { name, objective, tools: allTools.filter((t) => tools.has(t)) });
+      const patch: Record<string, unknown> = { name, objective, tools: allTools.filter((t) => tools.has(t)) };
+      // Only sent when it changed, so a save that does not touch it never rewrites the permission.
+      if (docMode !== initialDocMode || (docMode === "some" && !sameIds(docIds, agent.documents ?? []))) {
+        patch.documents = docMode === "all" ? undefined : docMode === "none" ? [] : documents.filter((d) => docIds.has(d.id)).map((d) => d.id);
+      }
+      await apiPatch(url, patch);
       setStatus({ ok: true, text: "Alterações salvas." });
       router.refresh();
     } catch (err) {
@@ -34,6 +54,14 @@ export function AgentEditor({ workspaceId, agent, allTools }: { workspaceId: str
       fail(err);
     }
   }
+  const initialDocMode = agent.documents == null ? "all" : agent.documents.length === 0 ? "none" : "some";
+  const toggleDoc = (id: string) =>
+    setDocIds((cur) => {
+      const next = new Set(cur);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  const usable = docMode === "all" ? documents.length : docMode === "none" ? 0 : documents.filter((d) => docIds.has(d.id)).length;
   const toggle = (t: string) =>
     setTools((cur) => {
       const next = new Set(cur);
@@ -60,6 +88,37 @@ export function AgentEditor({ workspaceId, agent, allTools }: { workspaceId: str
               {t}
             </label>
           ))}
+        </fieldset>
+        <fieldset className="flex flex-col gap-2 text-sm">
+          <legend className="mb-1">Documentos que esta IA pode ler</legend>
+          {(
+            [
+              ["all", "Todos os documentos do espaço"],
+              ["none", "Nenhum documento"],
+              ["some", "Só os que eu escolher"],
+            ] as const
+          ).map(([value, label]) => (
+            <label key={value} className="flex items-center gap-2">
+              <input type="radio" name="doc-mode" checked={docMode === value} onChange={() => setDocMode(value)} />
+              {label}
+            </label>
+          ))}
+          {docMode === "some" && (
+            <ul className="ml-6 flex flex-col gap-1">
+              {documents.length === 0 && <li className="text-ink-muted">Nenhum documento enviado ainda.</li>}
+              {documents.map((d) => (
+                <li key={d.id}>
+                  <label className="flex items-center gap-2">
+                    <input type="checkbox" checked={docIds.has(d.id)} onChange={() => toggleDoc(d.id)} />
+                    {d.name}
+                  </label>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="text-ink-muted">
+            Esta IA pode usar {usable} de {documents.length} documentos.
+          </p>
         </fieldset>
         <button type="submit" className="lg-btn self-start">
           Salvar alterações
@@ -93,4 +152,8 @@ export function AgentEditor({ workspaceId, agent, allTools }: { workspaceId: str
       </section>
     </div>
   );
+}
+
+function sameIds(a: Set<string>, b: string[]) {
+  return a.size === b.length && b.every((id) => a.has(id));
 }
