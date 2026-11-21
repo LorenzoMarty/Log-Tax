@@ -100,15 +100,30 @@ describe("editor cannot", () => {
     expect((await admin.from("workspaces").select().eq("id", ws).single()).data?.name).toBe("Minha Empresa");
   });
 
-  it("cannot touch owner-only data: agents, memories, conversation, owner's audit view, integrations", async () => {
-    expect((await editor.client.from("agents").insert({ workspace_id: ws, name: "x", objective: "y" })).error).not.toBeNull();
+  it("cannot touch the conversation or the owner's audit view", async () => {
     expect((await editor.client.from("conversations").upsert({ workspace_id: ws, history: [], messages: [] })).error).not.toBeNull();
     expect(((await editor.client.from("conversations").select()).data ?? []).length).toBe(0);
     expect(((await editor.client.from("audit_log").select().eq("workspace_id", ws)).data ?? []).length).toBe(0);
-    for (const table of ["workspace_memories", "integration_connections", "nfe_imports", "ir_imports", "estates", "heirs"]) {
-      expect((await editor.client.from(table).insert({ workspace_id: ws })).error, table).not.toBeNull();
-    }
   });
+
+  // #376: complete, valid rows, so the only reason the editor's insert can fail is the policy (RLS = 42501), and the
+  // owner inserting the very same row proves the row itself is fine.
+  const ownerOnly: Record<string, () => Record<string, unknown>> = {
+    agents: () => ({ workspace_id: ws, name: "Fiscal", objective: "Acompanhar impostos" }),
+    workspace_memories: () => ({ workspace_id: ws, text: "prefiro respostas curtas" }),
+    integration_connections: () => ({ workspace_id: ws, provider: "erp_teste", credentials: "cifrado" }),
+    nfe_imports: () => ({ workspace_id: ws, nfe_key: "3".repeat(44), kind: "sale", month: "2026-10", amount: 100 }),
+    ir_imports: () => ({ workspace_id: ws, origin: "informe_rendimentos", file_sha256: "a".repeat(64), fields: {} }),
+    estates: () => ({ workspace_id: ws, deceased_name: "Maria", died_at: "2025-12-31" }),
+    heirs: () => ({ workspace_id: ws, name: "João", share: 50 }),
+  };
+  for (const [table, row] of Object.entries(ownerOnly)) {
+    it(`cannot insert into ${table}, while the owner inserts the same row`, async () => {
+      const denied = await editor.client.from(table).insert(row());
+      expect(denied.error?.code, table).toBe("42501");
+      expect((await owner.client.from(table).insert(row())).error, table).toBeNull();
+    });
+  }
 
   it("cannot delete a comment it did not write", async () => {
     const ownerComment = (await owner.client.from("comments").insert({ workspace_id: ws, body: "Do dono" }).select().single()).data!;
