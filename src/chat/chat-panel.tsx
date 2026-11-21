@@ -18,6 +18,7 @@ import { nextQuestions, type SpaceProgress } from "./next-questions";
 import { clearConversation, rateAnswer } from "./actions";
 import { NDJSON, toolProgressLabel, type ChatStreamLine } from "./progress";
 import { RequestExamples } from "./request-examples";
+import { useSpeech } from "./speak";
 import { useVoiceInput } from "./voice";
 import type { Agent } from "./types";
 import type { DisplayMessage } from "./workspace-state";
@@ -123,7 +124,35 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
     voice.start();
   }
 
+  // Listening to answers (#188): off by default, the choice stays in this browser, nothing speaks unless it is on or "Ouvir" is pressed.
+  const speech = useSpeech();
+  const [autoRead, setAutoRead] = useState(false);
+  const spokenUpTo = useRef(props.initialMessages.length);
+  useEffect(() => {
+    try {
+      setAutoRead(localStorage.getItem("speak-auto") === "1");
+    } catch {
+      /* storage blocked: stays off */
+    }
+  }, []);
+  function toggleAutoRead(on: boolean) {
+    setAutoRead(on);
+    if (!on) speech.stop();
+    try {
+      localStorage.setItem("speak-auto", on ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }
+  const speakNow = speech.speak;
+  useEffect(() => {
+    const last = messages.at(-1);
+    if (autoRead && messages.length > spokenUpTo.current && last?.role === "assistant") speakNow(messages.length - 1, last.text);
+    spokenUpTo.current = messages.length;
+  }, [messages, autoRead, speakNow]);
+
   async function send(message: string, approve?: string[], display = message) {
+    speech.stop();
     setBusy(true);
     setError("");
     setPending([]);
@@ -261,11 +290,16 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
               <p data-role={m.role} className={`lg-msg lg-msg-${m.role === "user" ? "user" : "assistant"} whitespace-pre-line`}>
                 {m.role === "assistant" ? withReportLinks(m.text) : m.text}
               </p>
-              {m.role === "assistant" && i > 0 && (
+              {m.role === "assistant" && (speech.supported || i > 0) && (
                 <div className="flex flex-wrap items-center gap-2 text-sm text-ink">
-                  {rated[i] ? (
+                  {speech.supported && (
+                    <button type="button" className="underline underline-offset-2" aria-label={speech.speakingId === i ? "Parar leitura" : "Ouvir resposta"} onClick={() => (speech.speakingId === i ? speech.stop() : speech.speak(i, m.text))}>
+                      {speech.speakingId === i ? "Parar" : "Ouvir"}
+                    </button>
+                  )}
+                  {i > 0 && rated[i] ? (
                     <span role="status">Obrigado pela avaliação.</span>
-                  ) : (
+                  ) : i > 0 && (
                     <>
                       <button type="button" className="underline underline-offset-2" aria-label="Resposta útil" onClick={() => void rate(i, 1)}>
                         Útil
@@ -361,6 +395,18 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
         </p>
         <p aria-live="polite" className={voice.listening ? "text-sm text-brand-ink" : "sr-only"}>
           {voice.listening ? "Ouvindo… fale agora." : ""}
+        </p>
+        <p className="text-xs text-ink-muted">
+          {speech.supported ? "As respostas são lidas pela voz do seu navegador; nada sai do seu aparelho." : "Seu navegador não consegue ler as respostas em voz alta."}
+        </p>
+        {speech.supported && (
+          <label className="flex items-center gap-2 text-sm text-ink">
+            <input type="checkbox" checked={autoRead} onChange={(e) => toggleAutoRead(e.target.checked)} />
+            Ler respostas automaticamente
+          </label>
+        )}
+        <p aria-live="polite" className="sr-only">
+          {speech.speakingId !== null ? "Lendo a resposta em voz alta." : ""}
         </p>
         {voice.error && (
           <p role="alert" className="rounded-[var(--radius-sm)] bg-danger-tint px-4 py-3 text-sm text-danger-ink">
