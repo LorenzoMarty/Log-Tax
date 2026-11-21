@@ -42,3 +42,17 @@ def checklist(kind: str, profile: dict[str, Any], period: str, arrived: list[tup
         done = any(dt == t and ts.startswith(scope) for dt, ts in arrived)
         items.append({"label": LABEL.get(t, t), "done": done})
     return items
+
+
+def checklist_widget(period: str, items: list[dict[str, Any]]) -> dict[str, Any]:
+    """The dashboard `checklist` block for `period`, shared by the route and the chat tool (#143).
+
+    Example: `checklist_widget("2026-11", [{"label": "Guia DAS", "done": False}])["title"]` -> "Documentos de 11/2026".
+    """
+    return {
+        "id": "docs-faltantes",
+        "title": f"Documentos de {period[5:]}/{period[:4]}",
+        "size": "md",
+        "kind": "checklist",
+        "items": items,
+    }

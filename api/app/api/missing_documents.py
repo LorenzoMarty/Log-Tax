@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse, Response
 
 from app.core.errors import error_response
 from app.db.client import UserDb, user_db
-from app.documents.expected import checklist
+from app.documents.expected import checklist, checklist_widget
 
 router = APIRouter(tags=["documents"])
 _PERIOD = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
@@ -36,6 +36,5 @@ async def missing_documents(
         month,
         [(str(d["doc_type"]), str(d["created_at"])) for d in docs],
     )
-    title = f"Documentos de {month[5:]}/{month[:4]}"
-    widget = {"id": "docs-faltantes", "title": title, "size": "md", "kind": "checklist", "items": items}
+    widget = checklist_widget(month, items)
     return JSONResponse({"period": month, "missing": sum(not i["done"] for i in items), "widget": widget})
