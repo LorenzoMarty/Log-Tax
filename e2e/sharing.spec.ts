@@ -137,7 +137,7 @@ test("a comment notifies the owner, who replies and resolves the thread", async 
   await owner.page.reload();
   await expect(owner.page.getByTestId("notice")).toContainText(`Novo comentário de ${guestEmail}`);
   await owner.page.getByText("Responder", { exact: true }).click();
-  await owner.page.getByLabel("Resposta").fill("Feito, conferi.");
+  await owner.page.getByLabel("Sua resposta no comentário").fill("Feito, conferi.");
   await owner.page.getByRole("button", { name: "Enviar resposta" }).click();
   await expect(owner.page.getByTestId("comment")).toHaveCount(2);
   await owner.page.getByRole("button", { name: "Resolver" }).click();

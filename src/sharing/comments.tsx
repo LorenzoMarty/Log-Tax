@@ -94,7 +94,7 @@ export function Comments(props: {
                           <input type="hidden" name="parentId" value={c.id} />
                           <input type="hidden" name="widgetId" value={c.widget_id ?? ""} />
                           <label className="flex min-w-48 flex-1 flex-col gap-1">
-                            Resposta
+                            Sua resposta no comentário
                             <textarea name="body" required maxLength={2000} rows={2} className="rounded-xl border border-line px-3 py-2" />
                           </label>
                           <button type="submit" className="rounded-xl bg-inverse px-4 py-2 text-on-inverse">
