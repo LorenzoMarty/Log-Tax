@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { previousVersion, VersionHistory } from "../version-history";
@@ -56,5 +57,28 @@ describe("VersionHistory (#128)", () => {
     await waitFor(() => expect(undo).toBeEnabled());
     fireEvent.click(undo);
     expect(await screen.findByRole("alert")).toHaveTextContent("Não consegui restaurar");
+  });
+});
+
+describe("VersionHistory redo and read-only (#128)", () => {
+  it("redo is enabled only after an undo", async () => {
+    vi.stubGlobal("fetch", new FakeVersionsApi(dash(4)).fetch);
+    const Host = () => {
+      const [d, setD] = useState(dash(3));
+      return <VersionHistory workspaceId="ws" dashboard={d} onRestored={setD} />;
+    };
+    render(<Host />);
+    const undo = screen.getByRole("button", { name: "Desfazer" });
+    await waitFor(() => expect(undo).toBeEnabled());
+    expect(screen.getByRole("button", { name: "Refazer" })).toBeDisabled();
+    fireEvent.click(undo);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Refazer" })).toBeEnabled());
+  });
+
+  it("read-only shows the list without any action button", async () => {
+    vi.stubGlobal("fetch", new FakeVersionsApi(dash(4)).fetch);
+    render(<VersionHistory workspaceId="ws" dashboard={dash(3)} readOnly />);
+    expect(await screen.findByText('Bloco "Carga" adicionado')).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Desfazer|Refazer|Restaurar/, hidden: true })).toBeNull();
   });
 });

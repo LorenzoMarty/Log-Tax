@@ -44,6 +44,10 @@ test("company journey through FastAPI: context → diagnosis → dashboard → w
   // undo (#128): the removed block comes back from the saved version history
   await page.getByRole("button", { name: "Desfazer" }).click();
   await expect(page.getByTestId("widget-kpi")).toBeVisible();
+  await page.getByRole("button", { name: "Refazer" }).click(); // redo removes the block again
+  await expect(page.getByTestId("widget-kpi")).toHaveCount(0);
+  await page.getByRole("button", { name: "Desfazer" }).click();
+  await expect(page.getByTestId("widget-kpi")).toBeVisible();
   await page.getByText(/Versões do painel/).click();
   await page.getByRole("button", { name: "Restaurar" }).first().click(); // the version without the block, after the undo
   await expect(page.getByTestId("widget-kpi")).toHaveCount(0);

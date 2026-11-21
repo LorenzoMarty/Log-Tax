@@ -6,6 +6,7 @@ import { alertStatuses } from "@/alerts/evaluate";
 import { ChatPanel } from "@/chat/chat-panel";
 import { loadWorkspaceState } from "@/chat/workspace-state";
 import { DashboardView } from "@/dashboard/dashboard-view";
+import { VersionHistory } from "@/dashboard/version-history";
 import { DocumentsPanel, type DocumentRow } from "@/documents/documents-panel";
 import { openStored } from "@/documents/storage";
 import { InventoryPanel } from "@/inventory/inventory-panel";
@@ -161,6 +162,7 @@ export default async function WorkspaceChatPage({
             </form>
           </div>
           <AlertBar alerts={alerts} />
+          <VersionHistory workspaceId={id} dashboard={state.dashboard} readOnly />
           <DashboardView dashboard={state.dashboard} />
           {inventoryPanel}
           {documentsPanel}
