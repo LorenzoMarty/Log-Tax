@@ -31,6 +31,10 @@ class PlanLimitError(Exception):
         self.message = message
 
 
+class AccountSuspendedError(Exception):
+    """The caller's account was suspended by a platform admin (#201): every authenticated route answers 403."""
+
+
 class ErrorBody(BaseModel):
     code: str
     message: str
@@ -84,6 +88,10 @@ def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(PlanLimitError)
     async def _plan_limit(_: Request, exc: PlanLimitError) -> JSONResponse:
         return error_response(402, "plan_limit", exc.message)
+
+    @app.exception_handler(AccountSuspendedError)
+    async def _suspended(_: Request, __: AccountSuspendedError) -> JSONResponse:
+        return error_response(403, "account_suspended", "Conta suspensa. Fale com o suporte.")
 
     @app.exception_handler(DbError)
     async def _db(_: Request, exc: DbError) -> JSONResponse:

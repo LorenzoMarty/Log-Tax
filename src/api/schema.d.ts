@@ -101,6 +101,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/users/{user_id}/support": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Support View
+         * @description Workspace metadata of one person (names, plan, counters; never content). 403 unless an admin AND the person
+         *     has an active support consent. Each call is an audit row the person can see.
+         */
+        get: operations["support_view_v1_admin_users__user_id__support_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/users/{user_id}/suspension": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Suspension
+         * @description Suspends or reactivates an account. 403 unless a platform admin. Audited; the person sees the row.
+         */
+        put: operations["set_suspension_v1_admin_users__user_id__suspension_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/agent-templates": {
         parameters: {
             query?: never;
@@ -676,6 +717,34 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/support-access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Support Access
+         * @description The caller's consents for support to see their workspace metadata, newest first.
+         */
+        get: operations["list_support_access_v1_me_support_access_get"];
+        put?: never;
+        /**
+         * Grant Support Access
+         * @description Lets the support team read workspace metadata (names, plan, counters; never content) for `days` days (max 7).
+         */
+        post: operations["grant_support_access_v1_me_support_access_post"];
+        /**
+         * Revoke Support Access
+         * @description Ends every active consent right now.
+         */
+        delete: operations["revoke_support_access_v1_me_support_access_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2398,6 +2467,52 @@ export interface components {
             current: components["schemas"]["Diagnosis"];
             scenario: components["schemas"]["Diagnosis"];
         };
+        /** SupportGrant */
+        SupportGrant: {
+            /** Expiresat */
+            expiresAt: string;
+            /** Grantedat */
+            grantedAt?: string | null;
+            /** Id */
+            id: string;
+            /** Revokedat */
+            revokedAt?: string | null;
+        };
+        /** SupportView */
+        SupportView: {
+            /** Plan */
+            plan: string;
+            /** Suspended */
+            suspended: boolean;
+            /** Userid */
+            userId: string;
+            /** Workspaces */
+            workspaces: components["schemas"]["SupportWorkspace"][];
+        };
+        /** SupportWorkspace */
+        SupportWorkspace: {
+            /** Agents */
+            agents: number;
+            /** Createdat */
+            createdAt: string;
+            /** Dashboards */
+            dashboards: number;
+            /** Documents */
+            documents: number;
+            /** Id */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Members */
+            members: number;
+            /** Name */
+            name: string;
+        };
+        /** SuspensionIn */
+        SuspensionIn: {
+            /** Suspended */
+            suspended: boolean;
+        };
         /** TaxHistory */
         TaxHistory: {
             comparison?: components["schemas"]["Comparison"] | null;
@@ -2636,6 +2751,74 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["AdminOverview"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    support_view_v1_admin_users__user_id__support_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportView"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_suspension_v1_admin_users__user_id__suspension_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuspensionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -3656,6 +3839,99 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Usage"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_support_access_v1_me_support_access_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportGrant"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    grant_support_access_v1_me_support_access_post: {
+        parameters: {
+            query?: {
+                days?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportGrant"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_support_access_v1_me_support_access_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

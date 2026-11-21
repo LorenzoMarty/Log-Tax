@@ -2,6 +2,7 @@ import time
 import uuid
 from typing import Any
 
+import httpx
 import jwt
 import pytest
 from fastapi.testclient import TestClient
@@ -163,3 +164,46 @@ def test_hs256_signed_with_the_public_key_is_rejected(monkeypatch: pytest.Monkey
     with pytest.raises(Exception) as info:
         authenticate(f"Bearer {forged}", Settings(supabase_url=URL))
     assert info.value.status_code == 401  # type: ignore[attr-defined]
+
+
+def _status_client(monkeypatch: pytest.MonkeyPatch, handler: Any) -> None:
+    real = httpx.AsyncClient
+    monkeypatch.setattr("app.core.auth.httpx.AsyncClient", lambda **kw: real(transport=httpx.MockTransport(handler), **kw))
+
+
+@pytest.mark.parametrize(("answer", "locked"), [([{"suspended": True}], True), ([{"suspended": False}], False), ([], False)])
+def test_a_suspended_account_gets_403_in_portuguese(
+    monkeypatch: pytest.MonkeyPatch, answer: list[dict[str, bool]], locked: bool
+) -> None:
+    monkeypatch.setenv("LOGTAX_SUPABASE_URL", URL)
+    monkeypatch.setenv("LOGTAX_SUPABASE_JWT_SECRET", SECRET)
+    monkeypatch.setenv("LOGTAX_SUPABASE_ANON_KEY", "anon")
+    get_settings.cache_clear()
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(200, json=answer)
+
+    _status_client(monkeypatch, handler)
+    client = TestClient(create_app(), raise_server_exceptions=False, headers={"Authorization": f"Bearer {token()}"})
+    res = client.get("/v1/me")
+    get_settings.cache_clear()
+    assert seen[0].url.path == "/rest/v1/user_status" and seen[0].url.params["user_id"] == f"eq.{USER}"
+    assert (res.status_code, "suspensa" in res.text) == ((403, True) if locked else (200, False))
+
+
+def test_a_failed_status_lookup_does_not_lock_people_out(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LOGTAX_SUPABASE_URL", URL)
+    monkeypatch.setenv("LOGTAX_SUPABASE_JWT_SECRET", SECRET)
+    monkeypatch.setenv("LOGTAX_SUPABASE_ANON_KEY", "anon")
+    get_settings.cache_clear()
+
+    def boom(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("down")
+
+    _status_client(monkeypatch, boom)
+    client = TestClient(create_app(), raise_server_exceptions=False, headers={"Authorization": f"Bearer {token()}"})
+    res = client.get("/v1/me")
+    get_settings.cache_clear()
+    assert res.status_code == 200
