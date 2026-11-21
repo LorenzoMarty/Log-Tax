@@ -10,6 +10,9 @@ const BOM = "﻿";
 // A cell starting with these is run as a formula by spreadsheets (CSV injection); a leading ' keeps it text.
 const FORMULA_START = /^[=+\-@\t\r]/;
 
+// A decimal-string amount for the CSV: the exact digits with the pt-BR decimal comma (a text cell, so no float round trip).
+const decimalCell = (v: string) => v.replace(".", ",");
+
 /**
  * The block's data as a table, or null for blocks without tabular data (free text).
  * Example: `widgetTable({ kind: "bar", data: [{ label: "Jan", value: 1 }], … })` → `{ head: ["Item", "Valor"], rows: [["Jan", 1]] }`.
@@ -31,6 +34,17 @@ export function widgetTable(w: Widget): WidgetTable | null {
       return { head: ["Item", ...(w.labels ?? ["Hoje", "Potencial"])], rows: w.rows.map((r) => [r.label, r.today, r.potential]) };
     case "checklist":
       return { head: ["Item", "Feito"], rows: w.items.map((i) => [i.label, i.done ? "Sim" : "Não"]) };
+    case "projection":
+      return { head: ["Mês", "Valor (R$)", "Projeção"], rows: w.points.map((p) => [p.label, decimalCell(p.value), p.projected ? "Sim" : "Não"]) };
+    case "payroll":
+      return {
+        head: ["Encargo", "Valor (R$)"],
+        rows: [...w.items.map((i): (string | number)[] => [i.label, decimalCell(i.amount)]), ["Total", decimalCell(w.total)]],
+      };
+    case "table":
+      return { head: w.columns, rows: w.rows };
+    case "goal":
+      return { head: ["Atual", "Meta", "Unidade"], rows: [[decimalCell(w.current), decimalCell(w.target), w.unit ?? "R$"]] };
     case "text":
       return null;
   }
