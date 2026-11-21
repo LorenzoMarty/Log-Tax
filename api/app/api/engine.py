@@ -7,6 +7,8 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 
 from app.api.schemas import (
+    AssetSaleIn,
+    CarryingTaxIn,
     Competence,
     DeadlinesIn,
     DiagnoseIn,
@@ -20,6 +22,7 @@ from app.api.schemas import (
     envelope,
 )
 from app.core.auth import current_user
+from app.engine.asset_taxes import AssetSale, CarryingResult, carrying_tax, sale_tax
 from app.engine.calendar import DeadlineList, upcoming_deadlines
 from app.engine.company_schema import apply_fields
 from app.engine.history import TaxHistory, tax_history
@@ -77,6 +80,18 @@ async def prestador(body: PrestadorIn) -> Envelope[PrestadorComparison]:
 async def itcmd(body: ItcmdIn) -> Envelope[ItcmdResult]:
     """ITCMD on an inheritance or donation by UF; a UF without a checked table asks for validation."""
     return envelope(compute_itcmd(default_rulebook(), _competence(body.competence), body.to_input()))  # type: ignore[return-value]
+
+
+@router.post("/asset-sale")
+async def asset_sale(body: AssetSaleIn) -> Envelope[AssetSale]:
+    """Capital gain tax of a simulated sale, with premises; without the acquisition cost it asks for it."""
+    return envelope(sale_tax(default_rulebook(), _competence(body.competence), body.kind, body.sale_value, body.cost_basis))  # type: ignore[return-value]
+
+
+@router.post("/asset-carrying-tax")
+async def asset_carrying_tax(body: CarryingTaxIn) -> Envelope[CarryingResult]:
+    """IPTU, IPVA or ITR for the year as informed by the user; no rate is estimated, so no amount asks for it."""
+    return envelope(carrying_tax(body.tax, body.annual_amount))  # type: ignore[return-value]
 
 
 @router.post("/history")

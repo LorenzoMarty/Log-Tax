@@ -126,6 +126,18 @@ class ItcmdIn(_In):
         return ItcmdInput(self.uf, self.kind, self.base_value)
 
 
+class AssetSaleIn(_In):
+    competence: Competence | None = None
+    kind: Literal["imovel", "veiculo", "participacao", "bem"] = "imovel"
+    sale_value: Annotated[Decimal, Field(gt=0, le=Decimal("1e12"))]
+    cost_basis: Annotated[Decimal, Field(ge=0, le=Decimal("1e12"))] | None = None
+
+
+class CarryingTaxIn(_In):
+    tax: Literal["iptu", "ipva", "itr"]
+    annual_amount: Annotated[Decimal, Field(ge=0, le=Decimal("1e12"))] | None = None
+
+
 class HistoryIn(_In):
     company: CompanyIn
     to: Competence
