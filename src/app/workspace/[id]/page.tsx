@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { AssetsPanel } from "@/assets/assets-panel";
 import { NoticesBar, type NoticeRow } from "@/alerts/notices-bar";
 import { AlertBar } from "@/alerts/alert-bar";
 import { alertStatuses } from "@/alerts/evaluate";
@@ -89,6 +90,7 @@ export default async function WorkspaceChatPage({
   const alerts = state.kind === "pessoal" ? [] : alertStatuses(mockEngine, state.company, state.alerts);
   const notice = msg ? MESSAGES[msg] : undefined;
   const documentsPanel = <DocumentsPanel workspaceId={id} documents={((documents ?? []) as DocumentRow[]).map((d) => ({ ...d, extracted: openStored(d.extracted) }))} canEdit={isOwner} />;
+  const assetsPanel = state.kind === "pessoal" ? <AssetsPanel assets={(assets ?? []) as AssetRow[]} /> : null;
   const commentsPanel = (
     <Comments
       workspaceId={id}
@@ -144,6 +146,7 @@ export default async function WorkspaceChatPage({
             initialPrompt={pergunta?.slice(0, 1000)}
           />
           <SharePanel workspaceId={id} defaultOpen={Boolean(notice)} members={(members ?? []) as MemberRow[]} invites={(invites ?? []) as InviteRow[]} />
+          {assetsPanel}
           {inventoryPanel}
           {documentsPanel}
           {commentsPanel}
@@ -164,6 +167,7 @@ export default async function WorkspaceChatPage({
           <AlertBar alerts={alerts} />
           <VersionHistory workspaceId={id} dashboard={state.dashboard} readOnly />
           <DashboardView dashboard={state.dashboard} />
+          {assetsPanel}
           {inventoryPanel}
           {documentsPanel}
           {commentsPanel}

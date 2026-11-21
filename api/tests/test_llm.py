@@ -262,6 +262,16 @@ async def test_scripted_company_journey_builds_the_dashboard_and_answers() -> No
     assert "R$ 42.800 por mês (13,1% do faturamento)" in text
 
 
+async def test_scripted_asset_tracking_adds_the_asset_and_asks_for_the_missing_value() -> None:
+    text, tools = await turn("quero acompanhar esse apartamento", {"add_asset": value({"id": "a1"})})
+    assert tools.names == ["add_asset"]
+    assert tools.args[0] == {"kind": "imovel", "description": "Apartamento", "value": 0}
+    assert "Qual é o valor" in text
+    text, tools = await turn("quero acompanhar meu carro de R$ 40 mil", {"add_asset": value({"id": "a2"})})
+    assert tools.args[0] == {"kind": "veiculo", "description": "Veículo", "value": 40000}
+    assert "Qual é o valor" not in text
+
+
 async def test_scripted_company_journey_without_a_diagnosis_apologises() -> None:
     text, tools = await turn("Empresa", {"get_tax_diagnosis": {"status": "insufficient_data"}})
     assert tools.names == ["get_tax_diagnosis"] and "Não consegui calcular" in text

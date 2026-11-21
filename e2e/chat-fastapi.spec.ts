@@ -105,6 +105,19 @@ test("the Python chat is closed without a session and keeps the contract's error
   expect((await res.json()).error.code).toBe("unauthorized");
 });
 
+// #180: assets live in the Python chat only, so this journey runs in the FastAPI pass.
+test("assets through FastAPI: 'quero acompanhar esse apartamento' registers it in the patrimony panel", async ({ page }) => {
+  await login(page, "bens");
+  await createAndOpen(page, /Vida Pessoal/);
+  await expect(page.getByRole("region", { name: "Patrimônio" })).toContainText("Nenhum bem cadastrado");
+
+  await sendChatMessage(page, "quero acompanhar esse apartamento", /Qual é o valor/);
+  await page.reload();
+  const asset = page.getByRole("region", { name: "Patrimônio" }).getByTestId("asset");
+  await expect(asset).toHaveCount(1);
+  await expect(asset).toContainText("Apartamento");
+  await expect(asset).toContainText("Imóvel");
+});
 
 // #166: the CNPJ fills the company proposal; the API runs with LOG_TAX_CNPJ_STUB=1 (only 11.222.333/0001-81 is found, never BrasilAPI).
 test("informar o CNPJ preenche nome, CNAE, UF e município", async ({ page }) => {

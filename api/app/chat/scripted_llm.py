@@ -364,6 +364,23 @@ def _update_agent_step(_p: list[ToolOutcome], text: str, system: str) -> dict[st
     return _call("update_agent", id=agent_id, patch={"objective": objective})
 
 
+def _track_asset_step(_p: list[ToolOutcome], text: str, _s: str) -> dict[str, Any]:
+    vehicle = re.search(r"carro|ve[íi]culo|moto", text, _I)
+    return _call(
+        "add_asset",
+        kind="veiculo" if vehicle else "imovel",
+        description="Veículo" if vehicle else "Apartamento" if re.search("apartamento", text, _I) else "Imóvel",
+        value=_wire(revenue_from(text)),
+    )
+
+
+def _asset_reply(p: list[ToolOutcome], text: str) -> str:
+    if not _ok(_first(p)):
+        return "Não consegui cadastrar o bem. Isso só funciona no espaço Vida Pessoal."
+    base = "Cadastrei o bem no seu patrimônio."
+    return base if revenue_from(text) else f"{base} Qual é o valor dele hoje? Deixei R$ 0 por enquanto."
+
+
 def _plan(pattern: str, steps: list[Step], reply: Reply) -> Plan:
     return Plan(re.compile(pattern, _I), steps, reply)
 
@@ -431,6 +448,7 @@ def _saved_reply(ok_text: str) -> Reply:
 
 
 PLANS: list[Plan] = [
+    _plan(r"acompanhar.*(apartamento|im[óo]vel|casa|carro|ve[íi]culo|moto)", [_track_asset_step], _asset_reply),
     _plan(
         r"^abrir o esp[óo]lio",
         [_estate_step],
