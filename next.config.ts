@@ -9,6 +9,8 @@ const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${dev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
+  "worker-src 'self'",
+  "manifest-src 'self'",
   "img-src 'self' data: blob:",
   "font-src 'self'",
   `connect-src 'self' ${supabase}${dev ? " ws:" : ""}`.trim(),
