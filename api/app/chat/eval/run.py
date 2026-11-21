@@ -17,6 +17,7 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from app.chat.eval.cases import EVAL_CASES, EvalCase
+from app.chat.eval.citations import check_citations, sources_in
 from app.chat.openai_llm import DEFAULT_MODEL, create_openai_llm
 from app.chat.orchestrator import run_turn
 from app.chat.scripted_llm import scripted_llm
@@ -107,6 +108,9 @@ async def run_eval(llm: LlmClient, cases: list[EvalCase], model: str) -> EvalRep
             ran_engine = any(e.outcome["status"] == "ok" and e.name in ENGINE_TOOLS_THAT_NEED_THE_NOTICE for e in r.events)
             if ran_engine and DISCLAIMER not in r.text:
                 failures.append("faltou o aviso de estimativa")
+            if case.cites_only_engine_sources:
+                engine_sources = [s for e in r.events if e.name == "explain_result" for s in sources_in(e.outcome)]
+                failures += check_citations(r.text, engine_sources, case.user)
             if case.no_invented_numbers:
                 outcomes = " ".join(json.dumps(e.outcome, ensure_ascii=False) for e in r.events)
                 known = numbers_in(case.user + outcomes)

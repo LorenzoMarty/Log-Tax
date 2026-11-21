@@ -78,7 +78,9 @@ def llm_of(text: str, tool: str | None = "explain_result") -> Any:
         async def respond(self, *, system: str, history: list[Msg], tools: list[ToolSpec]) -> LlmTurn:
             steps["n"] += 1
             if steps["n"] == 1 and tool:
-                return LlmTurn("", [ToolCall("c1", tool, '{"subject": "diagnosis"}')], [{"type": "function_call", "call_id": "c1"}])
+                return LlmTurn(
+                    "", [ToolCall("c1", tool, '{"subject": "diagnosis"}')], [{"type": "function_call", "call_id": "c1"}]
+                )
             return say(text)
 
     return Fake()
