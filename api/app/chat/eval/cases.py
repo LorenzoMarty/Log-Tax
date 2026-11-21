@@ -61,4 +61,16 @@ EVAL_CASES: list[EvalCase] = [
         "plain-language", "O que é Fator R?",
         reply_matches=[_re(r"folha|sal[áa]rio|remunera|pr[óo]-labore")], reply_forbids=[NO_MARKDOWN], no_invented_numbers=True,
     ),
+    EvalCase(
+        "glossary-rbt12", "O que é RBT12 e por que isso importa para o meu Simples?",
+        reply_matches=[_re(r"12 meses|doze meses|[úu]ltimos meses")], reply_forbids=[NO_MARKDOWN], no_invented_numbers=True,
+    ),
+    EvalCase(
+        "glossary-das", "Preciso pagar o DAS todo mês? O que é isso?",
+        reply_matches=[_re(r"boleto|guia")], reply_forbids=[NO_MARKDOWN], no_invented_numbers=True,
+    ),
+    EvalCase(
+        "glossary-reform", "O que vai mudar para mim com o IBS e a CBS?",
+        reply_matches=[_re(r"substitu|reforma")], reply_forbids=[NO_MARKDOWN], no_invented_numbers=True,
+    ),
 ]  # fmt: skip

@@ -97,7 +97,7 @@ async def test_a_crashing_model_is_a_failed_case_not_a_crashed_run() -> None:
 
 async def test_the_whole_suite_runs_against_the_scripted_stand_in_with_the_real_tools() -> None:
     r = await run_eval(scripted_llm, EVAL_CASES, "scripted")
-    assert r.total == len(EVAL_CASES) == 13 and all(isinstance(x.failures, list) for x in r.results)
+    assert r.total == len(EVAL_CASES) and all(isinstance(x.failures, list) for x in r.results)
     by_id = {x.id: x for x in r.results}
     for passing in ("opportunities", "simulation", "alert", "explain", "report"):
         assert by_id[passing].passed, (passing, by_id[passing].failures)
