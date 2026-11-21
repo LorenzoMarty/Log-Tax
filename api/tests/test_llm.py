@@ -397,3 +397,80 @@ async def test_scripted_cancel_alert_lists_then_deletes_the_first_and_confirm_re
     again = Alerts({"list_alerts": [{"id": "a1", "rule": {}, "active": True}]})
     await run_turn(llm=ScriptedLlm(), tools=again, history=r.history, user_message="Sim, pode confirmar.")
     assert again.names == ["list_alerts", "delete_alert"]
+
+
+# ---- streaming (#110) ----
+def sse(*events: dict[str, Any]) -> httpx.Response:
+    body = "".join(f"event: {e['type']}\ndata: {json.dumps(e)}\n\n" for e in events)
+    return httpx.Response(200, headers={"content-type": "text/event-stream"}, text=body)
+
+
+def completed(text: str, **extra: Any) -> dict[str, Any]:
+    msg = {"type": "message", "content": [{"type": "output_text", "text": text}]}
+    return {"type": "response.completed", "response": {"output": [msg], **extra}}
+
+
+async def test_stream_pushes_each_delta_and_returns_the_completed_turn() -> None:
+    seen: list[httpx.Request] = []
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        seen.append(req)
+        return sse(
+            {"type": "response.created"},
+            {"type": "response.output_text.delta", "delta": "Ol"},
+            {"type": "response.output_text.delta", "delta": "á!"},
+            completed("Olá!", usage={"input_tokens": 5, "output_tokens": 2}),
+        )
+
+    got: list[str] = []
+    turn = await llm_over(handler).respond_stream(system="s", history=[], tools=TOOLS, on_text=got.append)
+    assert json.loads(seen[0].content)["stream"] is True
+    assert got == ["Ol", "á!"] and turn.text == "Olá!" and turn.usage is not None and turn.usage.output == 2
+
+
+async def test_stream_redacts_what_goes_out_and_keeps_function_calls() -> None:
+    call = {"type": "function_call", "call_id": "c1", "name": "get_tax_diagnosis", "arguments": "{}"}
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        assert CPF not in req.content.decode()
+        return sse({"type": "response.completed", "response": {"output": [call]}})
+
+    turn = await llm_over(handler).respond_stream(
+        system="s", history=[{"role": "user", "content": f"meu cpf {CPF}"}], tools=TOOLS, on_text=lambda _: None
+    )
+    assert [c.name for c in turn.calls] == ["get_tax_diagnosis"] and turn.items == [call]
+
+
+async def test_stream_retries_before_the_first_byte_but_not_client_errors() -> None:
+    codes = iter([429, 503])
+    calls: list[int] = []
+
+    def handler(_: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        code = next(codes, 200)
+        return httpx.Response(code, text="user data") if code != 200 else sse(completed("ok"))
+
+    assert (await llm_over(handler).respond_stream(system="s", history=[], tools=[], on_text=lambda _: None)).text == "ok"
+    assert len(calls) == 3
+    with pytest.raises(LlmError, match="401") as err:
+        await llm_over(lambda _: httpx.Response(401, text=f"echo {CPF}")).respond_stream(
+            system="s", history=[], tools=[], on_text=lambda _: None
+        )
+    assert CPF not in str(err.value)
+
+
+async def test_stream_gives_up_on_transport_errors_and_on_failed_or_truncated_streams() -> None:
+    def boom(_: httpx.Request) -> httpx.Response:
+        raise httpx.ReadTimeout("slow")
+
+    with pytest.raises(LlmError, match="ReadTimeout"):
+        await llm_over(boom).respond_stream(system="s", history=[], tools=[], on_text=lambda _: None)
+    with pytest.raises(LlmError, match=r"response\.failed"):
+        await llm_over(lambda _: sse({"type": "response.failed"})).respond_stream(
+            system="s", history=[], tools=[], on_text=lambda _: None
+        )
+    garbled = httpx.Response(200, text='data: {not json\n\ndata: {"type":"response.output_text.delta","delta":"a"}\n\n')
+    got: list[str] = []
+    with pytest.raises(LlmError, match="before completing"):
+        await llm_over(lambda _: garbled).respond_stream(system="s", history=[], tools=[], on_text=got.append)
+    assert got == ["a"]

@@ -31,6 +31,11 @@ def tool_line(name: str) -> bytes:
     return _line({"type": "tool", "name": name})
 
 
+def text_line(delta: str) -> bytes:
+    """A piece of the answer, as the model writes it (#110). The `done` line still carries the full, final text."""
+    return _line({"type": "text", "delta": delta})
+
+
 def done_line(reply: dict[str, Any]) -> bytes:
     return _line({"type": "done", "reply": reply})
 

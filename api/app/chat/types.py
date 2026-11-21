@@ -1,5 +1,6 @@
 """Chat types shared by the orchestrator, the tool registry and the LLM client (provider-agnostic, as in `src/chat/types.ts`)."""
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal, NotRequired, Protocol, TypedDict
 
@@ -63,6 +64,14 @@ class LlmTurn:
 
 class LlmClient(Protocol):
     async def respond(self, *, system: str, history: list[Msg], tools: list[ToolSpec]) -> LlmTurn: ...
+
+
+class StreamingLlmClient(LlmClient, Protocol):
+    """An LlmClient that can also push the answer's text as it is generated (#110). `on_text` gets each new piece."""
+
+    async def respond_stream(
+        self, *, system: str, history: list[Msg], tools: list[ToolSpec], on_text: Callable[[str], None]
+    ) -> LlmTurn: ...
 
 
 class ToolOutcome(TypedDict):

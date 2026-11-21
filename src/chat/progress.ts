@@ -16,6 +16,7 @@ export const toolProgressLabel = (tool: string): string => `${LABELS[tool] ?? "c
 /** One line of the NDJSON stream the chat route sends when the client asks for it. */
 export type ChatStreamLine =
   | { type: "tool"; name: string }
+  | { type: "text"; delta: string }
   | { type: "done"; reply: Record<string, unknown> }
   | { type: "error"; error: string };
 

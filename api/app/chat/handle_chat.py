@@ -73,6 +73,7 @@ async def handle_chat(
     page_id: str | None = None,
     approve: frozenset[str] = frozenset(),
     on_tool_start: Callable[[str], None] | None = None,
+    on_text: Callable[[str], None] | None = None,
     cancelled: asyncio.Event | None = None,
 ) -> ChatReply | None:
     state = await load_workspace_state(db, workspace_id, settings, agent_id, page_id)
@@ -104,6 +105,7 @@ async def handle_chat(
         user_message=message,
         system=system,
         on_tool_start=on_tool_start,
+        on_text=on_text,
         cancelled=cancelled,
     )
 
