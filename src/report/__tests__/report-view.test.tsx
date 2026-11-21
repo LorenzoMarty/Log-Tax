@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { mockEngine, seedCompany, seedPerson } from "@/engine";
-import { buildReport } from "../build";
+import { buildReport, type ReportSection } from "../build";
 import { ReportView } from "../report-view";
 
 const input = {
@@ -82,5 +82,26 @@ describe("ReportView", () => {
   it("has no download links without a workspace (shared report)", () => {
     render(<ReportView report={buildReport(input)} />);
     expect(screen.queryByRole("link", { name: /Baixar/ })).toBeNull();
+  });
+});
+
+describe("ReportView with the API's 12 sections (#146)", () => {
+  const section = (id: ReportSection["id"], title: string, extra: Partial<ReportSection> = {}): ReportSection => ({ id, title, paragraphs: [`${title} ok`], ...extra });
+  const COMMON: [ReportSection["id"], string][] = [
+    ["resumo", "Resumo"], ["dados", "Dados analisados"], ["impostos", "Impostos"], ["evolucao", "Evolução"],
+    ["oportunidades", "Oportunidades"], ["economia", "Economia potencial"], ["riscos", "Riscos"],
+    ["documentos", "Documentos"], ["pendencias", "Pendências"], ["premissas", "Premissas"],
+    ["recomendacoes", "Recomendações"], ["validar", "Itens a validar"],
+  ]; // prettier-ignore
+
+  it.each([
+    ["empresa", [...COMMON.slice(0, 7), ["alertas", "Alertas"] as [ReportSection["id"], string], ...COMMON.slice(7)]],
+    ["pessoa física", COMMON],
+  ])("renders every section of the %s report, absent data included as a sentence", (_kind, list) => {
+    const sections = list.map(([id, title]) => (id === "pendencias" ? section(id, title, { paragraphs: ["Nenhuma pendência com os dados atuais."] }) : section(id, title)));
+    render(<ReportView report={{ title: "Relatório", subtitle: "x", disclaimer: "Estimativa ilustrativa", sections }} />);
+    for (const [, title] of list) expect(screen.getByRole("heading", { level: 2, name: title })).toBeInTheDocument();
+    expect(screen.getByText("Nenhuma pendência com os dados atuais.")).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(list.length);
   });
 });
