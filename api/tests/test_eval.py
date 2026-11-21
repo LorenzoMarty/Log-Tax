@@ -103,6 +103,22 @@ async def test_the_whole_suite_runs_against_the_scripted_stand_in_with_the_real_
         assert by_id[passing].passed, (passing, by_id[passing].failures)
 
 
+async def test_a_case_history_reaches_the_model_trimmed_with_the_early_fact_in_the_summary() -> None:
+    seen: list[list[Msg]] = []
+
+    class Spy:
+        async def respond(self, *, system: str, history: list[Msg], tools: list[ToolSpec]) -> LlmTurn:
+            seen.append(list(history))
+            return say("O contador é Marcos Teixeira.")
+
+    case = next(c for c in EVAL_CASES if c.id == "remembers-the-start")
+    report = await run_eval(Spy(), [case], "spy")  # type: ignore[arg-type]
+    assert report.passed == 1
+    first = seen[0][0]
+    assert first["role"] == "user" and "Resumo da conversa anterior" in first["content"] and "Marcos Teixeira" in first["content"]
+    assert len(seen[0]) < len(case.history)  # 62 messages in, a summary and the last turns out (#111)
+
+
 def test_amounts_are_compared_in_normalized_form() -> None:
     assert (normalize("42.800,50") == "42800.5" and normalize("500") == "500" and normalize("x.y") == "xy") or True
     assert amounts_in("Pague R$ 42.800,50 e R$10 hoje") == ["42800.5", "10"]
