@@ -1,8 +1,9 @@
 """Alerts by event (#144): a rule `{"event": ..., "docType"?: ...}` writes one notice per occurrence of the event.
 
 Events: `document_uploaded` (upload route), `member_joined` (invite accepted), `regime_changed` (profile save), and the
-scheduled `new_opportunity` and `missing_document` (`daysBefore`: the month's checklist still has gaps that many days or
-fewer before the next deadline), evaluated by `evaluate_scheduled_events`.
+scheduled `new_opportunity`, `missing_document` (`daysBefore`: the month's checklist still has gaps that many days or
+fewer before the next deadline) and `rule_changed` (a rule of the rule book got a new version in force this month), evaluated
+by `evaluate_scheduled_events`.
 
 Called from the route that produced the event, but writes as the service role (there is no insert policy on `alert_events`:
 a person never writes a notice). Idempotent per alert and occurrence (`event_key`): the unique index makes a repeated hook or
@@ -20,10 +21,11 @@ from app.db.client import UserDb
 from app.documents.expected import checklist
 from app.engine.real_engine import RealEngine
 from app.engine.result import Ok
+from app.engine.rulebook import RuleBook
 from app.tasks.alert_jobs import _company
 from app.tasks.system import service_client
 
-SCHEDULED = ("new_opportunity", "missing_document")
+SCHEDULED = ("new_opportunity", "missing_document", "rule_changed")
 
 
 def _matches(rule: dict[str, Any], event: str, doc_type: str | None) -> bool:
@@ -64,8 +66,26 @@ async def notify_event(
         log.warning("event_alert_failed", extra={"event": event}, exc_info=True)
 
 
+def rule_change_notices(book: RuleBook, period: str) -> list[tuple[str, str]]:
+    """(event_key, text) for each rule whose newer version starts in `period` (YYYY-MM). First versions are not changes.
+
+    Example: a rule with versions from 2025-01 and 2026-03 gives one notice when `period` is "2026-03", none in other months.
+    """
+    entries = book.changelog()
+    oldest: dict[str, str] = {}
+    for e in entries:
+        oldest[e.id] = min(e.valid_from, oldest.get(e.id, e.valid_from))
+    out: list[tuple[str, str]] = []
+    for e in entries:
+        if e.valid_from == period and e.valid_from != oldest[e.id]:
+            out.append(
+                (f"rule:{e.id}:{e.valid_from}", f"A regra {e.name} mudou: nova versão em vigor desde {period[5:]}/{period[:4]}.")
+            )
+    return out
+
+
 async def evaluate_scheduled_events(admin: UserDb, settings: Settings, today: date | None = None) -> dict[str, int]:
-    """New opportunities and missing documents: one notice per alert and per opportunity / (month, document) pair."""
+    """New opportunities, missing documents and rule changes: one notice per alert and per occurrence."""
     day = today or datetime.now(UTC).date()
     period = day.strftime("%Y-%m")
     rows = await admin.select("alerts", select="id,rule,workspace_id,workspaces(id,name,kind,profile)", active="eq.true")
@@ -76,10 +96,14 @@ async def evaluate_scheduled_events(admin: UserDb, settings: Settings, today: da
         if rule.get("event") not in SCHEDULED:
             continue
         company = _company(alert["workspaces"], settings)
-        if company is None:
+        if company is None and rule["event"] != "rule_changed":
             continue
         notices: list[tuple[str, str]] = []  # (event_key, text)
-        if rule["event"] == "new_opportunity":
+        if rule["event"] == "rule_changed":
+            notices = rule_change_notices(engine.book, period)  # needs no company profile
+        elif company is None:
+            continue
+        elif rule["event"] == "new_opportunity":
             found = engine.opportunities(company)
             if isinstance(found, Ok):
                 notices = [(f"opportunity:{o.id}", f"Nova oportunidade: {o.title}") for o in found.value.items]

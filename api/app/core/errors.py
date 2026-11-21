@@ -35,6 +35,10 @@ class AccountSuspendedError(Exception):
     """The caller's account was suspended by a platform admin (#201): every authenticated route answers 403."""
 
 
+class AccountStatusUnavailableError(Exception):
+    """The suspension lookup failed (#393): answering would mean guessing, so the request is refused with 503 (fail closed)."""
+
+
 class ErrorBody(BaseModel):
     code: str
     message: str
@@ -92,6 +96,12 @@ def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(AccountSuspendedError)
     async def _suspended(_: Request, __: AccountSuspendedError) -> JSONResponse:
         return error_response(403, "account_suspended", "Conta suspensa. Fale com o suporte.")
+
+    @app.exception_handler(AccountStatusUnavailableError)
+    async def _status_unavailable(_: Request, __: AccountStatusUnavailableError) -> JSONResponse:
+        return error_response(
+            503, "account_status_unavailable", "Não consegui confirmar o estado da sua conta agora. Tente de novo."
+        )
 
     @app.exception_handler(DbError)
     async def _db(_: Request, exc: DbError) -> JSONResponse:

@@ -5,7 +5,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, Query
 
 from app.core.auth import Principal, current_user
-from app.core.br_ids import cnpj_valid
+from app.core.br_ids import cnpj_valid, normalize_cnpj
 from app.core.errors import error_response
 from app.core.rate_limit import rate_limited
 from app.integrations.cnpj import Lookup, fetch_company
@@ -19,7 +19,7 @@ async def lookup(
     _principal: Principal = Depends(current_user),
     _rate: None = Depends(rate_limited("documents")),
 ) -> Lookup | Any:
-    digits = "".join(c for c in cnpj if c.isdigit())
-    if len(digits) != 14 or not cnpj_valid(digits):
+    digits = normalize_cnpj(cnpj)  # keeps letters: alphanumeric CNPJ (#328)
+    if not cnpj_valid(digits):
         return error_response(400, "invalid_cnpj", "Esse CNPJ não é válido. Confira os números.")
     return await fetch_company(digits)
