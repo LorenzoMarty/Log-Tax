@@ -266,3 +266,16 @@ def test_a_storage_failure_keeps_the_records_so_nothing_is_orphaned(
     assert r.status_code == 500 and r.json()["error"]["code"] == "delete_failed" and len(db.tables["documents"]) == 1
     empty = FakeDb(USER)
     assert empty.tables == {}
+
+
+@pytest.mark.parametrize(
+    "scope",
+    [
+        {"kinds": ["documents"], "dashboardIds": ["44444444-4444-4444-8444-444444444444"]},  # no 'dashboard' to cut
+        {"kinds": ["dashboard"], "dashboardIds": []},  # would hide every page; null means all
+    ],
+)
+def test_dashboard_ids_need_the_dashboard_kind_and_at_least_one_page(signed_in: TestClient, db: FakeDb, scope: dict) -> None:
+    ws = workspace(db)
+    r = signed_in.post(f"/v1/workspaces/{ws}/invites", json={"email": "h@example.com", "role": "reader", "scope": scope})
+    assert r.status_code == 422

@@ -46,7 +46,13 @@ class ScopeIn(_In):
     kinds: Annotated[list[Literal["dashboard", "documents", "report"]], Field(min_length=1, max_length=3)]
     document_ids: list[uuid.UUID] | None = Field(default=None, max_length=200)
     # null = every dashboard page (when 'dashboard' is allowed); otherwise only these pages.
-    dashboard_ids: list[uuid.UUID] | None = Field(default=None, max_length=200)
+    dashboard_ids: list[uuid.UUID] | None = Field(default=None, min_length=1, max_length=200)
+
+    @model_validator(mode="after")
+    def _page_cut_needs_the_dashboard_kind(self) -> "ScopeIn":
+        if self.dashboard_ids is not None and "dashboard" not in self.kinds:
+            raise ValueError("dashboardIds só vale quando kinds inclui dashboard")
+        return self
 
 
 class InviteIn(_In):
