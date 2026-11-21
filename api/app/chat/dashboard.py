@@ -5,9 +5,10 @@ as is; widgets are validated against `WIDGET` before they reach the reducer.
 """
 
 from dataclasses import dataclass, field
+from decimal import Decimal
 from typing import Annotated, Any, Literal, cast
 
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, TypeAdapter, model_validator
 
 Dashboard = dict[str, Any]
 Action = dict[str, Any]
@@ -102,8 +103,67 @@ class Text(_Widget):
     body: str
 
 
+# Money in the new blocks is an exact decimal string ("1234.56", never a float); sizes are capped so a block stays readable.
+Money = Annotated[str, StringConstraints(pattern=r"^-?\d{1,12}(\.\d{1,2})?$")]
+_Label = Annotated[str, StringConstraints(min_length=1, max_length=60)]
+_Note = Annotated[str, StringConstraints(max_length=300)]
+_Cell = Annotated[str, StringConstraints(max_length=80)]
+
+
+class ProjectionPoint(_Strict):
+    label: _Label
+    value: Money
+    projected: bool
+
+
+class Projection(_Widget):
+    kind: Literal["projection"]
+    points: Annotated[list[ProjectionPoint], Field(min_length=1, max_length=36)]
+    basis: _Note  # what the projected months assume
+
+
+class PayrollItem(_Strict):
+    label: _Label
+    amount: Money
+
+
+class Payroll(_Widget):
+    kind: Literal["payroll"]
+    month: Annotated[str, StringConstraints(pattern=r"^\d{4}-(0[1-9]|1[0-2])$")]
+    items: Annotated[list[PayrollItem], Field(min_length=1, max_length=12)]
+    total: Money
+    notes: Annotated[list[_Note], Field(max_length=8)] = []
+
+
+class Table(_Widget):
+    kind: Literal["table"]
+    columns: Annotated[list[_Label], Field(min_length=1, max_length=6)]
+    rows: Annotated[list[Annotated[list[_Cell], Field(max_length=6)]], Field(max_length=30)]
+
+    @model_validator(mode="after")
+    def _rectangular(self) -> "Table":
+        if any(len(r) != len(self.columns) for r in self.rows):
+            raise ValueError("every row needs one cell per column")
+        return self
+
+
+class Goal(_Widget):
+    kind: Literal["goal"]
+    current: Money
+    target: Money
+    unit: Annotated[str, StringConstraints(max_length=20)] = "R$"
+    deadline: Annotated[str, StringConstraints(pattern=r"^\d{4}-\d{2}-\d{2}$")] | None = None
+
+    @model_validator(mode="after")
+    def _positive_target(self) -> "Goal":
+        if Decimal(self.target) <= 0:
+            raise ValueError("target must be positive")
+        return self
+
+
 Widget = Annotated[
-    Kpi | Bar | Line | Breakdown | Opportunities | Deadlines | Compare | Checklist | Text, Field(discriminator="kind")
+    Kpi | Bar | Line | Breakdown | Opportunities | Deadlines | Compare | Checklist | Text | Projection | Payroll | Table | Goal,
+    Field(discriminator="kind"),
 ]
 WIDGET: TypeAdapter[Any] = TypeAdapter(cast(Any, Widget))
 

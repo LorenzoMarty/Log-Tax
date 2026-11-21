@@ -24,6 +24,7 @@ from pydantic_core import to_jsonable_python
 
 from app.chat.agent_templates import AGENT_TEMPLATES
 from app.chat.agent_templates import BY_ID as TEMPLATE_BY_ID
+from app.chat.blocks import payroll_widget, projection_widget
 from app.chat.dashboard import Widget, validate_widget
 from app.chat.store import Kind, Scope, ToolContext
 from app.chat.types import ToolOutcome, ToolSpec
@@ -230,6 +231,10 @@ class CashArgs(_Args):
     monthly_tax: float = Field(ge=0)
     receive_days: int = Field(ge=0, le=365)
     tax_due_days: int = Field(ge=0, le=365)
+
+
+class ProjectionArgs(_Args):
+    months_ahead: int = Field(ge=1, le=12)
 
 
 class RememberArgs(_Args):
@@ -535,6 +540,33 @@ async def _add_cash_impact_block(ctx: ToolContext, a: CashArgs) -> Any:
     await ctx.store.dispatch({"type": "remove", "id": widget["id"]})
     await ctx.store.dispatch({"type": "add", "widget": widget})
     return _env(r)
+
+
+async def _add_engine_block(ctx: ToolContext, result: EngineResult[dict[str, Any]]) -> Any:
+    if not isinstance(result, Ok):
+        return _env(result)
+    widget = validate_widget(result.value)
+    await ctx.store.dispatch({"type": "remove", "id": widget["id"]})
+    await ctx.store.dispatch({"type": "add", "widget": widget})
+    return {"status": "ok", "value": {"id": widget["id"]}}
+
+
+@_tool(
+    "add_payroll_block",
+    "Cria no painel o bloco de encargos da folha (INSS patronal, RAT, terceiros, FGTS) do mês, calculado pelo motor a partir da folha gravada. Sem folha gravada responde o que falta.",
+    NoArgs, kinds=("empresa",), engine=True,
+)  # fmt: skip
+async def _add_payroll_block(ctx: ToolContext, a: NoArgs) -> Any:
+    return await _add_engine_block(ctx, payroll_widget(ctx.engine, await ctx.store.get_company()))
+
+
+@_tool(
+    "add_projection_block",
+    "Cria no painel a projeção do imposto: meses gravados como foram e os próximos meses mantendo o imposto mensal de hoje (premissa declarada no bloco). Não prevê mudança de faturamento.",
+    ProjectionArgs, kinds=("empresa",), engine=True,
+)  # fmt: skip
+async def _add_projection_block(ctx: ToolContext, a: ProjectionArgs) -> Any:
+    return await _add_engine_block(ctx, projection_widget(ctx.engine, await ctx.store.get_company(), a.months_ahead))
 
 
 @_tool(
@@ -976,7 +1008,7 @@ async def _find_widget(ctx: ToolContext, widget_id: str) -> dict[str, Any]:
 
 @_tool(
     "dashboard_add_widget",
-    "Adiciona um bloco ao painel. Tipos: kpi, bar, line, breakdown, opportunities, deadlines, compare, checklist, text.",
+    'Adiciona um bloco ao painel. Tipos: kpi, bar, line, breakdown, opportunities, deadlines, compare, checklist, text, projection, payroll, table, goal. Valores em reais nos 4 últimos são strings decimais ("1234.56"). Para folha e projeção prefira add_payroll_block e add_projection_block, que usam o motor.',
     AddWidgetArgs,
 )
 async def _dashboard_add_widget(ctx: ToolContext, a: AddWidgetArgs) -> Any:
