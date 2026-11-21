@@ -50,3 +50,24 @@ async def test_every_template_creates_an_agent_with_its_scope_and_only_real_tool
 async def test_an_agent_cannot_create_a_template_with_tools_it_lacks() -> None:
     reg, _ = make(Scope(WS, kind="empresa", agent_id="a1", allowed_tools=("create_agent_from_template", "get_deadlines")))
     assert (await call(reg, "create_agent_from_template", {"templateId": "tributaria"}))["status"] == "refused"
+
+
+@pytest.mark.parametrize(
+    ("template_id", "name", "must_have", "forbidden"),
+    [
+        ("patrimonial", "IA Patrimonial", {"add_asset", "simulate_asset_sale", "build_patrimony_panel"}, "get_inventory"),
+        ("inventario", "IA do Inventário", {"set_estate", "add_heir", "get_inventory", "simulate_partilha"}, "add_asset"),
+    ],
+)
+async def test_patrimonial_and_inventory_templates_gate_their_tools(
+    template_id: str, name: str, must_have: set[str], forbidden: str
+) -> None:
+    reg, store = make(Scope(WS, kind="pessoal"))
+    out = await call(reg, "create_agent_from_template", {"templateId": template_id})
+    assert out["status"] == "ok", out
+    agent = store.agents[-1]
+    assert agent["name"] == name and must_have <= set(agent["tools"]) and forbidden not in agent["tools"]
+    scoped, _ = make(Scope(WS, kind="pessoal", agent_id="a1", allowed_tools=tuple(agent["tools"])))
+    offered = {s.name for s in scoped.specs()}
+    assert must_have <= offered and forbidden not in offered
+    assert (await call(scoped, forbidden, {}))["status"] == "refused"
