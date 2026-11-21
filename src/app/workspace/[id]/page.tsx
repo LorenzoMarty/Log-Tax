@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AssetsPanel, type AssetRow } from "@/assets/assets-panel";
+import { NoticesBar, type NoticeRow } from "@/alerts/notices-bar";
 import { AlertBar } from "@/alerts/alert-bar";
 import { alertStatuses } from "@/alerts/evaluate";
 import { ChatPanel } from "@/chat/chat-panel";
@@ -55,10 +56,13 @@ export default async function WorkspaceChatPage({
       : { data: null };
   const { data: comments } = await supabase
     .from("comments")
-    .select("id, author_id, author_email, widget_id, body, created_at")
+    .select("id, author_id, author_email, widget_id, body, created_at, parent_id, resolved_at")
     .eq("workspace_id", id)
     .order("created_at", { ascending: false })
     .limit(50);
+  const { data: notices } = isOwner
+    ? await supabase.from("alert_events").select("id, text, current_text").eq("workspace_id", id).is("read_at", null).order("created_at", { ascending: false }).limit(20)
+    : { data: [] };
   const [{ data: members }, { data: invites }, { data: activity }] = isOwner
     ? await Promise.all([
         supabase.from("workspace_members").select("user_id, email, role").eq("workspace_id", id).order("role", { ascending: false }),
@@ -106,6 +110,7 @@ export default async function WorkspaceChatPage({
 
       {isOwner ? (
         <>
+          <NoticesBar workspaceId={id} notices={(notices ?? []) as NoticeRow[]} />
           <ChatPanel
             key={ia ?? "geral"}
             workspaceId={id}

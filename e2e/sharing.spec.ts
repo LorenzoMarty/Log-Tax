@@ -117,3 +117,40 @@ test("a reader only reads: no comment form, no chat API; a pending invite can be
   await owner.ctx.close();
   await ctx.close();
 });
+
+test("a comment notifies the owner, who replies and resolves the thread", async ({ browser }) => {
+  const owner = await ownerWithDashboard(browser);
+  const guestEmail = `revisora-${Date.now()}@example.com`;
+  await inviteToWorkspace(owner.page, guestEmail, "Comentário");
+
+  const guestCtx = await browser.newContext();
+  const guest = await guestCtx.newPage();
+  await login(guest, "x", guestEmail);
+  await guest.getByRole("button", { name: "Aceitar" }).click();
+  await expect(guest).toHaveURL(owner.url);
+  await guest.waitForLoadState("networkidle");
+  await guest.getByLabel("Comentário", { exact: true }).fill("Revisar o Simples deste mês");
+  await guest.getByRole("button", { name: "Comentar" }).click();
+  await expect(guest.getByTestId("comment")).toContainText("Revisar o Simples deste mês");
+
+  // the owner is told, answers in the thread, and resolves it
+  await owner.page.reload();
+  await expect(owner.page.getByTestId("notice")).toContainText(`Novo comentário de ${guestEmail}`);
+  await owner.page.getByText("Responder", { exact: true }).click();
+  await owner.page.getByLabel("Sua resposta no comentário").fill("Feito, conferi.");
+  await owner.page.getByRole("button", { name: "Enviar resposta" }).click();
+  await expect(owner.page.getByTestId("comment")).toHaveCount(2);
+  await owner.page.getByRole("button", { name: "Resolver" }).click();
+  await expect(owner.page.getByTestId("resolved-thread")).toContainText("Resolvido");
+  await owner.page.getByRole("button", { name: "Marcar avisos como lidos" }).click();
+  await expect(owner.page.getByTestId("notice")).toHaveCount(0);
+
+  // the commenter sees it resolved and can reopen it
+  await guest.reload();
+  await expect(guest.getByTestId("resolved-thread")).toBeVisible();
+  await guest.getByText(/Resolvido ·/).click();
+  await guest.getByRole("button", { name: "Reabrir" }).click();
+  await expect(guest.getByTestId("thread")).toContainText("Feito, conferi.");
+  await owner.ctx.close();
+  await guestCtx.close();
+});
