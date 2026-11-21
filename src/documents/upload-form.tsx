@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { uploadFiles } from "./upload-files";
 
 export const CONSENT_TEXT = "Autorizo o Log Tax a armazenar este documento e a ler o seu conteúdo para organizar e analisar meus impostos. Posso apagá-lo a qualquer momento (LGPD).";
 
@@ -19,33 +20,8 @@ export function UploadForm({ workspaceId }: { workspaceId: string }) {
     fixed.delete("file");
     setBusy(true);
     setStatus(null);
-    const failures: string[] = [];
-    let sent = 0;
-    // sequential on purpose: one failure (duplicate, quota, bad type) never aborts the rest of the batch
-    for (const [i, file] of files.entries()) {
-      setProgress(`Enviando ${i + 1} de ${files.length}: ${file.name}`);
-      const body = new FormData();
-      for (const [k, v] of fixed.entries()) body.append(k, v);
-      body.append("file", file);
-      try {
-        let res = await fetch("/api/documents", { method: "POST", body });
-        // the upload budget is per minute: a big batch waits for it instead of failing the rest
-        for (let tries = 0; res.status === 429 && tries < 3; tries++) {
-          const wait = Number(res.headers.get("Retry-After")) || 30;
-          setProgress(`Muitos envios seguidos: retomando em ${wait} s (${i + 1} de ${files.length})`);
-          await new Promise((r) => setTimeout(r, wait * 1000));
-          setProgress(`Enviando ${i + 1} de ${files.length}: ${file.name}`);
-          res = await fetch("/api/documents", { method: "POST", body });
-        }
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Não foi possível enviar.");
-        sent++;
-      } catch (err) {
-        failures.push(
-          files.length > 1 ? `${file.name}: ${err instanceof Error ? err.message : "Não foi possível enviar."}` : err instanceof Error ? err.message : "Não foi possível enviar.",
-        );
-      }
-    }
+    const { sent: done, failures } = await uploadFiles(files, fixed, setProgress);
+    const sent = done.length;
     setProgress(null);
     setBusy(false);
     if (sent > 0) {

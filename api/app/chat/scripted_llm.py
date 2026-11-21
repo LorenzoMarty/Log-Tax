@@ -615,7 +615,34 @@ def _seed_steps() -> list[Step]:
     ]
 
 
+_ATTACH_ID = re.compile(r"\(id: ([0-9a-f-]{36})\)")
+_ASK_DOC = re.compile(r"(o que|que) (tem|h[áa]|diz).*(documento|anexo|nota)", _I)
+
+
+def _document_step(_p: list[ToolOutcome], text: str, _s: str) -> dict[str, Any] | None:
+    m = _ATTACH_ID.search(text)
+    return _call("get_document", id=m.group(1)) if m else None
+
+
+def _document_reply(p: list[ToolOutcome], _t: str) -> str:
+    d = _first(p)["data"] if _ok(_first(p)) else None  # type: ignore[index]
+    if not isinstance(d, dict) or "documentId" not in d:
+        return "Não consegui ler esse documento agora."
+    f = d["fields"]
+    parts = [f'Reconheci "{d["name"]}" como {d["type"]}.']
+    if "numero" in f:
+        parts.append(f"Número {f['numero']}.")
+    if "valor_total" in f:
+        parts.append(f"Valor total {money(f['valor_total'])}.")
+    if "emissao" in f:
+        parts.append(f"Emissão {f['emissao']}.")
+    if d["needsConfirmation"]:
+        parts.append("A leitura teve confiança baixa: confira os valores antes de usar.")
+    return " ".join(parts)
+
+
 PLANS: list[Plan] = [
+    _plan(r"^\[anexo\]|" + _ASK_DOC.pattern, [_document_step], _document_reply),
     _plan(r"prestador", [_prestador_step], _prestador_reply),
     _plan(
         r"^(crie|criar|nova) uma p[áa]gina",
@@ -777,6 +804,8 @@ class ScriptedLlm:
         earlier = [str(cast(dict[str, Any], m)["content"]) for m in history[:last_user] if m["role"] == "user"]
         if re.match(r"sim\b", user_text.strip(), _I) and earlier and re.search(_PAGE_DELETE, earlier[-1].strip(), _I):
             user_text = earlier[-1]  # the user's "Confirmar" click answers the page removal just asked about
+        if _ASK_DOC.search(user_text) and (att := [e for e in earlier if e.startswith("[Anexo]")]):
+            user_text = f"{user_text} {att[-1]}"  # the question is about the last attachment of this conversation
         plan = next((p for p in PLANS if p.match.search(user_text.strip())), FALLBACK)
         if DELETE_ALERT.match.search(user_text.strip()) and (
             not user_text.strip().lower().startswith("sim") or _last_call(history) in ("delete_alert", "list_alerts")
