@@ -1058,6 +1058,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/workspaces/{workspace_id}/dashboard/layout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change Layout
+         * @description Moves/resizes a block as a new dashboard version, so the manual edit can be undone like a chat one.
+         */
+        post: operations["change_layout_v1_workspaces__workspace_id__dashboard_layout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/workspaces/{workspace_id}/dashboard/versions": {
         parameters: {
             query?: never;
@@ -2047,6 +2067,18 @@ export interface components {
         };
         /** @enum {string} */
         Kind: "heranca" | "doacao";
+        /**
+         * LayoutChange
+         * @description A manual move and/or resize of one block (#129).
+         */
+        LayoutChange: {
+            /** Id */
+            id: string;
+            /** Size */
+            size?: ("sm" | "md" | "lg") | null;
+            /** To Index */
+            to_index?: number | null;
+        };
         /** LinkIn */
         LinkIn: {
             /**
@@ -4565,6 +4597,43 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_layout_v1_workspaces__workspace_id__dashboard_layout_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LayoutChange"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

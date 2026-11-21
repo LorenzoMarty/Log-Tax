@@ -1,4 +1,7 @@
+"use client";
+
 import { ESTIMATE_KINDS, type Dashboard, type Widget, type WidgetSize } from "./types";
+import { SIZE_LABEL, moveTarget, type LayoutChange } from "./layout";
 import { widgetTransitionName } from "./motion";
 import { WidgetView } from "./widgets";
 
@@ -20,7 +23,7 @@ function WidgetSkeleton() {
 }
 
 /** `onAsk` adds a "Perguntar sobre isto" button to every block: the chat uses the chosen block as context. */
-export function DashboardView({ dashboard, loading = false, onAsk }: { dashboard: Dashboard; loading?: boolean; onAsk?: (widget: Widget) => void }) {
+export function DashboardView({ dashboard, loading = false, onAsk, onLayout }: { dashboard: Dashboard; loading?: boolean; onAsk?: (widget: Widget) => void; onLayout?: (change: LayoutChange) => void }) {
   const compact = dashboard.density === "compact";
   const gap = compact ? "var(--space-2)" : "var(--space-4)";
   return (
@@ -35,13 +38,50 @@ export function DashboardView({ dashboard, loading = false, onAsk }: { dashboard
         <p className="text-sm text-ink-muted">Nenhum bloco ainda. Peça à IA para adicionar algo.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4" style={{ gap }}>
-          {dashboard.widgets.map((w) => (
-            <div key={w.id} className={`lg-widget-enter ${SPAN[w.size]}`} style={{ viewTransitionName: widgetTransitionName(w.id) }}>
+          {dashboard.widgets.map((w, index) => (
+            <div
+              key={w.id}
+              className={`lg-widget-enter ${SPAN[w.size]}`}
+              style={{ viewTransitionName: widgetTransitionName(w.id) }}
+              // native HTML5 drag and drop (#129); the buttons below are the keyboard alternative
+              draggable={onLayout ? true : undefined}
+              onDragStart={onLayout && ((e) => e.dataTransfer.setData("text/plain", w.id))}
+              onDragOver={onLayout && ((e) => e.preventDefault())}
+              onDrop={
+                onLayout &&
+                ((e) => {
+                  e.preventDefault();
+                  const id = e.dataTransfer.getData("text/plain");
+                  if (id && id !== w.id) onLayout({ id, toIndex: index });
+                })
+              }
+            >
               <WidgetView widget={w} compact={compact} showDisclaimer={ESTIMATE_KINDS.includes(w.kind)} />
               {onAsk && (
                 <button type="button" aria-label={`Perguntar sobre isto: ${w.title}`} onClick={() => onAsk(w)} className="mt-1 text-sm font-medium text-ink underline underline-offset-2">
                   Perguntar sobre isto
                 </button>
+              )}
+              {onLayout && (
+                <div role="group" aria-label={`Organizar bloco: ${w.title}`} className="mt-1 flex flex-wrap items-center gap-2 text-sm">
+                  {([-1, 1] as const).map((delta) => {
+                    const to = moveTarget(dashboard.widgets, w.id, delta);
+                    const text = delta < 0 ? "Mover para cima" : "Mover para baixo";
+                    return (
+                      <button key={delta} type="button" aria-label={`${text}: ${w.title}`} disabled={to === undefined} onClick={() => to !== undefined && onLayout({ id: w.id, toIndex: to })} className="lg-btn lg-btn-soft lg-btn-sm">
+                        {text}
+                      </button>
+                    );
+                  })}
+                  <label className="flex items-center gap-1">
+                    Tamanho
+                    <select value={w.size} onChange={(e) => onLayout({ id: w.id, size: e.target.value as WidgetSize })} aria-label={`Tamanho: ${w.title}`}>
+                      {(Object.keys(SIZE_LABEL) as WidgetSize[]).map((size) => (
+                        <option key={size} value={size}>{SIZE_LABEL[size]}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
               )}
             </div>
           ))}

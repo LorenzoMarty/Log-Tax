@@ -139,3 +139,23 @@ def test_unknown_workspace_and_missing_dashboard_are_404(api: tuple[TestClient, 
     client, _ = api
     assert client.get("/v1/workspaces/00000000-0000-4000-8000-000000000000/dashboard/versions").status_code == 404
     assert client.post(f"{URL}/1/restore").status_code == 404  # no dashboard saved yet
+
+
+async def test_layout_change_is_a_new_version_for_owner_and_editor_only(api: tuple[TestClient, FakeDb]) -> None:
+    client, db = api
+    await turn(db, {"type": "add", "widget": KPI}, {"type": "add", "widget": TXT})
+    url = f"/v1/workspaces/{WS}/dashboard/layout"
+
+    r = client.post(url, json={"id": "txt", "to_index": 0, "size": "lg"})
+    assert r.status_code == 200
+    d = r.json()["dashboard"]
+    assert [w["id"] for w in d["widgets"]] == ["txt", "kpi"] and d["widgets"][0]["size"] == "lg"
+    assert db.tables["dashboards"][0]["version"] == d["version"]
+    assert client.post(f"{URL}/3/restore").json()["dashboard"]["widgets"][0]["id"] == "kpi"  # undo works
+
+    assert client.post(url, json={"id": "nope", "size": "sm"}).status_code == 404
+    assert client.post(url, json={"id": "kpi", "size": "xl"}).status_code == 422
+    db.rpcs["my_role"] = lambda a: "editor"
+    assert client.post(url, json={"id": "kpi", "size": "sm"}).status_code == 200
+    db.rpcs["my_role"] = lambda a: "reader"
+    assert client.post(url, json={"id": "kpi", "size": "md"}).status_code == 403
