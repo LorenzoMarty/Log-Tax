@@ -43,7 +43,13 @@ export async function inviteToWorkspace(page: Page, email: string, role: ShareRo
   await page.getByLabel(/Email de quem vai receber/).fill(email);
   await page.getByLabel("Papel").selectOption({ label: role });
   await page.getByRole("button", { name: "Convidar" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Convite criado" })).toBeVisible();
+  // After the redirect the dev server can render a blank page (the "clientReferenceManifest" glitch, runs 44897885342 and
+  // 44899350471: no notice for 15s and 60s); the notice comes from the URL, so a reload shows it.
+  const notice = page.getByRole("status").filter({ hasText: "Convite criado" });
+  await expect(async () => {
+    if (page.url().includes("msg=convite-enviado") && !(await notice.isVisible())) await gotoSettled(page, page.url());
+    await expect(notice).toBeVisible({ timeout: 5_000 });
+  }).toPass({ timeout: 60_000 });
 }
 
 /**
