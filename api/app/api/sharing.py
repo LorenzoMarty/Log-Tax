@@ -40,7 +40,7 @@ class _In(BaseModel):
 
 class InviteIn(_In):
     email: Annotated[str, StringConstraints(strip_whitespace=True, to_lower=True, max_length=254), AfterValidator(_email)]
-    role: Literal["commenter", "reader"]
+    role: Literal["editor", "commenter", "reader"]
 
 
 class CommentIn(_In):

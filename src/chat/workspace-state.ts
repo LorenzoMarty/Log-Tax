@@ -15,7 +15,7 @@ export interface WorkspaceState extends StoreState {
   workspaceName: string;
   kind: "empresa" | "pessoal";
   /** The caller's role here: only the owner may drive the chat. */
-  role: "owner" | "commenter" | "reader";
+  role: "owner" | "editor" | "commenter" | "reader";
   dashboardRowId?: string;
   /** Set when the state was loaded for a conversation with one specialised agent. */
   agent?: Agent;

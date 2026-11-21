@@ -29,6 +29,7 @@ export function SharePanel({ workspaceId, members, invites, defaultOpen = false 
           <select name="role" defaultValue="reader" className="rounded-xl border border-line px-3 py-2">
             <option value="reader">Leitura</option>
             <option value="commenter">Comentário</option>
+            <option value="editor">Edição</option>
           </select>
         </label>
         <button type="submit" className="rounded-xl bg-inverse px-4 py-2 text-on-inverse">
