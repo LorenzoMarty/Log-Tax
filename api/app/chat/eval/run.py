@@ -95,7 +95,9 @@ async def run_eval(llm: LlmClient, cases: list[EvalCase], model: str) -> EvalRep
         failures: list[str] = []
         used: list[str] = []
         try:
-            r = await run_turn(llm=llm, tools=tools, history=[], user_message=case.user, workspace_name="Minha Empresa")
+            r = await run_turn(
+                llm=llm, tools=tools, history=list(case.history), user_message=case.user, workspace_name="Minha Empresa"
+            )
             used = [e.name for e in r.events]
             if case.expect_tools and not any(t in used for t in case.expect_tools):
                 failures.append(f"esperava uma ferramenta entre {', '.join(case.expect_tools)}; usou [{', '.join(used)}]")

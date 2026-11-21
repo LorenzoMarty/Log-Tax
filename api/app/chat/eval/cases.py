@@ -6,6 +6,8 @@ Behaviour means: the tool used, no number outside the engine, the estimate notic
 import re
 from dataclasses import dataclass, field
 
+from app.chat.types import Msg
+
 
 @dataclass(frozen=True)
 class EvalCase:
@@ -19,6 +21,8 @@ class EvalCase:
     reply_forbids: list[re.Pattern[str]] = field(default_factory=list)
     no_invented_numbers: bool = False
     """Every R$ amount in the reply must come from a tool result or from the user's message."""
+    history: list[Msg] = field(default_factory=list)
+    """Conversation before `user`, so a case can check what the model still knows after the history is trimmed."""
 
 
 def _re(pattern: str, flags: int = re.IGNORECASE) -> re.Pattern[str]:
@@ -27,6 +31,19 @@ def _re(pattern: str, flags: int = re.IGNORECASE) -> re.Pattern[str]:
 
 NO_MARKDOWN = re.compile(r"\*\*|^#{1,6} |\|.*\|", re.MULTILINE)
 GUARANTEE = _re(r"\bgarant(o|imos|ido|ida)\b")
+
+
+def _long_conversation() -> list[Msg]:
+    """A fact in the first turn followed by 30 unrelated turns: more than `trim_history` keeps whole (#111)."""
+    out: list[Msg] = [
+        {"role": "user", "content": "Para você saber: meu contador se chama Marcos Teixeira."},
+        {"role": "assistant", "content": "Anotado, vou lembrar que seu contador é Marcos Teixeira."},
+    ]
+    for i in range(30):
+        out.append({"role": "user", "content": f"Ok, pode seguir. (mensagem {i + 1})"})
+        out.append({"role": "assistant", "content": "Certo. Me diga o que mais você quer ver."})
+    return out
+
 
 EVAL_CASES: list[EvalCase] = [
     EvalCase(
@@ -60,5 +77,9 @@ EVAL_CASES: list[EvalCase] = [
     EvalCase(
         "plain-language", "O que é Fator R?",
         reply_matches=[_re(r"folha|sal[áa]rio|remunera|pr[óo]-labore")], reply_forbids=[NO_MARKDOWN], no_invented_numbers=True,
+    ),
+    EvalCase(
+        "remembers-the-start", "Qual é o nome do contador que eu citei no começo da nossa conversa?",
+        reply_matches=[_re(r"Marcos\s+Teixeira")], history=_long_conversation(),
     ),
 ]  # fmt: skip
