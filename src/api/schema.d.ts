@@ -2841,6 +2841,8 @@ export interface components {
          * @description The parts of the space the invitee may see; no scope means the whole space.
          */
         ScopeIn: {
+            /** Dashboardids */
+            dashboardIds?: string[] | null;
             /** Documentids */
             documentIds?: string[] | null;
             /** Kinds */

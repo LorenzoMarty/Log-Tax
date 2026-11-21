@@ -4333,6 +4333,22 @@
         "additionalProperties": false,
         "description": "The parts of the space the invitee may see; no scope means the whole space.",
         "properties": {
+          "dashboardIds": {
+            "anyOf": [
+              {
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "maxItems": 200,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dashboardids"
+          },
           "documentIds": {
             "anyOf": [
               {

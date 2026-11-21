@@ -6,9 +6,12 @@ let owner: TestUser;
 let full: TestUser;
 let dashOnly: TestUser;
 let docsSome: TestUser;
+let onePage: TestUser;
 let ws: string;
 let docA: string;
 let docB: string;
+let pageA: string;
+let pageB: string;
 
 const join = async (u: TestUser, scope: unknown) => {
   const inv = await owner.client
@@ -22,15 +25,19 @@ const join = async (u: TestUser, scope: unknown) => {
 const count = async (u: TestUser, table: string) => ((await u.client.from(table).select()).data ?? []).length;
 
 beforeAll(async () => {
-  [owner, full, dashOnly, docsSome] = await Promise.all([
+  [owner, full, dashOnly, docsSome, onePage] = await Promise.all([
     createTestUser("owner"),
     createTestUser("full"),
     createTestUser("dash"),
     createTestUser("docs"),
+    createTestUser("page"),
   ]);
   ws = await createWorkspace(owner, "empresa");
   const consented_at = new Date().toISOString();
-  await owner.client.from("dashboards").insert({ workspace_id: ws, name: "Painel", data: { widgets: [] } });
+  const pa = await owner.client.from("dashboards").insert({ workspace_id: ws, name: "Painel", data: { widgets: [] } }).select().single();
+  const pb = await owner.client.from("dashboards").insert({ workspace_id: ws, name: "Oportunidades", data: { widgets: [] } }).select().single();
+  pageA = pa.data!.id;
+  pageB = pb.data!.id;
   await owner.client.from("alerts").insert({ workspace_id: ws, rule: { metric: "monthlyTotal", operator: "gt", threshold: 1 } });
   await owner.client.from("assets").insert({ workspace_id: ws, kind: "bem", description: "Notebook", value: 1000 });
   await owner.client.from("conversations").upsert({ workspace_id: ws, history: [], messages: [] });
@@ -42,14 +49,15 @@ beforeAll(async () => {
   await join(full, null);
   await join(dashOnly, { kinds: ["dashboard"] });
   await join(docsSome, { kinds: ["documents"], documentIds: [docA] });
+  await join(onePage, { kinds: ["dashboard"], dashboardIds: [pageA] });
 });
 afterAll(async () => {
-  for (const u of [owner, full, dashOnly, docsSome]) await admin.auth.admin.deleteUser(u.id);
+  for (const u of [owner, full, dashOnly, docsSome, onePage]) await admin.auth.admin.deleteUser(u.id);
 });
 
 describe("scoped member", () => {
   it("with only the dashboard sees dashboards and comments, nothing else", async () => {
-    expect(await count(dashOnly, "dashboards")).toBe(1);
+    expect(await count(dashOnly, "dashboards")).toBe(2);
     expect(await count(dashOnly, "comments")).toBe(1);
     for (const t of ["documents", "alerts", "assets", "agents", "estates", "report_history", "conversations", "workspace_memories", "alert_events"]) {
       expect(await count(dashOnly, t), t).toBe(0);
@@ -61,6 +69,13 @@ describe("scoped member", () => {
     expect(docs.map((d) => d.id)).toEqual([docA]);
     expect(docs.map((d) => d.id)).not.toContain(docB);
     for (const t of ["dashboards", "comments", "alerts", "assets", "agents", "conversations"]) expect(await count(docsSome, t), t).toBe(0);
+  });
+
+  it("restricted to one dashboard page does not read a page outside the cut", async () => {
+    const pages = (await onePage.client.from("dashboards").select()).data ?? [];
+    expect(pages.map((p) => p.id)).toEqual([pageA]);
+    expect(pages.map((p) => p.id)).not.toContain(pageB);
+    for (const t of ["dashboard_versions", "comments", "documents", "alerts", "assets", "conversations"]) expect(await count(onePage, t), t).toBe(0);
   });
 
   it("cannot widen its own scope or read other scopes", async () => {
@@ -80,7 +95,7 @@ describe("scoped member", () => {
 
 describe("unchanged", () => {
   it("a full member still sees everything it saw before", async () => {
-    expect(await count(full, "dashboards")).toBe(1);
+    expect(await count(full, "dashboards")).toBe(2);
     expect(await count(full, "documents")).toBe(2);
     expect(await count(full, "alerts")).toBe(1);
     expect(await count(full, "assets")).toBe(1);
@@ -88,12 +103,12 @@ describe("unchanged", () => {
   });
 
   it("the owner sees everything and who is restricted", async () => {
-    expect(await count(owner, "dashboards")).toBe(1);
+    expect(await count(owner, "dashboards")).toBe(2);
     expect(await count(owner, "documents")).toBe(2);
     expect(await count(owner, "alerts")).toBe(1);
     expect(await count(owner, "assets")).toBe(1);
     expect(await count(owner, "conversations")).toBe(1);
-    expect(await count(owner, "member_scopes")).toBe(2);
+    expect(await count(owner, "member_scopes")).toBe(3);
   });
 
   it("re-inviting a scoped member without scope restores full access", async () => {

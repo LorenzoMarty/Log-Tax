@@ -45,6 +45,8 @@ class ScopeIn(_In):
 
     kinds: Annotated[list[Literal["dashboard", "documents", "report"]], Field(min_length=1, max_length=3)]
     document_ids: list[uuid.UUID] | None = Field(default=None, max_length=200)
+    # null = every dashboard page (when 'dashboard' is allowed); otherwise only these pages.
+    dashboard_ids: list[uuid.UUID] | None = Field(default=None, max_length=200)
 
 
 class InviteIn(_In):
