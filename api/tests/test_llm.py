@@ -374,3 +374,21 @@ async def test_scripted_inventory_journey_calls_the_estate_asset_and_heir_tools(
     inv = {"netEstate": "480000.00", "assets": [{}, {}], "heirs": heirs, "pendencias": []}
     text, tools = await turn("Mostrar o resumo do inventário", {"get_inventory": inv})
     assert tools.names == ["get_inventory"] and "R$ 480.000" in text and "Ana 50% (R$ 240.000)" in text
+
+
+async def test_scripted_cancel_alert_lists_then_deletes_the_first_and_confirm_repeats_it() -> None:
+    class Alerts(Canned):
+        async def invoke(self, name: str, args: str, *, untrusted_in_context: bool) -> ToolOutcome:
+            if name == "delete_alert":
+                self.names.append(name)
+                self.args.append(json.loads(args))
+                return {"status": "confirmation_required", "key": "k", "summary": "apagar"}
+            return await super().invoke(name, args, untrusted_in_context=untrusted_in_context)
+
+    tools = Alerts({"list_alerts": [{"id": "a1", "rule": {}, "active": True}]})
+    r = await run_turn(llm=ScriptedLlm(), tools=tools, history=[], user_message="cancela aquele alerta")
+    assert tools.names == ["list_alerts", "delete_alert"] and tools.args[1] == {"id": "a1"}
+    assert "Você confirma" in r.text
+    again = Alerts({"list_alerts": [{"id": "a1", "rule": {}, "active": True}]})
+    await run_turn(llm=ScriptedLlm(), tools=again, history=r.history, user_message="Sim, pode confirmar.")
+    assert again.names == ["list_alerts", "delete_alert"]
