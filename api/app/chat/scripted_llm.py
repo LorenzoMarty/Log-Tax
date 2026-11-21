@@ -471,7 +471,66 @@ DELETE_ALERT = _plan(
     _delete_alert_reply,
 )
 
+_PAGE_DELETE = r"^(remov\w*|apag\w*|exclu\w*) a p[áa]gina"
+
+
+def _page_name(text: str) -> str:
+    m = re.search(r"p[áa]gina (?:chamada |de |s[óo] de |só de )*(.+?)[.!?]*$", text.strip(), _I)
+    name = m.group(1) if m else "Nova página"
+    return name[:1].upper() + name[1:]
+
+
+def _new_page_items(p: list[ToolOutcome], _t: str, _s: str) -> dict[str, Any] | None:
+    o = data_of(p[1]) if len(p) > 1 else None
+    found = [
+        {"title": i["title"], "monthlySavings": i["monthlySavings"]} for i in (o or {}).get("items", []) if i["status"] == "found"
+    ]
+    if not found:
+        return _widget(
+            {
+                "id": "opportunities",
+                "kind": "text",
+                "title": "Oportunidades",
+                "size": "md",
+                "body": "Nenhuma oportunidade de economia encontrada por enquanto.",
+            }
+        )
+    return _widget({"id": "opportunities", "kind": "opportunities", "title": "Oportunidades", "size": "md", "items": found})
+
+
+def _new_page_reply(p: list[ToolOutcome], text: str) -> str:
+    if not _ok(_first(p)):
+        return str(p[0].get("message", "Não consegui criar a página.")) if p else "Não consegui criar a página."
+    return f'Criei a página "{_page_name(text)}" e abri ela para você.'
+
+
+def _delete_page_step(p: list[ToolOutcome], text: str, _s: str) -> dict[str, Any] | None:
+    pages = p[0].get("data") if p and _ok(p[0]) else []
+    wanted = _page_name(text).lower()
+    page = next((x for x in pages or [] if x["name"].lower() == wanted), None)
+    return _call("dashboard_delete_page", id=page["id"]) if page else None
+
+
+def _delete_page_reply(p: list[ToolOutcome], text: str) -> str:
+    r = p[1] if len(p) > 1 else None
+    if r and r["status"] == "confirmation_required":
+        return f'Vou remover a página "{_page_name(text)}" e os blocos dela. Você confirma?'
+    if _ok(r):
+        return "Pronto, removi a página."
+    return str(r.get("message", "Não encontrei essa página.")) if r else "Não encontrei essa página."
+
+
 PLANS: list[Plan] = [
+    _plan(
+        r"^(crie|criar|nova) uma p[áa]gina",
+        [
+            lambda _p, text, _s: _call("dashboard_create_page", name=_page_name(text)),
+            lambda p, text, _s: _call("list_opportunities") if _ok(_first(p)) and "oportunidades" in text.lower() else None,
+            _new_page_items,
+        ],
+        _new_page_reply,
+    ),
+    _plan(_PAGE_DELETE, [lambda _p, _t, _s: _call("dashboard_list_pages"), _delete_page_step], _delete_page_reply),
     _plan(r"acompanhar.*(apartamento|im[óo]vel|casa|carro|ve[íi]culo|moto)", [_track_asset_step], _asset_reply),
     _plan(
         r"^abrir o esp[óo]lio",
@@ -608,6 +667,9 @@ class ScriptedLlm:
         last_user = max(i for i, m in enumerate(history) if m["role"] == "user")
         user_text = str(cast(dict[str, Any], history[last_user])["content"])
         prev: list[ToolOutcome] = [json.loads(m["output"]) for m in history[last_user + 1 :] if m["role"] == "tool_result"]
+        earlier = [str(cast(dict[str, Any], m)["content"]) for m in history[:last_user] if m["role"] == "user"]
+        if re.match(r"sim\b", user_text.strip(), _I) and earlier and re.search(_PAGE_DELETE, earlier[-1].strip(), _I):
+            user_text = earlier[-1]  # the user's "Confirmar" click answers the page removal just asked about
         plan = next((p for p in PLANS if p.match.search(user_text.strip())), FALLBACK)
         if DELETE_ALERT.match.search(user_text.strip()) and (
             not user_text.strip().lower().startswith("sim") or _last_call(history) in ("delete_alert", "list_alerts")

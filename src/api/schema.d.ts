@@ -1650,6 +1650,8 @@ export interface components {
             approve: string[];
             /** Message */
             message: string;
+            /** Pageid */
+            pageId?: string | null;
             /**
              * Workspaceid
              * Format: uuid

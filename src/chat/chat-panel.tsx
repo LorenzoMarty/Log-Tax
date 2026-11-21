@@ -7,6 +7,7 @@ import { AgentList } from "@/agents/agent-list";
 import { AlertBar } from "@/alerts/alert-bar";
 import type { AlertStatus } from "@/alerts/evaluate";
 import { DashboardView } from "@/dashboard/dashboard-view";
+import { PageTabs, type DashboardPage } from "@/dashboard/page-tabs";
 import { VersionHistory } from "@/dashboard/version-history";
 import { applyWithTransition } from "@/dashboard/view-transition";
 import type { Dashboard } from "@/dashboard/types";
@@ -71,10 +72,12 @@ async function readStream(res: Response, onProgress: (text: string) => void) {
   return result as Record<string, never>;
 }
 
-export function ChatPanel(props: { workspaceId: string; initialMessages: DisplayMessage[]; initialDashboard: Dashboard; initialAlerts?: AlertStatus[]; agentId?: string; initialAgents?: Agent[]; workspaceKind?: SpaceProgress["kind"]; initialPrompt?: string }) {
+export function ChatPanel(props: { workspaceId: string; initialMessages: DisplayMessage[]; initialDashboard: Dashboard; initialPages?: DashboardPage[]; initialAlerts?: AlertStatus[]; agentId?: string; initialAgents?: Agent[]; workspaceKind?: SpaceProgress["kind"]; initialPrompt?: string }) {
   const router = useRouter();
   const [messages, setMessages] = useState(props.initialMessages);
   const [dashboard, setDashboard] = useState(props.initialDashboard);
+  const [pages, setPages] = useState(props.initialPages ?? []);
+  const [activeId, setActiveId] = useState<string | undefined>(props.initialPages?.[0]?.id);
   const [alerts, setAlerts] = useState(props.initialAlerts ?? []);
   const [agents, setAgents] = useState(props.initialAgents ?? []);
   const [pending, setPending] = useState<PendingConfirmation[]>([]);
@@ -103,13 +106,19 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
       const res = await fetch(CHAT_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: NDJSON },
-        body: JSON.stringify({ workspaceId: props.workspaceId, agentId: props.agentId, message, approve }),
+        body: JSON.stringify({ workspaceId: props.workspaceId, agentId: props.agentId, pageId: activeId, message, approve }),
         signal: controller.signal,
       });
       const data = res.headers.get("content-type")?.includes(NDJSON) ? await readStream(res, setProgress) : await res.json();
       if (!res.ok) throw new Error(errorText(data.error) ?? "Algo deu errado.");
       setMessages((m) => [...m, { role: "assistant", text: data.text }]);
       applyWithTransition(() => setDashboard(data.dashboard));
+      if (data.pages?.length) {
+        const added = data.pages.length > pages.length;
+        setPages(data.pages);
+        setActiveId(data.activePageId ?? undefined);
+        if (added) router.refresh(); // a page made by the chat: re-read what the server renders around the dashboard
+      }
       setAlerts(data.alerts ?? []);
       setAgents(data.agents ?? agents);
       setPending(data.pendingConfirmations ?? []);
@@ -122,6 +131,14 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
       setProgress("");
       abort.current = null;
     }
+  }
+
+  function openPage(id: string) {
+    const target = pages.find((p) => p.id === id);
+    if (!target) return;
+    setPages((all) => all.map((p) => (p.id === activeId ? { ...p, dashboard } : p))); // keep this page's latest edits (undo/restore)
+    setActiveId(id);
+    applyWithTransition(() => setDashboard(target.dashboard));
   }
 
   async function rate(index: number, rating: 1 | -1, why?: string) {
@@ -185,7 +202,8 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
       <div className="grid items-start gap-6 lg:grid-cols-[1fr_380px]">
         <div className="order-2 flex min-w-0 flex-col gap-2 lg:order-none">
           {/* versions are recorded by the Python chat only (#370); the TS chat is being removed (#314) */}
-          {CHAT_URL === "/api/v1/chat" && !props.agentId && <VersionHistory workspaceId={props.workspaceId} dashboard={dashboard} onRestored={setDashboard} />}
+          {CHAT_URL === "/api/v1/chat" && !props.agentId && (pages.length < 2 || activeId === pages[0]?.id) && <VersionHistory workspaceId={props.workspaceId} dashboard={dashboard} onRestored={setDashboard} />}
+          <PageTabs pages={pages} activeId={activeId} onSelect={openPage} disabled={busy} />
           <DashboardView dashboard={dashboard} loading={busy} onAsk={(w) => { setTopic(w); inputRef.current?.focus(); }} />
         </div>
       <Panel label="Conversa com a IA" className="order-1 min-w-0 lg:order-none lg:sticky lg:top-6">

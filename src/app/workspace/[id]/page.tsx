@@ -8,6 +8,8 @@ import { alertStatuses } from "@/alerts/evaluate";
 import { ChatPanel } from "@/chat/chat-panel";
 import { loadWorkspaceState } from "@/chat/workspace-state";
 import { DashboardView } from "@/dashboard/dashboard-view";
+import type { DashboardPage } from "@/dashboard/page-tabs";
+import type { Dashboard } from "@/dashboard/types";
 import { VersionHistory } from "@/dashboard/version-history";
 import { DocumentsPanel, type DocumentRow } from "@/documents/documents-panel";
 import { openStored } from "@/documents/storage";
@@ -48,6 +50,10 @@ export default async function WorkspaceChatPage({
   if (!state) notFound();
   const isOwner = state.role === "owner";
   if (!isOwner && ia) notFound(); // specialised agents are conversations: owner only
+
+  // The pages of the dashboard (#123): the first is the main one; a specialised AI has its own single panel.
+  const { data: pageRows } = ia ? { data: [] } : await supabase.from("dashboards").select("id, data").eq("workspace_id", id).is("agent_id", null).order("created_at");
+  const pages: DashboardPage[] = (pageRows ?? []).filter((r) => r.data).map((r) => ({ id: r.id, name: (r.data as Dashboard).name, dashboard: r.data as Dashboard }));
 
   const { data: documents } = await supabase
     .from("documents")
@@ -142,6 +148,7 @@ export default async function WorkspaceChatPage({
             initialAgents={state.agents}
             initialMessages={state.messages}
             initialDashboard={state.dashboard}
+            initialPages={pages}
             initialAlerts={alerts}
             workspaceKind={state.kind}
             initialPrompt={pergunta?.slice(0, 1000)}

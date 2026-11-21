@@ -41,6 +41,11 @@ class ChatStore(Protocol):
     async def dispatch(self, action: Action) -> Dashboard: ...
     async def list_versions(self) -> list[dict[str, Any]]: ...
     async def restore_version(self, version: int) -> Dashboard | None: ...
+    async def list_pages(self) -> list[dict[str, Any]]: ...
+    async def add_page(self, name: str) -> dict[str, Any]: ...
+    async def rename_page(self, page_id: str, name: str) -> bool: ...
+    async def remove_page(self, page_id: str) -> bool: ...
+    async def switch_page(self, page_id: str) -> Dashboard | None: ...
     async def add_alert(self, rule: dict[str, Any]) -> Alert: ...
     async def list_alerts(self) -> list[Alert]: ...
     async def set_alert_active(self, alert_id: str, active: bool) -> Alert | None: ...
@@ -89,6 +94,16 @@ class ToolContext:
 
 
 @dataclass
+class Page:
+    """One named dashboard page of a workspace (#123). The first one is the main dashboard."""
+
+    id: str
+    history: History
+    loaded_version: int | None = None
+    """The version when loaded; None = not saved yet."""
+
+
+@dataclass
 class MemoryStore:
     """Working copy of one workspace's state for the duration of a chat turn (and the store the tests use)."""
 
@@ -113,9 +128,18 @@ class MemoryStore:
     heirs: list[Heir] = field(default_factory=list)
     removed_heir_ids: list[str] = field(default_factory=list)
     touched_heir_ids: set[str] = field(default_factory=set)
+    pages: list[Page] = field(default_factory=list)
+    """Every page of the workspace dashboard; the active one's edits live in `history` until `flush_page`."""
+    active_page: str | None = None
+    removed_page_ids: list[str] = field(default_factory=list)
     load_versions: Callable[[int | None], Awaitable[list[dict[str, Any]]]] | None = None
     """Reads the saved versions: None = the list (no data), a number = that one version with its `data`."""
     _n: int = 0
+
+    def __post_init__(self) -> None:
+        if not self.pages:
+            self.pages = [Page("page-main", self.history, self.history.present["version"])]
+            self.active_page = "page-main"
 
     def _next(self) -> int:
         self._n += 1
@@ -149,6 +173,53 @@ class MemoryStore:
         """The dashboard as that version was, saved as a new version; None if there is no such version."""
         rows = await self.load_versions(version) if self.load_versions else []
         return await self.dispatch({"type": "restore", "dashboard": rows[0]["data"]}) if rows else None
+
+    def flush_page(self) -> None:
+        """Copies the active page's edits back into its entry in `pages`."""
+        for page in self.pages:
+            if page.id == self.active_page:
+                page.history = self.history
+
+    def _page(self, page_id: str) -> Page | None:
+        self.flush_page()
+        return next((p for p in self.pages if p.id == page_id), None)
+
+    async def list_pages(self) -> list[dict[str, Any]]:
+        self.flush_page()
+        return [{"id": p.id, "name": p.history.present["name"], "active": p.id == self.active_page} for p in self.pages]
+
+    async def switch_page(self, page_id: str) -> Dashboard | None:
+        page = self._page(page_id)
+        if page is None:
+            return None
+        self.active_page, self.history = page.id, page.history
+        return page.history.present
+
+    async def add_page(self, name: str) -> dict[str, Any]:
+        self.flush_page()
+        page = Page(f"new-page-{self._next()}", History(new_dashboard(name)))
+        self.pages.append(page)
+        self.active_page, self.history = page.id, page.history  # the next blocks go to the page just made
+        return {"id": page.id, "name": name}
+
+    async def rename_page(self, page_id: str, name: str) -> bool:
+        page = self._page(page_id)
+        if page is None:
+            return False
+        page.history = reduce(page.history, {"type": "rename", "name": name})
+        if page.id == self.active_page:
+            self.history = page.history
+        return True
+
+    async def remove_page(self, page_id: str) -> bool:
+        page = self._page(page_id)
+        if page is None:
+            return False
+        self.pages.remove(page)
+        self.removed_page_ids.append(page_id)
+        if self.active_page == page_id:
+            await self.switch_page(self.pages[0].id)
+        return True
 
     async def add_alert(self, rule: dict[str, Any]) -> Alert:
         alert = {"id": f"new-alert-{self._next()}", "rule": rule, "active": True}

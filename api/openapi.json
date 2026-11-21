@@ -628,6 +628,18 @@
             "title": "Message",
             "type": "string"
           },
+          "pageId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pageid"
+          },
           "workspaceId": {
             "format": "uuid",
             "title": "Workspaceid",

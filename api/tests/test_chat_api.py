@@ -64,7 +64,17 @@ def test_a_turn_answers_with_the_reply_and_persists_it(signed_in: TestClient, db
     r = post(signed_in, ws)
     assert r.status_code == 200 and r.headers["cache-control"] == "no-store"
     body = r.json()
-    assert set(body) == {"text", "events", "pendingConfirmations", "dashboard", "alerts", "agents", "messages"}  # no `usage`
+    assert set(body) == {
+        "text",
+        "events",
+        "pendingConfirmations",
+        "dashboard",
+        "pages",
+        "activePageId",
+        "alerts",
+        "agents",
+        "messages",
+    }  # no `usage`
     assert body["events"][0] == {"name": "get_tax_diagnosis", "status": "ok"} and [
         w["id"] for w in body["dashboard"]["widgets"]
     ] == ["kpi", "breakdown"]
@@ -209,3 +219,17 @@ async def test_a_client_that_goes_away_cancels_the_turn(db: FakeDb) -> None:
         await first
     await stream.aclose()
     await asyncio.wait_for(finished.wait(), 2)
+
+
+def test_a_page_is_created_by_chat_and_removed_only_after_the_confirmation(signed_in: TestClient, db: FakeDb) -> None:
+    ws = workspace(db)
+    created = post(signed_in, ws, "Crie uma página só de oportunidades").json()
+    assert [p["name"] for p in created["pages"]] == ["Painel tributário", "Oportunidades"]
+    assert created["activePageId"] == created["pages"][1]["id"]
+    assert [w["kind"] for w in created["dashboard"]["widgets"]] == ["text"]  # the demo company has no opportunity to list
+
+    asked = post(signed_in, ws, "Remova a página de oportunidades", pageId=created["activePageId"]).json()
+    assert len(asked["pages"]) == 2 and "Você confirma" in asked["text"]
+    key = asked["pendingConfirmations"][0]["key"]
+    done = post(signed_in, ws, "Sim, pode confirmar.", approve=[key]).json()
+    assert [p["name"] for p in done["pages"]] == ["Painel tributário"] and done["activePageId"] == done["pages"][0]["id"]

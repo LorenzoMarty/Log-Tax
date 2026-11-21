@@ -211,3 +211,27 @@ test("pause, resume and delete an alert from the management list", async ({ page
   await row.getByRole("button", { name: "Confirmar exclusão" }).click();
   await expect(page.getByTestId("managed-alert")).toHaveCount(0);
 });
+
+test("dashboard pages through FastAPI: create by chat, switch, persist, remove with confirmation (#123)", async ({ page }) => {
+  await login(page, "fastapi-pages");
+  await createAndOpen(page, /Minha Empresa/);
+  const tabs = page.getByRole("navigation", { name: "Páginas do painel" });
+  await expect(tabs).toHaveCount(0); // one page: no navigation
+
+  await sendChatMessage(page, "Crie uma página só de oportunidades", /Criei a página "Oportunidades"/);
+  await expect(tabs.getByRole("button", { name: "Oportunidades" })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByTestId("widget-text").or(page.getByTestId("widget-opportunities"))).toBeVisible();
+
+  await tabs.getByRole("button", { name: "Painel tributário" }).click(); // the main page is still empty
+  await expect(page.getByText(/nenhum bloco/i)).toBeVisible();
+  await page.reload();
+  await expect(tabs.getByRole("button", { name: "Oportunidades" })).toBeVisible();
+  await tabs.getByRole("button", { name: "Oportunidades" }).click();
+
+  await sendChatMessage(page, "Remova a página de oportunidades", /Você confirma/);
+  await expect(tabs).toBeVisible(); // nothing is removed before the click
+  await page.getByRole("button", { name: "Confirmar" }).click();
+  await expect(tabs).toHaveCount(0);
+  await page.reload();
+  await expect(tabs).toHaveCount(0);
+});
