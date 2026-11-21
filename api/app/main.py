@@ -5,6 +5,7 @@ from app.api import (
     account,
     admin,
     agent_templates,
+    agents,
     alert_events,
     chat,
     company_lookup,
@@ -63,6 +64,7 @@ def create_app() -> FastAPI:
     app.include_router(sharing.router)
     app.include_router(workspaces.router)
     app.include_router(alert_events.router)
+    app.include_router(agents.router)
     app.include_router(missing_documents.router)
     app.include_router(usage.router)
     app.include_router(admin.router)
