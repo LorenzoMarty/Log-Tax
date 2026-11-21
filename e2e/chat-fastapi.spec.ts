@@ -264,3 +264,32 @@ test("owner reorders and resizes blocks with buttons; reload keeps it and undo r
   await page.getByRole("button", { name: "Desfazer" }).click();
   await expect(size).toHaveValue(original);
 });
+
+// #179: the service provider's journey in a personal space: missing data becomes a question, then the three options show up
+// in the panel with their premises, the deadlines and the checklist; the medium-confidence rules keep the validation note.
+test("prestador de serviço: conversa, comparação PF x MEI x Simples e painel com premissas", async ({ page }) => {
+  await login(page, "prestador");
+  await createAndOpen(page, /Vida Pessoal/);
+
+  await sendChatMessage(page, "Sou prestador de serviço e recebo R$ 10 mil por mês", /Em qual anexo do Simples/);
+  await expect(page.getByTestId("widget-prestador-opcoes")).toHaveCount(0);
+
+  await sendChatMessage(
+    page,
+    "Sou prestador de serviço, faturo R$ 10 mil por mês, com despesas de R$ 1 mil, anexo III",
+    /Comparei por mês sobre R\$ 10\.000.*precisam de validação/,
+  );
+  const options = page.getByTestId("widget-prestador-opcoes");
+  await expect(options).toContainText("Pessoa física");
+  await expect(options).toContainText("MEI");
+  await expect(options).toContainText("Simples Nacional");
+  await expect(options).toContainText("Não pode ser usada"); // R$ 120 mil a year is over the MEI limit
+  await expect(page.getByTestId("widget-prestador-comparativo")).toBeVisible();
+  await expect(page.getByTestId("widget-prestador-impostos")).toBeVisible();
+  await expect(page.getByTestId("widget-prestador-prazos")).toContainText("carnê-leão");
+  await expect(page.getByTestId("widget-prestador-checklist")).toContainText("livro-caixa");
+  await expect(page.getByTestId("widget-prestador-premissas")).toContainText("aguardam validação de um profissional");
+
+  await page.reload(); // what the Python API saved is what the panel reads back
+  await expect(page.getByTestId("widget-prestador-opcoes")).toContainText("Simples Nacional");
+});

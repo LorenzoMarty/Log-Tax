@@ -26,6 +26,7 @@ from app.chat.agent_templates import AGENT_TEMPLATES
 from app.chat.agent_templates import BY_ID as TEMPLATE_BY_ID
 from app.chat.blocks import payroll_widget, projection_widget
 from app.chat.dashboard import Widget, validate_widget
+from app.chat.prestador_panel import prestador_widgets
 from app.chat.store import Kind, Scope, ToolContext
 from app.chat.types import ToolOutcome, ToolSpec
 from app.core.br_ids import cnpj_valid, normalize_cnpj
@@ -39,6 +40,7 @@ from app.engine.history import tax_history
 from app.engine.irpf_bens import build_lines
 from app.engine.itcmd import ItcmdInput, compute_itcmd
 from app.engine.partilha import inventory_deadlines, split_estate
+from app.engine.prestador import PrestadorInput, compare_prestador
 from app.engine.reform_impact import reform_impact
 from app.engine.result import EngineResult, InsufficientData, NoneFound, NotApplicable, Ok
 from app.engine.split_payment import split_payment_impact
@@ -351,6 +353,16 @@ class SavePersonArgs(_Args, _NonEmpty):
     education_expenses: float | None = Field(default=None, ge=0)
     private_pension: float | None = Field(default=None, ge=0)
     tax_withheld: float | None = Field(default=None, ge=0)
+
+
+class ComparePrestadorArgs(_Args):
+    monthly_revenue: float = Field(gt=0, le=1e12)
+    deductible_expenses: float = Field(default=0, ge=0, le=1e12)
+    dependents: int = Field(default=0, ge=0, le=50)
+    inss_plan: Literal["normal", "simplificado"] = "normal"
+    annex: Literal["III", "IV", "V"] | None = None
+    fator_r: bool = False
+    pro_labore: float | None = Field(default=None, ge=0, le=1e12)
 
 
 class AddWidgetArgs(_Args):
@@ -1071,6 +1083,30 @@ async def _build_patrimony_panel(ctx: ToolContext, a: NoArgs) -> Any:
         await ctx.store.dispatch({"type": "update" if exists else "add", "widget": validate_widget(w)})
     out = wire(summary)
     out.pop("widgets")
+    return out
+
+
+@_tool(
+    "compare_prestador",
+    "Para o prestador de serviço (autônomo): compara pessoa física (carnê-leão + INSS), MEI e Simples Nacional sobre a receita mensal, com as premissas de cada opção, e monta no painel a comparação, o detalhamento, os prazos e o checklist. Informe o anexo do Simples (III, IV ou V) ou fatorR=true; sem ele o resultado pede o que falta. Use só valores que o usuário informou.",
+    ComparePrestadorArgs,
+    kinds=("pessoal",),
+    engine=True,
+)
+async def _compare_prestador(ctx: ToolContext, a: ComparePrestadorArgs) -> Any:
+    result = compare_prestador(
+        ctx.engine.book,
+        ctx.engine.competence,
+        PrestadorInput(
+            Decimal(str(a.monthly_revenue)), Decimal(str(a.deductible_expenses)), a.dependents, a.inss_plan, a.annex,
+            a.fator_r, None if a.pro_labore is None else Decimal(str(a.pro_labore)),
+        ),
+    )  # fmt: skip
+    out = _env(result)
+    if isinstance(result, Ok):
+        have = {w["id"] for w in (await ctx.store.get_dashboard())["widgets"]}
+        for w in prestador_widgets(out["value"], date.today()):
+            await ctx.store.dispatch({"type": "update" if w["id"] in have else "add", "widget": validate_widget(w)})
     return out
 
 
