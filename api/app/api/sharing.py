@@ -12,7 +12,7 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse, Response
-from pydantic import AfterValidator, BaseModel, ConfigDict, StringConstraints
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstraints, model_validator
 from pydantic.alias_generators import to_camel
 
 from app.core.audit import audit
@@ -40,9 +40,23 @@ class _In(BaseModel):
     model_config = ConfigDict(extra="forbid", alias_generator=to_camel, populate_by_name=True)
 
 
+class ScopeIn(_In):
+    """The parts of the space the invitee may see; no scope means the whole space."""
+
+    kinds: Annotated[list[Literal["dashboard", "documents", "report"]], Field(min_length=1, max_length=3)]
+    document_ids: list[uuid.UUID] | None = Field(default=None, max_length=200)
+
+
 class InviteIn(_In):
     email: Annotated[str, StringConstraints(strip_whitespace=True, to_lower=True, max_length=254), AfterValidator(_email)]
     role: Literal["editor", "commenter", "reader"]
+    scope: ScopeIn | None = None
+
+    @model_validator(mode="after")
+    def _scope_needs_read_only_role(self) -> "InviteIn":
+        if self.scope and self.role == "editor":
+            raise ValueError("convite restrito não pode ter papel de edição")
+        return self
 
 
 class CommentIn(_In):
@@ -78,15 +92,17 @@ async def invite_member(
     rows = await db.select("workspaces", select="name", id=f"eq.{ws}")
     if not rows:
         return _forbidden()
+    scope = body.scope.model_dump(mode="json", by_alias=True, exclude_none=True) if body.scope else None
     # One invite per email: replace a pending one (e.g. to change the role).
     await db.delete("workspace_invites", workspace_id=f"eq.{ws}", email=f"eq.{body.email}")
     try:
         [invite] = await db.insert(
-            "workspace_invites", {"workspace_id": ws, "workspace_name": rows[0]["name"], "email": body.email, "role": body.role}
+            "workspace_invites",
+            {"workspace_id": ws, "workspace_name": rows[0]["name"], "email": body.email, "role": body.role, "scope": scope},
         )
     except DbError:
         return _forbidden()
-    await audit(db, ws, "invite_sent", f"{body.email} ({body.role})")
+    await audit(db, ws, "invite_sent", f"{body.email} ({body.role})" + (f" [{','.join(body.scope.kinds)}]" if body.scope else ""))
     return JSONResponse({"id": invite["id"]}, status_code=201)
 
 

@@ -2226,6 +2226,16 @@
             ],
             "title": "Role",
             "type": "string"
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScopeIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -3701,6 +3711,47 @@
           "lapsed"
         ],
         "title": "RulesOut",
+        "type": "object"
+      },
+      "ScopeIn": {
+        "additionalProperties": false,
+        "description": "The parts of the space the invitee may see; no scope means the whole space.",
+        "properties": {
+          "documentIds": {
+            "anyOf": [
+              {
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "maxItems": 200,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Documentids"
+          },
+          "kinds": {
+            "items": {
+              "enum": [
+                "dashboard",
+                "documents",
+                "report"
+              ],
+              "type": "string"
+            },
+            "maxItems": 3,
+            "minItems": 1,
+            "title": "Kinds",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kinds"
+        ],
+        "title": "ScopeIn",
         "type": "object"
       },
       "SearchHitOut": {

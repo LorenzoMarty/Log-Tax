@@ -68,6 +68,23 @@ def test_an_invite_is_created_lower_cased_audited_and_replaces_a_pending_one(sig
     assert editor.status_code == 201 and db.tables["workspace_invites"][0]["role"] == "editor"
 
 
+def test_a_scoped_invite_stores_the_scope_and_refuses_the_editor_role(signed_in: TestClient, db: FakeDb) -> None:
+    ws = workspace(db)
+    doc = "33333333-3333-4333-8333-333333333333"
+    scope = {"kinds": ["dashboard", "documents"], "documentIds": [doc]}
+    ok = signed_in.post(f"/v1/workspaces/{ws}/invites", json={"email": "c@example.com", "role": "reader", "scope": scope})
+    assert ok.status_code == 201
+    assert db.tables["workspace_invites"][0]["scope"] == scope
+    assert audited(db) == [("invite_sent", "c@example.com (reader) [dashboard,documents]")]
+    for bad in ({"kinds": []}, {"kinds": ["agents"]}):
+        r = signed_in.post(f"/v1/workspaces/{ws}/invites", json={"email": "d@example.com", "role": "reader", "scope": bad})
+        assert r.status_code == 422
+    r = signed_in.post(f"/v1/workspaces/{ws}/invites", json={"email": "d@example.com", "role": "editor", "scope": scope})
+    assert r.status_code == 422
+    plain = signed_in.post(f"/v1/workspaces/{ws}/invites", json={"email": "e@example.com", "role": "reader"})
+    assert plain.status_code == 201 and db.tables["workspace_invites"][-1]["scope"] is None
+
+
 @pytest.mark.parametrize(
     "payload",
     [
