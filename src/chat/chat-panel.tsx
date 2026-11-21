@@ -18,6 +18,7 @@ import { nextQuestions, type SpaceProgress } from "./next-questions";
 import { clearConversation, rateAnswer } from "./actions";
 import { NDJSON, toolProgressLabel, type ChatStreamLine } from "./progress";
 import { RequestExamples } from "./request-examples";
+import { useVoiceInput } from "./voice";
 import type { Agent } from "./types";
 import type { DisplayMessage } from "./workspace-state";
 
@@ -96,6 +97,29 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
   const [reasonFor, setReasonFor] = useState<number | null>(null);
   const [reason, setReason] = useState("");
   const [layoutStatus, setLayoutStatus] = useState("");
+
+  // Dictation (#187): the transcript lands in the input for review; it is never sent by itself.
+  const voiceBase = useRef("");
+  const voice = useVoiceInput((text) => setDraft(`${voiceBase.current}${voiceBase.current && text ? " " : ""}${text}`));
+  const [voiceNoteSeen, setVoiceNoteSeen] = useState(true);
+  useEffect(() => {
+    try {
+      setVoiceNoteSeen(localStorage.getItem("voice-note-seen") === "1");
+    } catch {
+      setVoiceNoteSeen(false); // storage blocked: the note is shown every time
+    }
+  }, []);
+  function toggleVoice() {
+    if (voice.listening) return voice.stop();
+    voiceBase.current = draft.trim();
+    setVoiceNoteSeen(true);
+    try {
+      localStorage.setItem("voice-note-seen", "1");
+    } catch {
+      /* ignore */
+    }
+    voice.start();
+  }
 
   async function send(message: string, approve?: string[], display = message) {
     setBusy(true);
@@ -310,6 +334,9 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
         )}
         <form onSubmit={submit} className="flex gap-2">
           <Input ref={inputRef} aria-label="Mensagem" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Quero entender meus impostos..." className="min-w-0 flex-1" />
+          <Button type="button" variant="ghost" disabled={!voice.supported || busy} aria-describedby="voice-help" aria-pressed={voice.listening} onClick={toggleVoice}>
+            {voice.listening ? "Parar de falar" : "Falar"}
+          </Button>
           {busy ? (
             <Button type="button" variant="ghost" onClick={() => abort.current?.abort()}>
               Parar
@@ -319,6 +346,21 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
             Enviar
           </Button>
         </form>
+        <p id="voice-help" className="text-xs text-ink-muted">
+          {!voice.supported
+            ? "Seu navegador não permite falar a mensagem. Digite no campo acima."
+            : !voiceNoteSeen
+              ? "Ao falar, o navegador pode enviar o áudio ao serviço dele para reconhecer a voz. Nós não guardamos nem recebemos o áudio. O texto aparece no campo para você revisar antes de enviar."
+              : "O texto falado aparece no campo para você revisar antes de enviar."}
+        </p>
+        <p aria-live="polite" className={voice.listening ? "text-sm text-brand-ink" : "sr-only"}>
+          {voice.listening ? "Ouvindo… fale agora." : ""}
+        </p>
+        {voice.error && (
+          <p role="alert" className="rounded-[var(--radius-sm)] bg-danger-tint px-4 py-3 text-sm text-danger-ink">
+            {voice.error}
+          </p>
+        )}
       </Panel>
     </div>
     </div>
