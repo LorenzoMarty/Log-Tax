@@ -22,6 +22,7 @@ from app.engine.real_engine import RealEngine
 from app.report.build import ReportDocument, build_report
 from app.report.pdf import sections_hash, to_pdf
 from app.report.sheet import XLSX_TYPE, sheet_rows, to_csv, to_xlsx
+from app.report.validation import attach, fingerprint, latest
 
 router = APIRouter(tags=["report"])
 BUCKET = "reports"
@@ -48,6 +49,9 @@ async def _build(ws: str, settings: Settings, db: UserDb) -> dict[str, Any] | No
         engine=engine,
         generated_at=datetime.now(UTC),
     )
+    reviews = await db.select("validations", select="*", workspace_id=f"eq.{ws}", order="created_at.desc")
+    profile = store.person if state.kind == "pessoal" else store.company
+    attach(data, latest(reviews, *fingerprint(profile, engine)))
     return data
 
 

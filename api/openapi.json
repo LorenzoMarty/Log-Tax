@@ -3646,6 +3646,39 @@
         "title": "ValidationError",
         "type": "object"
       },
+      "ValidationIn": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Note",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "validated",
+              "contested"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "subject": {
+            "enum": [
+              "diagnosis",
+              "opportunities"
+            ],
+            "title": "Subject",
+            "type": "string"
+          }
+        },
+        "required": [
+          "subject",
+          "status"
+        ],
+        "title": "ValidationIn",
+        "type": "object"
+      },
       "Vital": {
         "additionalProperties": false,
         "properties": {
@@ -7665,6 +7698,129 @@
         "summary": "Report Issue",
         "tags": [
           "report"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/validations": {
+      "get": {
+        "description": "The newest review of each subject, each with `valid`: false when the data or the rules changed since.",
+        "operationId": "list_validations_v1_workspaces__workspace_id__validations_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Validations",
+        "tags": [
+          "validations"
+        ]
+      },
+      "post": {
+        "operationId": "add_validation_v1_workspaces__workspace_id__validations_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidationIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Validation",
+        "tags": [
+          "validations"
         ]
       }
     }
