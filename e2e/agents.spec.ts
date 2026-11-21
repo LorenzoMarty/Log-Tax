@@ -38,6 +38,26 @@ test("create an agent by chat, talk to it inside its scope, edit it by chat", as
   await expect(page.getByRole("navigation", { name: "Minhas IAs" })).toContainText("Cuidar do planejamento tributário");
 });
 
+test("edit an agent on its detail screen and delete it with confirmation", async ({ page }) => {
+  await login(page, "agentedit");
+  await createAndOpen(page, /Minha Empresa/);
+  await sendChatMessage(page, "Crie uma IA para minha empresa", /Criei a "IA da Empresa"/);
+  await page.getByRole("link", { name: "Editar IA da Empresa" }).click();
+  await expect(page.getByRole("heading", { name: "IA da Empresa" })).toBeVisible();
+  await page.getByLabel("Objetivo").fill("Vigiar o caixa");
+  await page.getByLabel("run_simulation").uncheck();
+  await page.getByRole("button", { name: "Salvar alterações" }).click();
+  await expect(page.getByText("Alterações salvas.")).toBeVisible();
+  await page.getByRole("link", { name: "Voltar ao espaço" }).click();
+  await expect(page.getByRole("navigation", { name: "Minhas IAs" })).toContainText("Vigiar o caixa");
+
+  await page.getByRole("link", { name: "Editar IA da Empresa" }).click();
+  await page.getByRole("button", { name: "Excluir IA" }).click();
+  await page.getByRole("button", { name: "Confirmar exclusão" }).click();
+  await expect(page).toHaveURL(/\/workspace\/[0-9a-f-]{36}$/);
+  await expect(page.getByRole("navigation", { name: "Minhas IAs" })).toHaveCount(0);
+});
+
 test("an agent id that is not yours returns 404", async ({ page }) => {
   await login(page, "agents404");
   await createAndOpen(page, /Minha Empresa/);

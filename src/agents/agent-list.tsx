@@ -28,6 +28,15 @@ export function AgentList({ workspaceId, agents, currentAgentId }: { workspaceId
           item(a.id, `${base}?ia=${a.id}`, a.name, [a.objective, a.tools.length ? `${a.tools.length} ferramentas` : "sem ferramentas"], a.id === currentAgentId),
         )}
       </ul>
+      <ul className="mt-1 flex flex-wrap gap-2 text-xs">
+        {agents.map((a) => (
+          <li key={a.id}>
+            <a href={`${base}/ia/${a.id}`} className="underline">
+              Editar {a.name}
+            </a>
+          </li>
+        ))}
+      </ul>
     </nav>
   );
 }
