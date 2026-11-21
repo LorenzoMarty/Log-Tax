@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     llm: str = Field(default="", validation_alias="LOG_TAX_LLM")
     # "1" = a workspace with no data starts from the fictional demo company (e2e and demos); empty = it starts blank.
     demo_seed: str = Field(default="", validation_alias="LOG_TAX_DEMO_SEED")
+    # "1" = the CNPJ lookup answers from a fixed stub instead of BrasilAPI (e2e and demos); ignored in production.
+    cnpj_lookup_stub: str = Field(default="", validation_alias="LOG_TAX_CNPJ_STUB")
     # Model tokens a user may spend per day (0 or invalid = the default).
     chat_daily_tokens: int = Field(default=200_000, validation_alias="CHAT_DAILY_TOKENS")
     # AES-256-GCM key (32 bytes, base64) for identifiers at rest (CNPJ), and its id. Old keys stay as DATA_ENCRYPTION_KEY_<ID>.

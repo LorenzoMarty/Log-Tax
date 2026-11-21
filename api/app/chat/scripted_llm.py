@@ -368,7 +368,29 @@ def _plan(pattern: str, steps: list[Step], reply: Reply) -> Plan:
     return Plan(re.compile(pattern, _I), steps, reply)
 
 
+_CNPJ = re.compile(r"\d{2}\.?\d{3}\.?\d{3}/?\d{4}-?\d{2}")
+
+
+def _lookup_reply(p: list[ToolOutcome], _t: str) -> str:
+    r = _first(p)
+    d = r["data"] if r and _ok(r) else None
+    if d is None:
+        return "Não consegui consultar esse CNPJ. Me diga o nome, a UF e o município da empresa."
+    if d["status"] != "found":
+        return str(d["message"])
+    c = d["company"]
+    return (
+        f"Encontrei {c['name']}: CNAE {', '.join(c['cnaes'][:3])}, {c['municipio']}/{c['uf']}. "
+        "Esses dados estão certos? Confirme e eu salvo no perfil."
+    )
+
+
 PLANS: list[Plan] = [
+    _plan(
+        r"\bcnpj\s*(?:é|e|:)?\s*" + _CNPJ.pattern,
+        [lambda _p, text, _s: _call("lookup_company", cnpj=_CNPJ.search(text).group())],  # type: ignore[union-attr]
+        _lookup_reply,
+    ),
     _plan(
         "|".join([_COMPACT, _COMFORTABLE, _DARK]),
         [lambda _p, text, _s: _call("dashboard_set_style", **style_from(text))],
