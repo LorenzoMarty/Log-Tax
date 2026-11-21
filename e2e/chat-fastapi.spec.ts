@@ -69,6 +69,32 @@ test("personal journey through FastAPI: the real engine does not invent a 2026 i
   await sendChatMessage(page, "Empresa", /Não consegui calcular/);
 });
 
+// #133: the agent detail screen talks to PATCH/DELETE /v1/workspaces/{ws}/agents/{id} on the Python API.
+test("edit an agent on its detail screen and delete it with confirmation", async ({ page }) => {
+  await login(page, "agentedit");
+  await createAndOpen(page, /Minha Empresa/);
+  await sendChatMessage(page, "Crie uma IA para minha empresa", /Criei a "IA da Empresa"/);
+  const nav = page.getByRole("navigation", { name: "Minhas IAs" });
+  await nav.getByRole("link", { name: /IA da Empresa/ }).click();
+  await page.getByRole("link", { name: "Editar esta IA" }).click();
+  await expect(page.getByRole("heading", { name: "IA da Empresa", level: 1 })).toBeVisible();
+  await page.waitForLoadState("networkidle"); // hydrate before submitting, or the form posts natively
+  await page.getByLabel("Objetivo").fill("Vigiar o caixa");
+  await page.getByRole("checkbox").first().click();
+  await page.getByRole("button", { name: "Salvar alterações" }).click();
+  await expect(page.getByText("Alterações salvas.")).toBeVisible();
+  await page.getByRole("link", { name: "Voltar ao espaço" }).click();
+  await expect(nav).toContainText("Vigiar o caixa");
+
+  await nav.getByRole("link", { name: /IA da Empresa/ }).click();
+  await page.getByRole("link", { name: "Editar esta IA" }).click();
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("button", { name: "Excluir IA" }).click();
+  await page.getByRole("button", { name: "Confirmar exclusão" }).click();
+  await expect(page).toHaveURL(/\/workspace\/[0-9a-f-]{36}$/);
+  await expect(page.getByRole("navigation", { name: "Minhas IAs" })).toHaveCount(0);
+});
+
 test("the Python chat is closed without a session and keeps the contract's error shape", async ({ request }) => {
   const res = await request.post("/api/v1/chat", { data: { workspaceId: "00000000-0000-0000-0000-000000000000", message: "oi" } });
   expect(res.status()).toBe(401);
@@ -87,4 +113,45 @@ test("assets through FastAPI: 'quero acompanhar esse apartamento' registers it i
   await expect(asset).toHaveCount(1);
   await expect(asset).toContainText("Apartamento");
   await expect(asset).toContainText("Imóvel");
+});
+
+// #166: the CNPJ fills the company proposal; the API runs with LOG_TAX_CNPJ_STUB=1 (only 11.222.333/0001-81 is found, never BrasilAPI).
+test("informar o CNPJ preenche nome, CNAE, UF e município", async ({ page }) => {
+  await login(page, "cnpj");
+  await createAndOpen(page, /Minha Empresa/);
+  await sendChatMessage(page, "Meu CNPJ é 11.222.333/0001-81", /LOG TAX DEMONSTRACAO LTDA: CNAE 6201501, 6202300, São Paulo\/SP/);
+});
+
+test("serviço fora do ar vira pergunta manual, não erro", async ({ page }) => {
+  await login(page, "cnpj-down");
+  await createAndOpen(page, /Minha Empresa/);
+  await sendChatMessage(page, "Meu CNPJ é 11.444.777/0001-61", /fora do ar\. Me diga os dados da empresa/);
+});
+
+// #183, #185: an inventory built through the conversation (estate, 2 assets, 3 heirs) shows up in the inventory panel.
+test("criar um inventário com 2 bens e 3 herdeiros pela conversa e ver o painel", async ({ page }) => {
+  await login(page, "inventario");
+  await createAndOpen(page, /Vida Pessoal/);
+
+  await sendChatMessage(page, "Abrir o espólio de João Silva, falecido em 15/10/2026, em SP", /Sinto muito pela sua perda/);
+  await sendChatMessage(page, "Cadastrar imóvel Apartamento no centro de R$ 400 mil", /Anotei o item/);
+  await sendChatMessage(page, "Cadastrar veículo Carro de R$ 80 mil", /Anotei o item/);
+  await sendChatMessage(page, "Cadastrar herdeira Ana Silva, filha, 50%", /Anotei o herdeiro/);
+  await sendChatMessage(page, "Cadastrar herdeiro Bruno Silva, filho, 30%", /Anotei o herdeiro/);
+  await sendChatMessage(page, "Cadastrar herdeiro Carla Silva, filha, 20%", /Anotei o herdeiro/);
+  await sendChatMessage(page, "Mostrar o resumo do inventário", /R\$ 480\.000.*3 herdeiros/);
+
+  const panel = page.getByTestId("inventory-panel");
+  await expect(panel).toContainText("Inventário de João Silva");
+  await expect(page.getByTestId("inventory-net")).toContainText("480.000");
+  await expect(page.getByTestId("inventory-heir")).toHaveCount(3);
+  await expect(page.getByTestId("inventory-pending")).toHaveCount(0);
+  await expect(page.getByTestId("inventory-deadlines")).toContainText("15/12/2026");
+  await expect(page.getByTestId("inventory-deadlines")).toContainText("ainda não foi conferido");
+  await expect(page.getByTestId("inventory-checklist")).toContainText("Certidão de óbito (falta)");
+  await expect(page.getByTestId("inventory-split")).toContainText("240.000,00");
+
+  // what the Python API saved is what the panel reads back
+  await page.reload();
+  await expect(page.getByTestId("inventory-heir")).toHaveCount(3);
 });

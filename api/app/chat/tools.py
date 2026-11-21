@@ -28,7 +28,7 @@ from app.chat.blocks import payroll_widget, projection_widget
 from app.chat.dashboard import Widget, validate_widget
 from app.chat.store import Kind, Scope, ToolContext
 from app.chat.types import ToolOutcome, ToolSpec
-from app.core.br_ids import normalize_cnpj
+from app.core.br_ids import cnpj_valid, normalize_cnpj
 from app.documents.classify import DOC_LABEL
 from app.documents.inventory import inventory_checklist
 from app.documents.search import cited_for_model
@@ -42,6 +42,7 @@ from app.engine.partilha import inventory_deadlines, split_estate
 from app.engine.reform_impact import reform_impact
 from app.engine.result import EngineResult, InsufficientData, NoneFound, NotApplicable, Ok
 from app.engine.split_payment import split_payment_impact
+from app.integrations.cnpj import fetch_company
 
 MAX_WORKSPACES = 10
 MAX_MEMORIES = 30
@@ -365,8 +366,9 @@ class AlertArgs(_Args):
     metric: Literal["monthlyTotal", "effectiveRate", "annualSavings", "daysToDeadline"] | None = None
     operator: Literal["gt", "lt", "within"] | None = None
     threshold: float | None = None
-    event: Literal["document_uploaded"] | None = None
+    event: Literal["document_uploaded", "member_joined", "regime_changed", "new_opportunity", "missing_document"] | None = None
     doc_type: str | None = None
+    days_before: int | None = None
 
     @model_validator(mode="after")
     def _operator_fits_the_metric(self) -> "AlertArgs":
@@ -374,11 +376,17 @@ class AlertArgs(_Args):
         if self.event:
             if any(v is not None for v in numeric):
                 raise ValueError("um alerta é por evento ou por limite numérico, não os dois")
+            if self.doc_type is not None and self.event != "document_uploaded":
+                raise ValueError("o tipo de documento só vale para o evento document_uploaded")
             if self.doc_type is not None and self.doc_type not in DOC_LABEL:
                 raise ValueError("tipo de documento desconhecido: " + ", ".join(DOC_LABEL))
+            if (self.event == "missing_document") != (self.days_before is not None):
+                raise ValueError("daysBefore é obrigatório para missing_document e só vale para ele")
+            if self.days_before is not None and not 0 <= self.days_before <= 60:
+                raise ValueError("o prazo vai de 0 a 60 dias")
             return self
-        if self.doc_type is not None:
-            raise ValueError("o tipo de documento só vale para alertas por evento")
+        if self.doc_type is not None or self.days_before is not None:
+            raise ValueError("o tipo de documento e daysBefore só valem para alertas por evento")
         if any(v is None for v in numeric):
             raise ValueError("informe metric, operator e threshold, ou então um event")
         if (self.metric == "daysToDeadline") != (self.operator == "within"):
@@ -616,6 +624,25 @@ async def _get_ir_diagnosis(ctx: ToolContext, a: NoArgs) -> Any:
 
 
 # ---- data tools ----
+class LookupCompanyArgs(_Args):
+    cnpj: Annotated[str, StringConstraints(max_length=30)]
+
+
+@_tool(
+    "lookup_company",
+    "Consulta o CNPJ na base pública e devolve nome, CNAEs, UF e município como PROPOSTA. Não salva nada: mostre os dados ao usuário "
+    "e só chame save_company_data depois que ele confirmar. Se a consulta falhar, peça os dados ao usuário.",
+    LookupCompanyArgs,
+    read_only=True,
+    kinds=("empresa",),
+)
+async def _lookup_company(ctx: ToolContext, a: LookupCompanyArgs) -> Any:
+    digits = normalize_cnpj(a.cnpj)
+    if len(digits) != 14 or not cnpj_valid(digits):
+        raise ToolError("Esse CNPJ não é válido. Confira os números.")
+    return wire(await fetch_company(digits))
+
+
 @_tool(
     "save_company_data",
     "Salva dados informados pelo usuário sobre a empresa. Use só o que o usuário disse.",
@@ -1194,7 +1221,10 @@ async def _dashboard_restore_version(ctx: ToolContext, a: RestoreArgs) -> Any:
     'Para avisar N dias antes de um vencimento (ex.: "me avise 10 dias antes dos impostos") use metric daysToDeadline, '
     "operator within e threshold N (0 a 60): dispara quando a próxima obrigação estiver a N dias ou menos. "
     'Para avisar quando um documento for enviado (ex.: "me avise quando subirem uma nota fiscal") use event document_uploaded '
-    "(sem metric/operator/threshold) e, se quiser, docType com o tipo do documento.",
+    "(sem metric/operator/threshold) e, se quiser, docType com o tipo do documento. Outros eventos, também sem metric: "
+    "member_joined (alguém entrou no espaço), regime_changed (o regime tributário mudou), new_opportunity (surgiu uma "
+    'oportunidade de economia) e missing_document com daysBefore N (0 a 60; ex.: "me avise 5 dias antes do vencimento se faltar '
+    'documento"): avisa quando faltar documento do mês a N dias ou menos do próximo vencimento.',
     AlertArgs,
     kinds=("empresa",),
 )

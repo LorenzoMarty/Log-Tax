@@ -5,7 +5,6 @@ export interface AssetRow {
   kind: string;
   description: string;
   value: number | string;
-  acquired_at: string | null;
 }
 
 const KIND_LABEL: Record<string, string> = {

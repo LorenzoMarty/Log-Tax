@@ -29,7 +29,7 @@ def test_an_event_rule_is_validated_with_plain_portuguese_errors() -> None:
     for bad, message in [
         ({"event": "document_uploaded", "metric": "monthlyTotal", "operator": "gt", "threshold": 1}, "não os dois"),
         ({"event": "document_uploaded", "docType": "xyz"}, "tipo de documento desconhecido"),
-        ({"docType": "das", "metric": "monthlyTotal", "operator": "gt", "threshold": 1}, "só vale para alertas por evento"),
+        ({"docType": "das", "metric": "monthlyTotal", "operator": "gt", "threshold": 1}, "só valem para alertas por evento"),
         ({"metric": "monthlyTotal"}, "informe metric, operator e threshold"),
     ]:
         with pytest.raises(ValueError, match=message):

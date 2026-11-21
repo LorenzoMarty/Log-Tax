@@ -6,6 +6,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
+from app.api import sharing
 from app.core.errors import DbError
 from app.db.client import user_db
 from tests.conftest import USER
@@ -109,7 +110,7 @@ def test_a_workspace_one_cannot_see_or_write_to_is_refused_without_detail(
     assert signed_in.post(f"/v1/workspaces/{ws}/comments", json={"body": "oi"}).status_code == 403
 
 
-def test_revoking_declining_and_accepting_an_invite(signed_in: TestClient, db: FakeDb) -> None:
+def test_revoking_declining_and_accepting_an_invite(signed_in: TestClient, db: FakeDb, monkeypatch: pytest.MonkeyPatch) -> None:
     ws = workspace(db)
     invite = db.seed("workspace_invites", workspace_id=ws, email="b@example.com", role="reader")
     other = db.seed("workspaces", name="De outro", kind="empresa", owner_id="x")["id"]
@@ -126,9 +127,16 @@ def test_revoking_declining_and_accepting_an_invite(signed_in: TestClient, db: F
     mine = db.seed("workspace_invites", workspace_id=ws, email="a@example.com", role="reader")
     assert signed_in.delete(f"/v1/invites/{mine['id']}").status_code == 204 and not db.tables["workspace_invites"]
 
+    heard: list[tuple[str, str]] = []
+
+    async def spy(settings: Any, workspace: str, event: str, key: str, text: str, doc_type: Any = None) -> None:
+        heard.append((event, key))
+
+    monkeypatch.setattr(sharing, "notify_event", spy)
     db.rpcs["accept_invite"] = lambda a: ws
     ok = signed_in.post(f"/v1/invites/{mine['id']}/accept")
     assert ok.status_code == 200 and ok.json() == {"workspaceId": ws} and audited(db)[-1] == ("invite_accepted", None)
+    assert heard == [("member_joined", str(mine["id"]))]
     db.rpcs["accept_invite"] = lambda a: None
     assert signed_in.post(f"/v1/invites/{mine['id']}/accept").status_code == 404
 

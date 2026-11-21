@@ -4,9 +4,10 @@ Guarded by the `platform_admins` role inside the database function (a non-admin 
 Nothing here reads message or document content, and every call appends an `admin_overview` row to the audit trail.
 """
 
+import uuid
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 from pydantic import BaseModel
 from pydantic.alias_generators import to_camel
 
@@ -59,3 +60,45 @@ async def overview(top: Annotated[int, Query(ge=1, le=100)] = 20, db: UserDb = D
             for a in r["top_accounts"]
         ],
     )
+
+
+class SupportWorkspace(_Camel):
+    id: str
+    name: str
+    kind: str
+    created_at: str
+    documents: int
+    dashboards: int
+    agents: int
+    members: int
+
+
+class SupportView(_Camel):
+    user_id: str
+    plan: str
+    suspended: bool
+    workspaces: list[SupportWorkspace]
+
+
+@router.get("/v1/admin/users/{user_id}/support", response_model=SupportView, response_model_by_alias=True)
+async def support_view(user_id: uuid.UUID, db: UserDb = Depends(user_db)) -> SupportView:
+    """Workspace metadata of one person (names, plan, counters; never content). 403 unless an admin AND the person
+    has an active support consent. Each call is an audit row the person can see."""
+    r: dict[str, Any] = await db.rpc("admin_support_view", {"p_user": str(user_id)})
+    return SupportView(
+        user_id=r["user_id"],
+        plan=r["plan"],
+        suspended=r["suspended"],
+        workspaces=[SupportWorkspace(**{k: w[k] for k in SupportWorkspace.model_fields}) for w in r["workspaces"]],
+    )
+
+
+class SuspensionIn(BaseModel):
+    suspended: bool
+
+
+@router.put("/v1/admin/users/{user_id}/suspension", status_code=204)
+async def set_suspension(user_id: uuid.UUID, body: SuspensionIn, db: UserDb = Depends(user_db)) -> Response:
+    """Suspends or reactivates an account. 403 unless a platform admin. Audited; the person sees the row."""
+    await db.rpc("admin_set_suspended", {"p_user": str(user_id), "p_suspended": body.suspended})
+    return Response(status_code=204)

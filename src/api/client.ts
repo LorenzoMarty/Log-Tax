@@ -16,7 +16,7 @@ export class ApiError extends Error {
   }
 }
 
-async function call<T>(method: "GET" | "POST", path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
+async function call<T>(method: "GET" | "POST" | "PATCH" | "DELETE", path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   const res = await fetch(`/api${path}`, {
     method,
     headers: body === undefined ? undefined : { "Content-Type": "application/json" },
@@ -36,3 +36,7 @@ export const apiPost = <P extends keyof paths>(path: P, body: Body<P>, signal?: 
 
 /** Typed GET. Example: `await apiGet("/v1/me")`. */
 export const apiGet = <P extends keyof paths>(path: P, signal?: AbortSignal) => call<Answer<P, "get">>("GET", path, undefined, signal);
+
+/** PATCH/DELETE for routes with a path parameter (generated keys are templates); `path` is the filled-in URL. */
+export const apiPatch = <T>(path: string, body: unknown) => call<T>("PATCH", path, body);
+export const apiDelete = (path: string) => call<void>("DELETE", path);
