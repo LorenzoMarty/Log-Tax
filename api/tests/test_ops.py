@@ -86,7 +86,7 @@ async def test_audit_appends_through_the_rpc_and_a_failure_is_logged_not_raised(
 
 
 def test_every_audit_action_has_a_label_and_the_funnel_is_in_order() -> None:
-    assert set(AUDIT_ACTIONS) == set(AUDIT_LABEL) and len(AUDIT_ACTIONS) == 17
+    assert set(AUDIT_ACTIONS) == set(AUDIT_LABEL) and len(AUDIT_ACTIONS) == 18
     assert FUNNEL[0] == "signed_in" and FUNNEL[-1] == "agent_created"
     assert set(FUNNEL) == set(FUNNEL_LABEL)
 

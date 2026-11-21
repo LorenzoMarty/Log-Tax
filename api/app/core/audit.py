@@ -24,6 +24,7 @@ type AuditAction = Literal[
     "report_link_created",
     "report_link_revoked",
     "report_link_opened",
+    "agent_documents_changed",
 ]
 
 AUDIT_LABEL: dict[str, str] = {
@@ -44,6 +45,7 @@ AUDIT_LABEL: dict[str, str] = {
     "report_link_created": "Criou um link do relatório",
     "report_link_revoked": "Revogou um link do relatório",
     "report_link_opened": "Alguém abriu um link do relatório",
+    "agent_documents_changed": "Mudou os documentos que uma IA pode usar",
 }
 AUDIT_ACTIONS: tuple[str, ...] = get_args(AuditAction.__value__)
 

@@ -1652,6 +1652,8 @@ export interface components {
         };
         /** AgentPatchIn */
         AgentPatchIn: {
+            /** Documents */
+            documents?: string[] | null;
             /** Name */
             name?: string | null;
             /** Objective */

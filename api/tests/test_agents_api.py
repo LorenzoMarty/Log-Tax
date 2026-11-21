@@ -37,7 +37,13 @@ def test_owner_edits_name_objective_and_tools(signed_in: TestClient, db: FakeDb)
     ws, aid = seeded(db)
     tool = next(iter(BY_NAME))
     r = signed_in.patch(f"/v1/workspaces/{ws}/agents/{aid}", json={"objective": "Seja breve", "tools": [tool]})
-    assert r.status_code == 200 and r.json() == {"id": aid, "name": "IA", "objective": "Seja breve", "tools": [tool]}
+    assert r.status_code == 200 and r.json() == {
+        "id": aid,
+        "name": "IA",
+        "objective": "Seja breve",
+        "tools": [tool],
+        "documents": None,
+    }
     assert db.tables["agents"][0]["config"] == {"tools": [tool]}
     assert signed_in.patch(f"/v1/workspaces/{ws}/agents/{aid}", json={}).status_code == 200
 

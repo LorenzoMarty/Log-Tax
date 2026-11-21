@@ -30,6 +30,8 @@ class Scope:
     agent_id: str | None = None
     allowed_tools: tuple[str, ...] | None = None
     """None = every tool. An agent only ever gets the tools it was created with."""
+    allowed_documents: tuple[str, ...] | None = None
+    """None = every document of the workspace; a tuple = only those ids (#134). An agent never hands out more than it has."""
 
 
 class ChatStore(Protocol):

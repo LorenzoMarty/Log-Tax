@@ -142,7 +142,13 @@ async def load_workspace_state(
     )
 
     agents: list[Agent] = [
-        {"id": a["id"], "name": a["name"], "objective": a["objective"], "tools": (a.get("config") or {}).get("tools", [])}
+        {
+            "id": a["id"],
+            "name": a["name"],
+            "objective": a["objective"],
+            "tools": (a.get("config") or {}).get("tools", []),
+            "documents": (a.get("config") or {}).get("documents"),
+        }
         for a in agent_rows
     ]
     agent = next((a for a in agents if a["id"] == agent_id), None) if agent_id else None
@@ -326,7 +332,7 @@ async def save_workspace_state(
         await db.delete("agents", id=f"in.({','.join(gone_agents)})", workspace_id=f"eq.{workspace_id}")
     saved: list[Agent] = []
     for agent in store.agents:
-        values = {"name": agent["name"], "objective": agent["objective"], "config": {"tools": agent["tools"]}}
+        values = {"name": agent["name"], "objective": agent["objective"], "config": agent_config(agent)}
         if is_persisted(agent["id"]):
             await db.update("agents", values, id=f"eq.{agent['id']}")
             saved.append(agent)
@@ -340,3 +346,11 @@ async def save_workspace_state(
     else:
         await db.upsert("conversations", conversation, "workspace_id")
     return saved
+
+
+def agent_config(agent: Agent) -> dict[str, Any]:
+    """What goes in `agents.config`: the tools, and the document permission only when the agent has one (#134)."""
+    config: dict[str, Any] = {"tools": agent["tools"]}
+    if agent.get("documents") is not None:
+        config["documents"] = agent["documents"]
+    return config
