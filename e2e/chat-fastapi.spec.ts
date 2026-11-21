@@ -2,6 +2,9 @@ import { expect, test } from "@playwright/test";
 import { createAndOpen, login } from "./helpers";
 import { sendChatMessage } from "./workspace-actions";
 
+// Long journeys (15+ chat turns, undo/restore, reload) against `next dev` + uvicorn: same budget as the other long specs.
+test.setTimeout(120_000);
+
 // The chat journeys against the FastAPI backend (#307, #315): the browser talks to Next.js, which proxies /api/v1/chat to the
 // Python API (E2E_CHAT_API=fastapi, see playwright.config.ts and the "e2e" job). The model is still the scripted one, but the
 // engine is the real one, so the numbers are the real engine's for the demo company (not the mock's).

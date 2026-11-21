@@ -33,6 +33,7 @@ test("'deixa mais minimalista' makes the dashboard compact without losing blocks
   await sendChatMessage(page, "Empresa", /42\.800/);
   const panel = page.locator("[data-density]");
   const blocks = page.locator('[data-testid^="widget-"]');
+  await expect(blocks.first()).toBeVisible(); // the reply can land before the widgets render; count() does not wait (run 44900611120)
   const count = await blocks.count();
   expect(count).toBeGreaterThan(0);
   await expect(panel).toHaveAttribute("data-density", "comfortable");
