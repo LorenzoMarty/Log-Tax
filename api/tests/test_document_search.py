@@ -90,3 +90,31 @@ async def test_the_chat_tool_is_bound_to_the_scope_and_wraps_document_text_as_un
     restricted = ToolContext(Scope(mine, "A", "empresa", allowed_tools=("get_tax_diagnosis",)), MemoryStore(company()), RealEngine(),
                              documents=DbDocumentSearch(db, mine))  # type: ignore[arg-type]  # fmt: skip
     assert (await call(restricted, {"query": "valor"}))["status"] != "ok"
+
+
+async def test_get_document_reads_fields_with_confidence_inside_the_scope_and_hides_identifiers(db: FakeDb) -> None:
+    mine, other = seeded(db)
+    from tests.test_chat_tools import company
+
+    extracted = {
+        "fields": {"valor_total": "1500.00", "emitente_cnpj": "enc:xyz"},
+        "confidence": "baixa",
+        "fieldConfidence": {"valor_total": "baixa"},
+        "toConfirm": ["valor_total"],
+        "missing": [],
+        "notes": [],
+    }
+    mine_doc = db.seed("documents", workspace_id=mine, name="nf.xml", doc_type="nfe", extracted=extracted, search_text=NOTE)
+    other_doc = db.seed("documents", workspace_id=other, name="x.xml", doc_type="nfe", extracted=extracted)
+
+    async def get(scope: Scope, doc_id: str) -> Any:
+        ctx = ToolContext(scope, MemoryStore(company()), RealEngine(), documents=DbDocumentSearch(db, mine))  # type: ignore[arg-type]
+        return await ToolRegistry(ctx).invoke("get_document", json.dumps({"id": doc_id}), untrusted_in_context=True)
+
+    out = await get(Scope(mine, "A", "empresa"), str(mine_doc["id"]))
+    d = out["data"]
+    assert d["fields"] == {"valor_total": "1500.00"} and d["needsConfirmation"] is True and d["toConfirm"] == ["valor_total"]
+    assert "<dados_externos" in d["text"] and "enc:xyz" not in str(out)
+    assert "message" in (await get(Scope(mine, "A", "empresa"), str(other_doc["id"])))["data"]  # another workspace: not found
+    assert (await get(Scope(mine, "A", "empresa"), "nope"))["status"] == "error"
+    assert (await get(Scope(mine, "A", "empresa", allowed_tools=("get_tax_diagnosis",)), str(mine_doc["id"])))["status"] != "ok"
