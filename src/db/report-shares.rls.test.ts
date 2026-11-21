@@ -35,7 +35,10 @@ describe("report links", () => {
     await admin.from("report_shares").insert({ workspace_id: ws, created_by: owner.id, token_hash: sha("old"), snapshot: {}, created_at: new Date(Date.now() - 9 * day).toISOString(), expires_at: new Date(Date.now() - day).toISOString() });
     expect((await open("old")).data).toBeNull();
     await share("to-revoke");
-    const { data } = await owner.client.from("report_shares").update({ revoked_at: new Date().toISOString() }).eq("token_hash", sha("to-revoke")).select("id");
+    // The hash column is not selectable, so the owner finds the link by its id (the newest one).
+    const { data: latest } = await owner.client.from("report_shares").select("id").order("created_at", { ascending: false }).limit(1);
+    const { data, error } = await owner.client.from("report_shares").update({ revoked_at: new Date().toISOString() }).eq("id", latest![0].id).select("id");
+    expect(error).toBeNull();
     expect(data).toHaveLength(1);
     expect((await open("to-revoke")).data).toBeNull();
   });
