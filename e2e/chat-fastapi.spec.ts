@@ -279,7 +279,7 @@ test("attach an NF-e in the conversation and ask about it", async ({ page }) => 
   const file = { name: "nota.xml", mimeType: "application/xml", buffer: Buffer.from(NFE) };
   // without the LGPD authorization nothing is sent
   await tray.getByLabel(/Arquivos \(PDF/).setInputFiles(file);
-  await expect(page.getByRole("alert")).toContainText("Marque a autorização");
+  await expect(page.getByRole("alert").filter({ hasText: "Marque a autorização" })).toBeVisible();
   await tray.getByRole("checkbox").check();
   await tray.getByLabel(/Arquivos \(PDF/).setInputFiles(file);
   await expect(page.getByTestId("attachment-chip")).toContainText("nota.xml");
