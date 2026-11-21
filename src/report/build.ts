@@ -10,8 +10,13 @@ export function memoriaSection(steps: CalcStep[] | undefined): ReportSection[] {
   return [{ id: "memoria", title: "Memória de cálculo", table: { head: ["Passo", "Como foi calculado", "Valor", "Fonte"], rows: steps.map((s) => [s.label, s.formula, `R$ ${s.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, s.source]) } }];
 }
 
+/** The sections of the PRD §21 report (#146); the API builds all of them, the TypeScript builder a subset. */
+export type SectionId =
+  | "resumo" | "dados" | "impostos" | "evolucao" | "oportunidades" | "economia" | "riscos" | "alertas"
+  | "documentos" | "pendencias" | "premissas" | "memoria" | "recomendacoes" | "validar"; // prettier-ignore
+
 export interface ReportSection {
-  id: "resumo" | "impostos" | "oportunidades" | "economia" | "premissas" | "memoria" | "validar" | "documentos" | "alertas";
+  id: SectionId;
   title: string;
   paragraphs?: string[];
   table?: { head: string[]; rows: string[][] };

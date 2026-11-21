@@ -57,3 +57,21 @@ export async function proxyToApi(request: Request, segments: string[]): Promise<
   out.set("Cache-Control", "no-store");
   return new Response(upstream.status === 204 ? null : upstream.body, { status: upstream.status, headers: out });
 }
+
+/**
+ * GET to the API from a server component, with the signed-in user's token. Returns null when there is no session, the API
+ * refuses, or it is unreachable, so the caller can fall back. Example: `await apiGetJson<Report>("/v1/workspaces/<id>/report")`.
+ */
+export async function apiGetJson<T>(path: string): Promise<T | null> {
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session?.access_token) return null;
+  try {
+    const res = await fetch(`${apiUrl()}${path}`, { headers: { Authorization: `Bearer ${session.access_token}` }, cache: "no-store" });
+    return res.ok ? ((await res.json()) as T) : null;
+  } catch {
+    return null;
+  }
+}

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const getSession = vi.fn();
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({ auth: { getSession } }) }));
 
-import { proxyToApi } from "../api-proxy";
+import { apiGetJson, proxyToApi } from "../api-proxy";
 
 const fetchMock = vi.fn();
 beforeEach(() => {
@@ -93,5 +93,26 @@ describe("proxyToApi", () => {
     fetchMock.mockRejectedValueOnce(new DOMException("aborted", "AbortError"));
     const aborted = await proxyToApi(new Request("http://app.test/api/v1/chat", { method: "POST", body: "{}", signal: controller.signal }), ["chat"]);
     expect(aborted.status).toBe(499);
+  });
+});
+
+describe("apiGetJson (#146)", () => {
+  it("reads the API with the session's token", async () => {
+    fetchMock.mockResolvedValue(Response.json({ title: "R" }));
+    expect(await apiGetJson("/v1/workspaces/w/report")).toEqual({ title: "R" });
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("http://api.test:8100/v1/workspaces/w/report");
+    expect((init.headers as Record<string, string>).Authorization).toBe("Bearer user.jwt");
+  });
+
+  it("answers null without a session, on a refusal and when the API is down, so the caller can fall back", async () => {
+    getSession.mockResolvedValue({ data: { session: null } });
+    expect(await apiGetJson("/v1/x")).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+    getSession.mockResolvedValue({ data: { session: { access_token: "t" } } });
+    fetchMock.mockResolvedValueOnce(new Response("{}", { status: 404 }));
+    expect(await apiGetJson("/v1/x")).toBeNull();
+    fetchMock.mockRejectedValueOnce(new Error("down"));
+    expect(await apiGetJson("/v1/x")).toBeNull();
   });
 });

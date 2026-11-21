@@ -5,7 +5,8 @@ import type { DocType } from "@/documents/classify";
 import type { StoredExtraction } from "@/documents/storage";
 import { mockEngine } from "@/engine";
 import { createClient } from "@/lib/supabase/server";
-import { buildReport } from "@/report/build";
+import { apiGetJson } from "@/lib/api-proxy";
+import { buildReport, type Report } from "@/report/build";
 import { isPersonal } from "@/workspace/kinds";
 import { ReportView } from "@/report/report-view";
 
@@ -23,6 +24,10 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  // The API builds the full PRD §21 report with the real engine (#146); the local builder is the fallback while it is unreachable.
+  const fromApi = await apiGetJson<Report>(`/v1/workspaces/${id}/report`);
+  if (fromApi) return <ReportView report={fromApi} backHref={`/workspace/${id}`} workspaceId={id} />;
 
   const state = await loadWorkspaceState(supabase, id);
   if (!state) notFound();
