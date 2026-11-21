@@ -347,6 +347,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/engine/asset-carrying-tax": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Asset Carrying Tax
+         * @description IPTU, IPVA or ITR for the year as informed by the user; no rate is estimated, so no amount asks for it.
+         */
+        post: operations["asset_carrying_tax_v1_engine_asset_carrying_tax_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/engine/asset-sale": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Asset Sale
+         * @description Capital gain tax of a simulated sale, with premises; without the acquisition cost it asks for it.
+         */
+        post: operations["asset_sale_v1_engine_asset_sale_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/engine/deadlines": {
         parameters: {
             query?: never;
@@ -1343,6 +1383,38 @@ export interface components {
             /** Message */
             message: string;
         };
+        /** AssetSale */
+        AssetSale: {
+            /** Assumptions */
+            assumptions: string[];
+            /** Costbasis */
+            costBasis: string;
+            /** Gain */
+            gain: string;
+            /** Netproceeds */
+            netProceeds: string;
+            /** Rate */
+            rate: string;
+            /** Salevalue */
+            saleValue: string;
+            /** Tax */
+            tax: string;
+        };
+        /** AssetSaleIn */
+        AssetSaleIn: {
+            /** Competence */
+            competence?: string | null;
+            /** Costbasis */
+            costBasis?: number | string | null;
+            /**
+             * Kind
+             * @default imovel
+             * @enum {string}
+             */
+            kind: "imovel" | "veiculo" | "participacao" | "bem";
+            /** Salevalue */
+            saleValue: number | string;
+        };
         /** Body_import_batch_v1_documents_nfe_batch_post */
         Body_import_batch_v1_documents_nfe_batch_post: {
             /**
@@ -1422,6 +1494,28 @@ export interface components {
             source: string;
             /** Tax */
             tax?: string | null;
+        };
+        /** CarryingResult */
+        CarryingResult: {
+            /** Annual */
+            annual: string;
+            /** Assumptions */
+            assumptions: string[];
+            /** Monthly */
+            monthly: string;
+            tax: components["schemas"]["CarryingTax"];
+        };
+        /** @enum {string} */
+        CarryingTax: "iptu" | "ipva" | "itr";
+        /** CarryingTaxIn */
+        CarryingTaxIn: {
+            /** Annualamount */
+            annualAmount?: number | string | null;
+            /**
+             * Tax
+             * @enum {string}
+             */
+            tax: "iptu" | "ipva" | "itr";
         };
         /** ChangelogEntry */
         ChangelogEntry: {
@@ -1700,6 +1794,8 @@ export interface components {
             /** Steps */
             steps?: components["schemas"]["CalcStep"][];
         };
+        Envelope_AssetSale_: components["schemas"]["OkOut_AssetSale_"] | components["schemas"]["InsufficientDataOut"] | components["schemas"]["NotApplicableOut"] | components["schemas"]["NoneFoundOut"];
+        Envelope_CarryingResult_: components["schemas"]["OkOut_CarryingResult_"] | components["schemas"]["InsufficientDataOut"] | components["schemas"]["NotApplicableOut"] | components["schemas"]["NoneFoundOut"];
         Envelope_Diagnosis_: components["schemas"]["OkOut_Diagnosis_"] | components["schemas"]["InsufficientDataOut"] | components["schemas"]["NotApplicableOut"] | components["schemas"]["NoneFoundOut"];
         Envelope_ItcmdResult_: components["schemas"]["OkOut_ItcmdResult_"] | components["schemas"]["InsufficientDataOut"] | components["schemas"]["NotApplicableOut"] | components["schemas"]["NoneFoundOut"];
         Envelope_OpportunitySet_: components["schemas"]["OkOut_OpportunitySet_"] | components["schemas"]["InsufficientDataOut"] | components["schemas"]["NotApplicableOut"] | components["schemas"]["NoneFoundOut"];
@@ -1900,6 +1996,24 @@ export interface components {
              * @enum {string}
              */
             status: "not_applicable";
+        };
+        /** OkOut[AssetSale] */
+        OkOut_AssetSale_: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            status: "ok";
+            value: components["schemas"]["AssetSale"];
+        };
+        /** OkOut[CarryingResult] */
+        OkOut_CarryingResult_: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            status: "ok";
+            value: components["schemas"]["CarryingResult"];
         };
         /** OkOut[Diagnosis] */
         OkOut_Diagnosis_: {
@@ -2910,6 +3024,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    asset_carrying_tax_v1_engine_asset_carrying_tax_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CarryingTaxIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_CarryingResult_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    asset_sale_v1_engine_asset_sale_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssetSaleIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_AssetSale_"];
                 };
             };
             /** @description Validation Error */

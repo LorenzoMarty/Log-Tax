@@ -208,6 +208,117 @@
         "title": "AskIn",
         "type": "object"
       },
+      "AssetSale": {
+        "properties": {
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "costBasis": {
+            "title": "Costbasis",
+            "type": "string"
+          },
+          "gain": {
+            "title": "Gain",
+            "type": "string"
+          },
+          "netProceeds": {
+            "title": "Netproceeds",
+            "type": "string"
+          },
+          "rate": {
+            "title": "Rate",
+            "type": "string"
+          },
+          "saleValue": {
+            "title": "Salevalue",
+            "type": "string"
+          },
+          "tax": {
+            "title": "Tax",
+            "type": "string"
+          }
+        },
+        "required": [
+          "saleValue",
+          "costBasis",
+          "gain",
+          "tax",
+          "rate",
+          "netProceeds",
+          "assumptions"
+        ],
+        "title": "AssetSale",
+        "type": "object"
+      },
+      "AssetSaleIn": {
+        "additionalProperties": false,
+        "properties": {
+          "competence": {
+            "anyOf": [
+              {
+                "examples": [
+                  "2026-03"
+                ],
+                "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Competence"
+          },
+          "costBasis": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Costbasis"
+          },
+          "kind": {
+            "default": "imovel",
+            "enum": [
+              "imovel",
+              "veiculo",
+              "participacao",
+              "bem"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "saleValue": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1000000000000.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Salevalue"
+          }
+        },
+        "required": [
+          "saleValue"
+        ],
+        "title": "AssetSaleIn",
+        "type": "object"
+      },
       "Body_import_batch_v1_documents_nfe_batch_post": {
         "properties": {
           "confirm": {
@@ -362,6 +473,79 @@
           "source"
         ],
         "title": "CalcStep",
+        "type": "object"
+      },
+      "CarryingResult": {
+        "properties": {
+          "annual": {
+            "title": "Annual",
+            "type": "string"
+          },
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Assumptions",
+            "type": "array"
+          },
+          "monthly": {
+            "title": "Monthly",
+            "type": "string"
+          },
+          "tax": {
+            "$ref": "#/components/schemas/CarryingTax"
+          }
+        },
+        "required": [
+          "tax",
+          "annual",
+          "monthly",
+          "assumptions"
+        ],
+        "title": "CarryingResult",
+        "type": "object"
+      },
+      "CarryingTax": {
+        "enum": [
+          "iptu",
+          "ipva",
+          "itr"
+        ],
+        "type": "string"
+      },
+      "CarryingTaxIn": {
+        "additionalProperties": false,
+        "properties": {
+          "annualAmount": {
+            "anyOf": [
+              {
+                "maximum": 1000000000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annualamount"
+          },
+          "tax": {
+            "enum": [
+              "iptu",
+              "ipva",
+              "itr"
+            ],
+            "title": "Tax",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tax"
+        ],
+        "title": "CarryingTaxIn",
         "type": "object"
       },
       "ChangelogEntry": {
@@ -1587,6 +1771,56 @@
         "title": "Diagnosis",
         "type": "object"
       },
+      "Envelope_AssetSale_": {
+        "discriminator": {
+          "mapping": {
+            "insufficient_data": "#/components/schemas/InsufficientDataOut",
+            "none_found": "#/components/schemas/NoneFoundOut",
+            "not_applicable": "#/components/schemas/NotApplicableOut",
+            "ok": "#/components/schemas/OkOut_AssetSale_"
+          },
+          "propertyName": "status"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/OkOut_AssetSale_"
+          },
+          {
+            "$ref": "#/components/schemas/InsufficientDataOut"
+          },
+          {
+            "$ref": "#/components/schemas/NotApplicableOut"
+          },
+          {
+            "$ref": "#/components/schemas/NoneFoundOut"
+          }
+        ]
+      },
+      "Envelope_CarryingResult_": {
+        "discriminator": {
+          "mapping": {
+            "insufficient_data": "#/components/schemas/InsufficientDataOut",
+            "none_found": "#/components/schemas/NoneFoundOut",
+            "not_applicable": "#/components/schemas/NotApplicableOut",
+            "ok": "#/components/schemas/OkOut_CarryingResult_"
+          },
+          "propertyName": "status"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/OkOut_CarryingResult_"
+          },
+          {
+            "$ref": "#/components/schemas/InsufficientDataOut"
+          },
+          {
+            "$ref": "#/components/schemas/NotApplicableOut"
+          },
+          {
+            "$ref": "#/components/schemas/NoneFoundOut"
+          }
+        ]
+      },
       "Envelope_Diagnosis_": {
         "discriminator": {
           "mapping": {
@@ -2374,6 +2608,42 @@
           "reason"
         ],
         "title": "NotApplicableOut",
+        "type": "object"
+      },
+      "OkOut_AssetSale_": {
+        "properties": {
+          "status": {
+            "const": "ok",
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/AssetSale"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "OkOut[AssetSale]",
+        "type": "object"
+      },
+      "OkOut_CarryingResult_": {
+        "properties": {
+          "status": {
+            "const": "ok",
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/CarryingResult"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "OkOut[CarryingResult]",
         "type": "object"
       },
       "OkOut_Diagnosis_": {
@@ -4742,6 +5012,126 @@
         "summary": "Download",
         "tags": [
           "documents"
+        ]
+      }
+    },
+    "/v1/engine/asset-carrying-tax": {
+      "post": {
+        "description": "IPTU, IPVA or ITR for the year as informed by the user; no rate is estimated, so no amount asks for it.",
+        "operationId": "asset_carrying_tax_v1_engine_asset_carrying_tax_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CarryingTaxIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_CarryingResult_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Asset Carrying Tax",
+        "tags": [
+          "engine"
+        ]
+      }
+    },
+    "/v1/engine/asset-sale": {
+      "post": {
+        "description": "Capital gain tax of a simulated sale, with premises; without the acquisition cost it asks for it.",
+        "operationId": "asset_sale_v1_engine_asset_sale_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetSaleIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_AssetSale_"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Asset Sale",
+        "tags": [
+          "engine"
         ]
       }
     },

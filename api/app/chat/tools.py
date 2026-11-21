@@ -31,6 +31,7 @@ from app.core.br_ids import normalize_cnpj
 from app.documents.classify import DOC_LABEL
 from app.documents.inventory import inventory_checklist
 from app.documents.search import cited_for_model
+from app.engine.asset_taxes import carrying_tax, patrimony_summary, sale_tax
 from app.engine.calendar import upcoming_deadlines
 from app.engine.company_schema import CompanyFields, apply_fields, inconsistencies, merge_series
 from app.engine.history import tax_history
@@ -277,6 +278,17 @@ class AssetPatch(_Args, _NonEmpty):
 class UpdateAssetArgs(_Args):
     id: str = Field(min_length=1)
     patch: AssetPatch
+
+
+class SimulateAssetSaleArgs(_Args):
+    id: str = Field(min_length=1)
+    sale_value: float = Field(gt=0, le=1e13)
+    cost_basis: float | None = Field(default=None, ge=0, le=1e13)
+
+
+class AssetCarryingTaxArgs(_Args):
+    tax: Literal["iptu", "ipva", "itr"]
+    annual_amount: float | None = Field(default=None, ge=0, le=1e13)
 
 
 class SetEstateArgs(_Args):
@@ -902,6 +914,50 @@ async def _simulate_partilha(ctx: ToolContext, a: PartilhaArgs) -> Any:
         "notes": ["Meação não é herança e não entra no ITCMD."] * bool(meacao)
         + ["Simulação estimativa: confirme com advogado ou contador."],
     }
+
+
+# ---- asset taxes and patrimony panel ----
+@_tool(
+    "simulate_asset_sale",
+    "Simula a venda de um bem do patrimônio e mostra o imposto de ganho de capital com as premissas. id vem de list_assets; saleValue é o preço de venda; costBasis é o custo de aquisição (pergunte ao usuário se não souber: sem ele o resultado pede o valor).",
+    SimulateAssetSaleArgs,
+    read_only=True,
+    engine=True,
+    kinds=("pessoal",),
+)  # fmt: skip
+async def _simulate_asset_sale(ctx: ToolContext, a: SimulateAssetSaleArgs) -> Any:
+    asset = next((i for i in await ctx.store.list_assets() if i["id"] == a.id), None)
+    asset = _need(asset, f'Bem "{a.id}" não encontrado.')
+    sale, cost = Decimal(str(a.sale_value)), _dec(a.cost_basis)
+    return _env(sale_tax(ctx.engine.book, ctx.engine.competence, asset["kind"], sale, cost))
+
+
+@_tool(
+    "asset_carrying_tax",
+    "Registra no cálculo IPTU, IPVA ou ITR anual de um bem. Só usa o valor que o usuário informar (annualAmount); a alíquota varia por município/UF e não é estimada: sem o valor, o resultado pede ao usuário.",
+    AssetCarryingTaxArgs,
+    read_only=True,
+    engine=True,
+    kinds=("pessoal",),
+)  # fmt: skip
+async def _asset_carrying_tax(ctx: ToolContext, a: AssetCarryingTaxArgs) -> Any:
+    return _env(carrying_tax(a.tax, _dec(a.annual_amount)))
+
+
+@_tool(
+    "build_patrimony_panel",
+    "Monta no painel o patrimônio líquido e o patrimônio por tipo (a partir dos bens e dívidas cadastrados) e devolve os totais.",
+    NoArgs,
+    kinds=("pessoal",),
+)  # fmt: skip
+async def _build_patrimony_panel(ctx: ToolContext, a: NoArgs) -> Any:
+    summary = patrimony_summary(await ctx.store.list_assets())
+    for w in summary.widgets:
+        exists = any(x["id"] == w["id"] for x in (await ctx.store.get_dashboard())["widgets"])
+        await ctx.store.dispatch({"type": "update" if exists else "add", "widget": validate_widget(w)})
+    out = wire(summary)
+    out.pop("widgets")
+    return out
 
 
 # ---- workspaces ----
