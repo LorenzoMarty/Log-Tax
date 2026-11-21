@@ -380,6 +380,7 @@ def _asset_reply(p: list[ToolOutcome], text: str) -> str:
     base = "Cadastrei o bem no seu patrimônio."
     return base if revenue_from(text) else f"{base} Qual é o valor dele hoje? Deixei R$ 0 por enquanto."
 
+
 def _goal_widget(text: str) -> dict[str, Any]:
     target = (revenue_from(text) or Decimal(10000)).quantize(Decimal("0.01"))
     return {
