@@ -124,6 +124,11 @@ export default async function WorkspacePage({ searchParams }: { searchParams: Pr
       </form>
 
       <p className="text-sm text-ink-muted">
+        <Link href="/workspace/conta" className="underline">
+          Minha conta (email, nome, segurança e privacidade)
+        </Link>
+      </p>
+      <p className="text-sm text-ink-muted">
         <Link href="/workspace/seguranca" className="underline">
           Segurança da conta (verificação em duas etapas)
         </Link>
