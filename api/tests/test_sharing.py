@@ -63,6 +63,8 @@ def test_an_invite_is_created_lower_cased_audited_and_replaces_a_pending_one(sig
     [invite] = db.tables["workspace_invites"]  # one invite per email: the role was changed, not duplicated
     assert (invite["email"], invite["role"], invite["workspace_name"]) == ("ana@example.com", "commenter", "Minha Empresa")
     assert audited(db) == [("invite_sent", "ana@example.com (reader)"), ("invite_sent", "ana@example.com (commenter)")]
+    editor = signed_in.post(f"/v1/workspaces/{ws}/invites", json={"email": "ana@example.com", "role": "editor"})
+    assert editor.status_code == 201 and db.tables["workspace_invites"][0]["role"] == "editor"
 
 
 @pytest.mark.parametrize(

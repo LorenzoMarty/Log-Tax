@@ -1986,6 +1986,7 @@
           },
           "role": {
             "enum": [
+              "editor",
               "commenter",
               "reader"
             ],

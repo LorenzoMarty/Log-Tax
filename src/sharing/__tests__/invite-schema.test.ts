@@ -33,6 +33,6 @@ describe("commentInput", () => {
 
 describe("ROLE_LABEL", () => {
   it("names every role in Portuguese", () => {
-    expect(ROLE_LABEL).toEqual({ owner: "Dono", commenter: "Comentário", reader: "Leitura" });
+    expect(ROLE_LABEL).toEqual({ owner: "Dono", editor: "Edição", commenter: "Comentário", reader: "Leitura" });
   });
 });

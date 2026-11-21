@@ -1644,7 +1644,7 @@ export interface components {
              * Role
              * @enum {string}
              */
-            role: "commenter" | "reader";
+            role: "editor" | "commenter" | "reader";
         };
         /** IrScenario */
         IrScenario: {
