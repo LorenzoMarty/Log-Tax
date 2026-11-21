@@ -6,8 +6,12 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
+from app.chat.store import MemoryStore, Scope, ToolContext
+from app.chat.tools import ToolRegistry
 from app.db.client import user_db
 from app.documents.expected import expected_types
+from app.engine.real_engine import RealEngine
+from app.engine.types import CompanyProfile
 from tests.conftest import USER
 from tests.fake_db import FakeDb
 
@@ -79,3 +83,44 @@ def test_bad_period_unknown_workspace_and_anonymous(signed_in: TestClient, db: F
     assert signed_in.get(f"/v1/workspaces/{ws}/missing-documents", params={"period": "março"}).status_code == 422
     assert signed_in.get(f"/v1/workspaces/{USER}/missing-documents").status_code == 404
     assert anonymous.get(f"/v1/workspaces/{ws}/missing-documents").status_code == 401
+
+
+class FakeArrivedDocuments:
+    """The workspace's documents as the chat tool sees them: only (doc_type, created_at)."""
+
+    def __init__(self, arrived: list[tuple[str, str]]) -> None:
+        self._arrived = arrived
+
+    async def search(self, query: str) -> list[Any]:
+        return []
+
+    async def names(self) -> list[str]:
+        return []
+
+    async def arrived(self) -> list[tuple[str, str]]:
+        return self._arrived
+
+
+async def test_the_chat_tool_puts_the_checklist_on_the_dashboard_once() -> None:
+    store = MemoryStore(company=CompanyProfile(id="c1", name="Demo", regime="simples", activity="comercio"))
+    docs = FakeArrivedDocuments([("informe_rendimentos", "2026-02-10T12:00:00Z")])
+    reg = ToolRegistry(ToolContext(Scope("ws", kind="pessoal"), store, RealEngine("2026-03"), documents=docs))  # type: ignore[arg-type]
+    for _ in range(2):
+        r = dict(await reg.invoke("list_missing_documents", '{"period": "2026-03"}', untrusted_in_context=False))
+    assert r["status"] == "ok" and r["data"] == {"period": "2026-03", "missing": ["Holerites da folha", "Extrato bancário"]}
+    blocks = [w for w in store.history.present["widgets"] if w["id"] == "docs-faltantes"]
+    assert len(blocks) == 1 and blocks[0]["title"] == "Documentos de 03/2026" and blocks[0]["items"][0]["done"] is True
+
+
+async def test_the_chat_tool_refuses_a_bad_period_and_works_only_with_documents() -> None:
+    reg = ToolRegistry(
+        ToolContext(
+            Scope("ws", kind="empresa"),
+            MemoryStore(company=CompanyProfile(id="c1", name="Demo", regime="simples", activity="comercio")),
+            RealEngine("2026-03"),
+        )
+    )
+    assert (
+        dict(await reg.invoke("list_missing_documents", '{"period": "2026-13"}', untrusted_in_context=False))["status"] == "error"
+    )
+    assert dict(await reg.invoke("list_missing_documents", "{}", untrusted_in_context=False))["status"] == "error"

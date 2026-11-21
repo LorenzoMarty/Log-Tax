@@ -53,6 +53,7 @@ class Hit:
 class DocumentSearch(Protocol):
     async def search(self, query: str) -> list[Hit]: ...
     async def names(self) -> list[str]: ...
+    async def arrived(self) -> list[tuple[str, str]]: ...
 
 
 class DbDocumentSearch:
@@ -75,6 +76,11 @@ class DbDocumentSearch:
     async def names(self) -> list[str]:
         rows = await self._db.select("documents", select="name", workspace_id=f"eq.{self._workspace_id}")
         return [str(r["name"]) for r in rows]
+
+    async def arrived(self) -> list[tuple[str, str]]:
+        """(doc_type, created_at) of every document, what the missing-documents checklist ticks from (#143)."""
+        rows = await self._db.select("documents", select="doc_type,created_at", workspace_id=f"eq.{self._workspace_id}")
+        return [(str(r["doc_type"]), str(r["created_at"])) for r in rows]
 
 
 def cited_for_model(hits: list[Hit]) -> list[dict[str, str]]:

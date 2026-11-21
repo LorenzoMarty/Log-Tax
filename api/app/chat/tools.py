@@ -14,7 +14,7 @@ import unicodedata
 import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field, is_dataclass, replace
-from datetime import date
+from datetime import UTC, date, datetime
 from decimal import ROUND_DOWN, ROUND_HALF_UP, Decimal
 from typing import Annotated, Any, Literal
 
@@ -26,12 +26,14 @@ from app.chat.agent_templates import AGENT_TEMPLATES
 from app.chat.agent_templates import BY_ID as TEMPLATE_BY_ID
 from app.chat.blocks import payroll_widget, projection_widget
 from app.chat.dashboard import Widget, validate_widget
-from app.chat.kinds import Kind, kind_allows, spec_of
+from app.chat.kinds import Kind, is_personal, kind_allows, spec_of
 from app.chat.prestador_panel import prestador_widgets
+from app.chat.state import profile_to_json
 from app.chat.store import Scope, ToolContext
 from app.chat.types import ToolOutcome, ToolSpec
 from app.core.br_ids import cnpj_valid, normalize_cnpj
 from app.documents.classify import DOC_LABEL
+from app.documents.expected import checklist, checklist_widget
 from app.documents.inventory import inventory_checklist
 from app.documents.search import cited_for_model
 from app.engine.asset_taxes import carrying_tax, patrimony_summary, sale_tax
@@ -736,6 +738,28 @@ async def _search_documents(ctx: ToolContext, a: SearchDocsArgs) -> Any:
         raise ToolError("A busca em documentos não está disponível agora.")
     hits = cited_for_model(await ctx.documents.search(a.query.strip()))
     return hits or {"message": "Não encontrei esse termo nos documentos deste espaço."}
+
+
+class MissingDocsArgs(_Args):
+    period: _MONTH | None = None
+
+
+@_tool(
+    "list_missing_documents",
+    "Mostra no painel a lista de documentos esperados para o mês (AAAA-MM; padrão: o mês atual), marcando os que já chegaram. Use quando o usuário perguntar quais documentos faltam.",
+    MissingDocsArgs,
+)  # fmt: skip
+async def _list_missing_documents(ctx: ToolContext, a: MissingDocsArgs) -> Any:
+    # #143: same list as GET /v1/workspaces/{id}/missing-documents, put on the dashboard from the conversation
+    if ctx.documents is None:
+        raise ToolError("A lista de documentos não está disponível agora.")
+    period = a.period or datetime.now(UTC).strftime("%Y-%m")
+    profile = await ctx.store.get_person() if is_personal(ctx.scope.kind) else await ctx.store.get_company()
+    items = checklist(ctx.scope.kind or "empresa", profile_to_json(profile), period, await ctx.documents.arrived())
+    widget = checklist_widget(period, items)
+    await ctx.store.dispatch({"type": "remove", "id": widget["id"]})
+    await ctx.store.dispatch({"type": "add", "widget": widget})
+    return {"period": period, "missing": [i["label"] for i in items if not i["done"]]}
 
 
 @_tool(
