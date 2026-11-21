@@ -41,6 +41,13 @@ test("company journey through FastAPI: context → diagnosis → dashboard → w
   await page.getByRole("button", { name: "Confirmar" }).click();
   await expect(page.getByTestId("widget-kpi")).toHaveCount(0);
 
+  // undo (#128): the removed block comes back from the saved version history
+  await page.getByRole("button", { name: "Desfazer" }).click();
+  await expect(page.getByTestId("widget-kpi")).toBeVisible();
+  await page.getByText(/Versões do painel/).click();
+  await page.getByRole("button", { name: "Restaurar" }).first().click(); // the version without the block, after the undo
+  await expect(page.getByTestId("widget-kpi")).toHaveCount(0);
+
   // everything the Python API saved is what the page reads back
   await page.reload();
   await expect(page.getByTestId("widget-breakdown")).toBeVisible();

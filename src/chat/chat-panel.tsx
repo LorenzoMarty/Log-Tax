@@ -6,6 +6,7 @@ import { AgentList } from "@/agents/agent-list";
 import { AlertBar } from "@/alerts/alert-bar";
 import type { AlertStatus } from "@/alerts/evaluate";
 import { DashboardView } from "@/dashboard/dashboard-view";
+import { VersionHistory } from "@/dashboard/version-history";
 import { applyWithTransition } from "@/dashboard/view-transition";
 import type { Dashboard } from "@/dashboard/types";
 import { Button, Input, Panel } from "@/ui/log";
@@ -179,7 +180,9 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
       <AgentList workspaceId={props.workspaceId} agents={agents} currentAgentId={props.agentId} />
       <AlertBar alerts={alerts} />
       <div className="grid items-start gap-6 lg:grid-cols-[1fr_380px]">
-        <div className="order-2 min-w-0 lg:order-none">
+        <div className="order-2 flex min-w-0 flex-col gap-2 lg:order-none">
+          {/* versions are recorded by the Python chat only (#370); the TS chat is being removed (#314) */}
+          {CHAT_URL === "/api/v1/chat" && !props.agentId && <VersionHistory workspaceId={props.workspaceId} dashboard={dashboard} onRestored={setDashboard} />}
           <DashboardView dashboard={dashboard} loading={busy} onAsk={(w) => { setTopic(w); inputRef.current?.focus(); }} />
         </div>
       <Panel label="Conversa com a IA" className="order-1 min-w-0 lg:order-none lg:sticky lg:top-6">
