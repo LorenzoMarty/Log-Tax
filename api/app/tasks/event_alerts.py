@@ -85,7 +85,7 @@ def rule_change_notices(book: RuleBook, period: str) -> list[tuple[str, str]]:
 
 
 async def evaluate_scheduled_events(admin: UserDb, settings: Settings, today: date | None = None) -> dict[str, int]:
-    """New opportunities, missing documents, rule changes: one notice per alert and per opportunity, (month, document) or rule version."""
+    """New opportunities, missing documents and rule changes: one notice per alert and per occurrence."""
     day = today or datetime.now(UTC).date()
     period = day.strftime("%Y-%m")
     rows = await admin.select("alerts", select="id,rule,workspace_id,workspaces(id,name,kind,profile)", active="eq.true")
