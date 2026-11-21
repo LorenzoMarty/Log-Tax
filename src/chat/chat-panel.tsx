@@ -315,7 +315,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
           {messages.length === 0 && (
             <>
               <p className="text-sm text-ink-muted">O que você precisa resolver?</p>
-              <RequestExamples disabled={busy} onPick={(text) => void send(text)} />
+              <RequestExamples showContact disabled={busy} onPick={(text) => void send(text)} />
             </>
           )}
           {messages.map((m, i) => (

@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { supportContact } from "@/lib/support";
 
 /** Requests a first-time user can make, taken from PRD §8 ("Comandos naturais"), #158. */
 export const REQUEST_EXAMPLES = [
@@ -19,13 +20,19 @@ export function RequestExamples({
   disabled,
   title = "O que posso pedir?",
   prompts = REQUEST_EXAMPLES,
+  showContact = false,
+  contactEmail,
 }: {
   onPick: (text: string) => void;
   disabled: boolean;
   title?: string;
   prompts?: readonly string[];
+  /** Adds the support channel under the list (the empty-conversation help); it shows only when an address is configured (#158). */
+  showContact?: boolean;
+  contactEmail?: string;
 }) {
   const titleId = useId();
+  const contact = showContact ? supportContact(contactEmail ?? process.env.NEXT_PUBLIC_SUPPORT_EMAIL) : null;
   return (
     <section aria-labelledby={titleId} className="flex flex-col gap-2">
       <h3 id={titleId} className="text-sm font-semibold text-ink">
@@ -40,6 +47,15 @@ export function RequestExamples({
           </li>
         ))}
       </ul>
+      {contact && (
+        <p className="text-xs text-ink-muted">
+          Precisa de ajuda de uma pessoa?{" "}
+          <a href={contact.href} className="underline">
+            Fale com o suporte
+          </a>
+          .
+        </p>
+      )}
     </section>
   );
 }
