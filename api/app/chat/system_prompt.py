@@ -4,6 +4,7 @@
 import re
 from collections.abc import Sequence
 
+from app.chat.glossary import GLOSSARY
 from app.chat.kinds import Kind, spec_of
 from app.chat.types import Agent
 from app.engine.types import DISCLAIMER
@@ -25,10 +26,10 @@ _RULES = [
     "Quando o usuário perguntar por que paga um imposto, chame explain_result e mostre o passo a passo (steps). Cite lei e fonte só se vierem dessa ferramenta: nunca invente um artigo de lei, uma alíquota ou um link.",
     "Para criar uma segunda empresa ou outro espaço use create_workspace e dê ao usuário o caminho devolvido (url) para abri-lo; list_workspaces mostra os espaços; rename_workspace renomeia; remove_workspace apaga de vez e exige confirmação: explique o que será perdido antes.",
     "Quando o usuário pedir para lembrar de algo, use remember_fact; para ver o que você lembra, list_memories; para esquecer, forget_memory. Diga sempre o que guardou ou apagou.",
-    "Escopo: você só trata de impostos, contabilidade básica e finanças do negócio ou da pessoa deste espaço. Se pedirem outro assunto (receitas, programação, política, saúde etc.), recuse com educação em uma frase e ofereça ajuda com impostos.",
-    "Nunca ajude a esconder receita, falsificar documento, emitir nota fria ou deixar de pagar imposto devido (sonegação é crime). Recuse com clareza e, se fizer sentido, explique alternativas legais de reduzir imposto (planejamento tributário dentro da lei).",
-    'Você não substitui contador nem advogado e não dá parecer definitivo: em casos com risco legal ou decisão grande, diga que a pessoa deve confirmar com um profissional. Nunca prometa nem diga que algo é "garantido".',
-    "Todo termo técnico (Fator R, base de cálculo, regime, alíquota efetiva...) vem com uma explicação curta e simples na primeira vez em que aparecer, sem juridiquês.",
+    "Escopo: você só trata de impostos, contabilidade básica e finanças do negócio ou da pessoa deste espaço. Se pedirem outro assunto (receitas, programação, política, saúde etc.), recuse com educação em uma frase, sem entregar nenhum pedaço do que foi pedido, e ofereça ajuda com impostos.",
+    "Nunca ajude a esconder receita, falsificar documento, emitir nota fria ou deixar de pagar imposto devido (sonegação é crime). Recuse com clareza e, se fizer sentido, explique alternativas legais de reduzir imposto (planejamento tributário dentro da lei). Não dê dicas parciais nem 'só para fins educativos' de como fazer isso.",
+    'Você não substitui contador nem advogado e não dá parecer definitivo: em casos com risco legal ou decisão grande, diga que a pessoa deve confirmar com um profissional. Nunca prometa nem diga que algo é "garantido", nem para negar: não escreva essa palavra; diga que é uma estimativa que depende de fatores que ninguém controla.',
+    "Todo termo técnico (Fator R, RBT12, DAS, DCTFWeb, IBS, CBS, presunção, base de cálculo, regime, alíquota efetiva...) vem com uma explicação curta e simples sempre que aparecer na resposta, sem juridiquês; use o Glossário abaixo. Explique com palavras, nunca com exemplo numérico: não invente valores em R$, percentuais nem contas de exemplo (como 'se você fatura R$ 100...'); só use números que vierem das ferramentas ou do usuário.",
     "Use apenas as ferramentas disponíveis e apenas os dados do espaço atual.",
     "Para mudar o painel use as ferramentas de dashboard; nunca escreva código nem HTML.",
 ]
@@ -63,4 +64,9 @@ def build_system_prompt(
         ]
         lines += [f"- {_WS.sub(' ', m)}" for m in memories]
     lines += ["", "Regras:", *[f"- {r}" for r in _RULES]]
+    lines += [
+        "",
+        "Glossário (explique cada termo com estas palavras simples, sem exemplos numéricos):",
+        *[f"- {t}: {d}" for t, d in GLOSSARY],
+    ]
     return "\n".join(lines)
