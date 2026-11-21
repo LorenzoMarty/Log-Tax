@@ -212,6 +212,13 @@ test("informar o CNPJ preenche nome, CNAE, UF e município", async ({ page }) =>
   await sendChatMessage(page, "Meu CNPJ é 11.222.333/0001-81", /LOG TAX DEMONSTRACAO LTDA: CNAE 6201501, 6202300, São Paulo\/SP/);
 });
 
+// #328: the alphanumeric CNPJ (Receita, since 2026-07-31) is looked up with its letters; the stub finds 12.ABC.345/01DE-35.
+test("informar um CNPJ alfanumérico preenche a proposta sem perder as letras", async ({ page }) => {
+  await login(page, "cnpj-alfa");
+  await createAndOpen(page, /Minha Empresa/);
+  await sendChatMessage(page, "Meu CNPJ é 12.ABC.345/01DE-35", /LOG TAX DEMONSTRACAO LTDA: CNAE 6201501, 6202300, São Paulo\/SP/);
+});
+
 test("serviço fora do ar vira pergunta manual, não erro", async ({ page }) => {
   await login(page, "cnpj-down");
   await createAndOpen(page, /Minha Empresa/);

@@ -429,7 +429,7 @@ def _plan(pattern: str, steps: list[Step], reply: Reply) -> Plan:
     return Plan(re.compile(pattern, _I), steps, reply)
 
 
-_CNPJ = re.compile(r"\d{2}\.?\d{3}\.?\d{3}/?\d{4}-?\d{2}")
+_CNPJ = re.compile(r"[0-9A-Z]{2}\.?[0-9A-Z]{3}\.?[0-9A-Z]{3}/?[0-9A-Z]{4}-?\d{2}", re.I)  # alphanumeric CNPJ too (#328)
 
 
 def _lookup_reply(p: list[ToolOutcome], _t: str) -> str:
