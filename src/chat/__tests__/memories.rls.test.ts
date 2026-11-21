@@ -38,6 +38,16 @@ describe("assistant long-term memory (real database)", () => {
     expect((await loadWorkspaceState(owner.client, ws))!.memories).toEqual([]);
   });
 
+  it("an agent's memory is owner-only and cascades with the agent", async () => {
+    const agent = await owner.client.from("agents").insert({ workspace_id: ws, name: "IA", objective: "o", config: { tools: [] } }).select().single();
+    const ins = await owner.client.from("workspace_memories").insert({ workspace_id: ws, agent_id: agent.data!.id, text: "só da IA" });
+    expect(ins.error).toBeNull();
+    expect((await guest.client.from("workspace_memories").select("*").eq("agent_id", agent.data!.id)).data).toEqual([]);
+    expect((await other.client.from("workspace_memories").select("*").eq("agent_id", agent.data!.id)).data).toEqual([]);
+    await owner.client.from("agents").delete().eq("id", agent.data!.id);
+    expect((await admin.from("workspace_memories").select("*").eq("text", "só da IA")).data).toEqual([]);
+  });
+
   it("one workspace's memory does not leak to another workspace or to a guest", async () => {
     const own = await owner.client.from("workspace_memories").insert({ workspace_id: ws, text: "segredo do espaço" });
     expect(own.error).toBeNull();

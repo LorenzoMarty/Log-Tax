@@ -111,7 +111,11 @@ async def load_workspace_state(
         "agents", select="id,name,objective,config", workspace_id=f"eq.{workspace_id}", order="created_at"
     )
     # Owner-only by RLS: a guest gets an empty list.
-    memories = await db.select("workspace_memories", select="id,text", workspace_id=f"eq.{workspace_id}", order="created_at")
+    memories = await db.select(
+        "workspace_memories", select="id,text,agent_id", workspace_id=f"eq.{workspace_id}", order="created_at"
+    )
+    # An agent conversation sees the workspace's memories plus its own, never another agent's.
+    memories = [m for m in memories if m.get("agent_id") in (None, agent_id)]
 
     asset_rows = await db.select(
         "assets", select="id,kind,description,value,acquired_at,extra", workspace_id=f"eq.{workspace_id}", order="created_at"
@@ -157,7 +161,8 @@ async def load_workspace_state(
         history=History(present),
         alerts=[{"id": a["id"], "rule": a["rule"], "active": a["active"]} for a in alerts],
         agents=agents,
-        memories=[{"id": m["id"], "text": m["text"]} for m in memories],
+        memories=[{"id": m["id"], "text": m["text"], **({"scope": "agent"} if m.get("agent_id") else {})} for m in memories],
+        agent_id=agent_id,
         assets=[
             {**a, "value": str(Decimal(str(a["value"])).quantize(Decimal("0.01"))), "extra": a.get("extra") or {}}
             for a in asset_rows
@@ -229,7 +234,11 @@ async def save_workspace_state(
     removed = [i for i in store.removed_memory_ids if is_persisted(i)]
     if removed:
         await db.delete("workspace_memories", id=f"in.({','.join(removed)})", workspace_id=f"eq.{workspace_id}")
-    new_memories = [{"workspace_id": workspace_id, "text": m["text"]} for m in store.memories if not is_persisted(m["id"])]
+    new_memories = [
+        {"workspace_id": workspace_id, "text": m["text"], "agent_id": store.agent_id if m.get("scope") == "agent" else None}
+        for m in store.memories
+        if not is_persisted(m["id"])
+    ]
     if new_memories:
         await db.insert("workspace_memories", new_memories)
 
