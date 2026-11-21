@@ -1,7 +1,6 @@
 import { ESTIMATE_KINDS, type Dashboard, type Widget, type WidgetSize } from "./types";
 import { widgetTransitionName } from "./motion";
 import { WidgetView } from "./widgets";
-import { dashboardCsv } from "./csv";
 import { DashboardExportMenu } from "./export-buttons";
 
 const SPAN: Record<WidgetSize, string> = {
@@ -35,7 +34,7 @@ export function DashboardView({ dashboard, loading = false, onAsk }: { dashboard
     >
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="lg-heading-1">{dashboard.name}</h2>
-        <DashboardExportMenu title={dashboard.name} csv={dashboardCsv(dashboard.widgets)} />
+        <DashboardExportMenu title={dashboard.name} widgets={dashboard.widgets} />
       </div>
       {dashboard.widgets.length === 0 && !loading ? (
         <p className="text-sm text-ink-muted">Nenhum bloco ainda. Peça à IA para adicionar algo.</p>

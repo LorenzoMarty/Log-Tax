@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { exportFileName } from "./csv";
+import { dashboardCsv, exportFileName } from "./csv";
+import type { Widget } from "./types";
 import { elementToPng } from "./image";
 
 function save(href: string, name: string) {
@@ -41,7 +42,9 @@ export function ImageButton({ title, className = "text-xs" }: { title: string; c
 }
 
 /** "Exportar" menu of the whole dashboard: native details, so it opens with Enter/Space and closes with the same key. */
-export function DashboardExportMenu({ title, csv }: { title: string; csv: string | null }) {
+export function DashboardExportMenu({ title, widgets }: { title: string; widgets: Widget[] }) {
+  // Built on the client: a leading BOM would be stripped when passed as a server component prop.
+  const csv = dashboardCsv(widgets);
   return (
     <details data-export-skip className="relative print:hidden">
       <summary className="cursor-pointer text-sm font-medium text-ink underline underline-offset-2">Exportar</summary>
