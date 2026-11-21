@@ -17,7 +17,7 @@ describe("AgentList", () => {
     render(<AgentList workspaceId="ws1" agents={agents} />);
     const nav = screen.getByRole("navigation", { name: "Minhas IAs" });
     const links = within(nav).getAllByRole("link");
-    expect(links.map((l) => l.getAttribute("href"))).toEqual(["/workspace/ws1", "/workspace/ws1?ia=a1", "/workspace/ws1?ia=a2", "/workspace/ws1/ia/a1", "/workspace/ws1/ia/a2"]);
+    expect(links.map((l) => l.getAttribute("href"))).toEqual(["/workspace/ws1", "/workspace/ws1?ia=a1", "/workspace/ws1?ia=a2"]);
     expect(within(nav).getByText("Acompanhar impostos")).toBeInTheDocument();
     expect(within(nav).getByText("2 ferramentas")).toBeInTheDocument();
     expect(within(nav).getByText("sem ferramentas")).toBeInTheDocument();
@@ -27,7 +27,7 @@ describe("AgentList", () => {
     const { rerender } = render(<AgentList workspaceId="ws1" agents={agents} />);
     expect(screen.getByRole("link", { name: /Assistente geral/ })).toHaveAttribute("aria-current", "page");
     rerender(<AgentList workspaceId="ws1" agents={agents} currentAgentId="a2" />);
-    expect(screen.getByRole("link", { name: /^IA Patrimonial/ })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: /IA Patrimonial/ })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: /Assistente geral/ })).not.toHaveAttribute("aria-current");
   });
 });

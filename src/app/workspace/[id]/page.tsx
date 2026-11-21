@@ -86,10 +86,17 @@ export default async function WorkspaceChatPage({
             {state.agent && <span className="font-normal text-ink-muted"> · {state.agent.name}</span>}
           </h1>
         </div>
-        <Link href="/workspace" className="lg-btn lg-btn-ghost lg-btn-sm">
-          <Icon name="chevronLeft" />
-          Todos os espaços
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          {isOwner && state.agent && (
+            <Link href={`/workspace/${id}/ia/${state.agent.id}`} className="lg-btn lg-btn-ghost lg-btn-sm">
+              Editar esta IA
+            </Link>
+          )}
+          <Link href="/workspace" className="lg-btn lg-btn-ghost lg-btn-sm">
+            <Icon name="chevronLeft" />
+            Todos os espaços
+          </Link>
+        </div>
       </header>
 
       {notice && (

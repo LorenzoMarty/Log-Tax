@@ -42,8 +42,9 @@ test("edit an agent on its detail screen and delete it with confirmation", async
   await login(page, "agentedit");
   await createAndOpen(page, /Minha Empresa/);
   await sendChatMessage(page, "Crie uma IA para minha empresa", /Criei a "IA da Empresa"/);
-  await page.getByRole("link", { name: "Editar IA da Empresa" }).click();
-  await expect(page.getByRole("heading", { name: "IA da Empresa" })).toBeVisible();
+  await page.getByRole("navigation", { name: "Minhas IAs" }).getByRole("link", { name: /IA da Empresa/ }).click();
+  await page.getByRole("link", { name: "Editar esta IA" }).click();
+  await expect(page.getByRole("heading", { name: "IA da Empresa", level: 1 })).toBeVisible();
   await page.getByLabel("Objetivo").fill("Vigiar o caixa");
   await page.getByLabel("run_simulation").uncheck();
   await page.getByRole("button", { name: "Salvar alterações" }).click();
@@ -51,7 +52,7 @@ test("edit an agent on its detail screen and delete it with confirmation", async
   await page.getByRole("link", { name: "Voltar ao espaço" }).click();
   await expect(page.getByRole("navigation", { name: "Minhas IAs" })).toContainText("Vigiar o caixa");
 
-  await page.getByRole("link", { name: "Editar IA da Empresa" }).click();
+  await page.getByRole("link", { name: "Editar esta IA" }).click();
   await page.getByRole("button", { name: "Excluir IA" }).click();
   await page.getByRole("button", { name: "Confirmar exclusão" }).click();
   await expect(page).toHaveURL(/\/workspace\/[0-9a-f-]{36}$/);
