@@ -32,6 +32,11 @@ export default async function WorkspacePage({ searchParams }: { searchParams: Pr
     <main className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-10">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <Logo height={32} />
+        {workspaces?.some((w) => w.owner_id !== user.id) && (
+          <Link href="/portal" className="text-sm underline">
+            Portal do contador
+          </Link>
+        )}
         <form action={signOut} className="flex min-w-0 flex-wrap items-center gap-3 text-sm text-ink-muted">
           <span className="break-all">{user.email}</span>
           <Button type="submit" variant="ghost" size="sm">
