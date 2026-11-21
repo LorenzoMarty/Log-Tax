@@ -344,3 +344,17 @@ async def test_scripted_update_agent_reads_the_agent_id_from_the_system_prompt()
     assert tools.args[0] == {"id": "a1", "patch": {"objective": "cuidar do caixa"}} and "atualizei o objetivo" in r.text
     none, tools2 = await turn("troque o objetivo para algo", {})  # no agent in the default system prompt
     assert tools2.names == [] and "Não encontrei essa IA" in none
+
+
+async def test_scripted_inventory_journey_calls_the_estate_asset_and_heir_tools() -> None:
+    _, tools = await turn("Abrir o espólio de João Silva, falecido em 15/10/2026, em sp", {})
+    assert tools.names == ["set_estate"]
+    assert tools.args[0] == {"deceasedName": "João Silva", "diedAt": "2026-10-15", "uf": "SP"}
+    _, tools = await turn("Cadastrar imóvel Apartamento no centro de R$ 400 mil", {})
+    assert tools.args[0] == {"kind": "imovel", "description": "Apartamento no centro", "value": 400000}
+    _, tools = await turn("Cadastrar herdeira Ana Silva, filha, 50%", {})
+    assert tools.args[0] == {"name": "Ana Silva", "relationship": "filha", "share": 50.0}
+    heirs = [{"name": "Ana", "share": "50.00", "amount": "240000.00"}]
+    inv = {"netEstate": "480000.00", "assets": [{}, {}], "heirs": heirs, "pendencias": []}
+    text, tools = await turn("Mostrar o resumo do inventário", {"get_inventory": value(inv)})
+    assert tools.names == ["get_inventory"] and "R$ 480.000" in text and "Ana 50% (R$ 240.000)" in text
