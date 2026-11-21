@@ -107,7 +107,7 @@ export default async function WorkspacePage({ searchParams }: { searchParams: Pr
       ) : null}
 
       <form action={createWorkspace} className="flex flex-wrap items-end gap-2" aria-label="Criar um espaço">
-        <Input name="name" label="Nome do novo espaço (opcional)" maxLength={60} className="min-w-0" />
+        <Input id="new-space-name" name="name" label="Nome do novo espaço (opcional)" maxLength={60} className="min-w-0" />
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium">Tipo de espaço</span>
           <select name="kind" defaultValue="empresa" className="rounded-[var(--radius-md)] border border-line bg-surface px-3 py-2">
