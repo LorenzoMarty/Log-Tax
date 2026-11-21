@@ -6,6 +6,7 @@ import { ChatPanel } from "../chat-panel";
 const clearConversation = vi.hoisted(() => vi.fn());
 const rateAnswer = vi.hoisted(() => vi.fn());
 vi.mock("../actions", () => ({ clearConversation, rateAnswer }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
 const reply = (body: unknown, ok = true) => vi.fn().mockResolvedValue({ ok, headers: new Headers(), json: async () => body });
 const setup = () =>

@@ -8,6 +8,8 @@ import { loadWorkspaceState } from "@/chat/workspace-state";
 import { DashboardView } from "@/dashboard/dashboard-view";
 import { DocumentsPanel, type DocumentRow } from "@/documents/documents-panel";
 import { openStored } from "@/documents/storage";
+import { InventoryPanel } from "@/inventory/inventory-panel";
+import type { AssetRow, EstateRow, HeirRow } from "@/inventory/summary";
 import { mockEngine } from "@/engine";
 import { createClient } from "@/lib/supabase/server";
 import { Icon, Logo } from "@/ui/log";
@@ -49,6 +51,23 @@ export default async function WorkspaceChatPage({
     .select("id, name, doc_type, extracted, size_bytes, mime_type, created_at")
     .eq("workspace_id", id)
     .order("created_at", { ascending: false });
+  const [{ data: estate }, { data: heirs }, { data: assets }] =
+    state.kind === "pessoal"
+      ? await Promise.all([
+          supabase.from("estates").select("deceased_name, died_at, uf").eq("workspace_id", id).maybeSingle(),
+          supabase.from("heirs").select("id, name, relationship, share").eq("workspace_id", id).order("created_at"),
+          supabase.from("assets").select("id, kind, description, value").eq("workspace_id", id).order("created_at"),
+        ])
+      : [{ data: null }, { data: [] }, { data: [] }];
+  const inventoryPanel = estate && (
+    <InventoryPanel
+      estate={estate as EstateRow}
+      heirs={(heirs ?? []) as HeirRow[]}
+      assets={(assets ?? []) as AssetRow[]}
+      fileNames={(documents ?? []).map((d) => d.name)}
+      today={new Date().toISOString().slice(0, 10)}
+    />
+  );
   const { data: comments } = await supabase
     .from("comments")
     .select("id, author_id, author_email, widget_id, body, created_at, parent_id, resolved_at")
@@ -124,6 +143,7 @@ export default async function WorkspaceChatPage({
             initialPrompt={pergunta?.slice(0, 1000)}
           />
           <SharePanel workspaceId={id} defaultOpen={Boolean(notice)} members={(members ?? []) as MemberRow[]} invites={(invites ?? []) as InviteRow[]} />
+          {inventoryPanel}
           {documentsPanel}
           {commentsPanel}
           <ActivityPanel events={(activity ?? []) as ActivityRow[]} />
@@ -142,6 +162,7 @@ export default async function WorkspaceChatPage({
           </div>
           <AlertBar alerts={alerts} />
           <DashboardView dashboard={state.dashboard} />
+          {inventoryPanel}
           {documentsPanel}
           {commentsPanel}
         </>
