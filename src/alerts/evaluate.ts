@@ -22,6 +22,16 @@ const money = (n: number) => `R$ ${Math.round(n).toLocaleString("pt-BR")}`;
 const percent = (r: number) => `${(r * 100).toFixed(1).replace(".", ",")}%`;
 const format = (metric: AlertRule["metric"], n: number) => (metric === "effectiveRate" ? percent(n) : money(n));
 
+/** Any stored rule in plain Portuguese: metric limits, deadlines and event triggers (the API accepts more kinds than the engine evaluates). */
+export function describeRule(stored: object): string {
+  const rule = stored as Record<string, unknown>;
+  const metric = rule.metric as AlertRule["metric"] | undefined;
+  if (metric && metric in LABEL) return `${LABEL[metric]} ${rule.operator === "gt" ? "acima de" : "abaixo de"} ${format(metric, Number(rule.threshold))}`;
+  if (rule.metric === "daysToDeadline") return `Prazo de obrigação em até ${Number(rule.threshold)} dias`;
+  if (rule.event === "document_uploaded") return "Quando um documento for enviado";
+  return "Alerta personalizado";
+}
+
 /** Only what the engine can actually compute: a missing metric never fires an alert. */
 export function computeMetrics(engine: TaxEngine, company: CompanyProfile): Metrics {
   const diagnosis = engine.diagnose(company);

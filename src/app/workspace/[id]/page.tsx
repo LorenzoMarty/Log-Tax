@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AssetsPanel } from "@/assets/assets-panel";
+import { AlertManager } from "@/alerts/alert-manager";
 import { NoticesBar, type NoticeRow } from "@/alerts/notices-bar";
 import { AlertBar } from "@/alerts/alert-bar";
 import { alertStatuses } from "@/alerts/evaluate";
@@ -77,7 +78,7 @@ export default async function WorkspaceChatPage({
     .order("created_at", { ascending: false })
     .limit(50);
   const { data: notices } = isOwner
-    ? await supabase.from("alert_events").select("id, text, current_text").eq("workspace_id", id).is("read_at", null).order("created_at", { ascending: false }).limit(20)
+    ? await supabase.from("alert_events").select("id, text, current_text, created_at, read_at").eq("workspace_id", id).order("created_at", { ascending: false }).limit(50)
     : { data: [] };
   const [{ data: members }, { data: invites }, { data: activity }] = isOwner
     ? await Promise.all([
@@ -145,6 +146,7 @@ export default async function WorkspaceChatPage({
             workspaceKind={state.kind}
             initialPrompt={pergunta?.slice(0, 1000)}
           />
+          {state.kind !== "pessoal" && <AlertManager workspaceId={id} alerts={state.alerts} />}
           <SharePanel workspaceId={id} defaultOpen={Boolean(notice)} members={(members ?? []) as MemberRow[]} invites={(invites ?? []) as InviteRow[]} />
           {assetsPanel}
           {inventoryPanel}
