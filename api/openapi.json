@@ -2001,6 +2001,43 @@
         "title": "InviteIn",
         "type": "object"
       },
+      "IrBensBody": {
+        "additionalProperties": false,
+        "properties": {
+          "assetIds": {
+            "anyOf": [
+              {
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "maxItems": 200,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assetids"
+          },
+          "confirm": {
+            "default": false,
+            "title": "Confirm",
+            "type": "boolean"
+          },
+          "year": {
+            "maximum": 2100.0,
+            "minimum": 2000.0,
+            "title": "Year",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "year"
+        ],
+        "title": "IrBensBody",
+        "type": "object"
+      },
       "IrScenario": {
         "properties": {
           "balance": {
@@ -7255,6 +7292,73 @@
         "summary": "Revoke Invite",
         "tags": [
           "sharing"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/ir-bens-direitos": {
+      "post": {
+        "operationId": "ir_bens_direitos_v1_workspaces__workspace_id__ir_bens_direitos_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IrBensBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ir Bens Direitos",
+        "tags": [
+          "irpf"
         ]
       }
     },
