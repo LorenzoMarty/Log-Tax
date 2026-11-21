@@ -17,6 +17,7 @@ from app.api import (
     engine,
     health,
     integrations,
+    ir_bens,
     ir_import,
     me,
     missing_documents,
@@ -60,6 +61,7 @@ def create_app() -> FastAPI:
     app.include_router(document_search.router)  # before documents.router, harmless either way: /search is a fixed path
     app.include_router(documents.router)
     app.include_router(nfe_import.router)
+    app.include_router(ir_bens.router)
     app.include_router(ir_import.router)
     app.include_router(organized_documents.router)
     app.include_router(cron.router)

@@ -56,6 +56,8 @@ class ChatStore(Protocol):
     async def add_asset(self, values: dict[str, Any]) -> Asset: ...
     async def update_asset(self, asset_id: str, patch: dict[str, Any]) -> Asset | None: ...
     async def remove_asset(self, asset_id: str) -> bool: ...
+    async def list_ir_bens(self, year: int) -> list[dict[str, Any]]: ...
+    async def confirm_ir_bens(self, year: int, lines: list[dict[str, Any]]) -> None: ...
     async def get_estate(self) -> Estate | None: ...
     async def set_estate(self, values: dict[str, Any]) -> Estate: ...
     async def list_heirs(self) -> list[Heir]: ...
@@ -104,6 +106,8 @@ class MemoryStore:
     removed_asset_ids: list[str] = field(default_factory=list)
     removed_agent_ids: list[str] = field(default_factory=list)
     touched_asset_ids: set[str] = field(default_factory=set)
+    ir_bens: list[dict[str, Any]] = field(default_factory=list)  # confirmed IRPF lines, all years
+    ir_bens_changed: set[int] = field(default_factory=set)
     estate: Estate | None = None
     estate_changed: bool = False
     heirs: list[Heir] = field(default_factory=list)
@@ -225,6 +229,23 @@ class MemoryStore:
         if had:
             self.removed_asset_ids.append(asset_id)
         return had
+
+    async def list_ir_bens(self, year: int) -> list[dict[str, Any]]:
+        return [b for b in self.ir_bens if b["year"] == year]
+
+    async def confirm_ir_bens(self, year: int, lines: list[dict[str, Any]]) -> None:
+        ids = {ln["assetId"] for ln in lines}
+        self.ir_bens = [b for b in self.ir_bens if not (b["year"] == year and b["asset_id"] in ids)] + [
+            {
+                "year": year,
+                "asset_id": ln["assetId"],
+                "description": ln["description"],
+                "value": ln["value"],
+                "acquired_at": ln["acquiredAt"],
+            }
+            for ln in lines
+        ]
+        self.ir_bens_changed.add(year)
 
     async def get_estate(self) -> Estate | None:
         return self.estate

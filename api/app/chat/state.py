@@ -128,6 +128,9 @@ async def load_workspace_state(
     asset_rows = await db.select(
         "assets", select="id,kind,description,value,acquired_at,extra", workspace_id=f"eq.{workspace_id}", order="created_at"
     )
+    ir_rows = await db.select(
+        "ir_bens_direitos", select="year,asset_id,description,value,acquired_at", workspace_id=f"eq.{workspace_id}"
+    )
     estate_rows = await db.select("estates", select="deceased_name,died_at,uf", workspace_id=f"eq.{workspace_id}")
     heir_rows = await db.select(
         "heirs", select="id,name,relationship,share", workspace_id=f"eq.{workspace_id}", order="created_at"
@@ -177,6 +180,7 @@ async def load_workspace_state(
             {**a, "value": str(Decimal(str(a["value"])).quantize(Decimal("0.01"))), "extra": a.get("extra") or {}}
             for a in asset_rows
         ],
+        ir_bens=[{**r, "value": str(Decimal(str(r["value"])).quantize(Decimal("0.01")))} for r in ir_rows],
         estate=estate_rows[0] if estate_rows else None,
         heirs=[{**h, "share": str(Decimal(str(h["share"])).quantize(Decimal("0.01")))} for h in heir_rows],
     )
@@ -263,6 +267,9 @@ async def save_workspace_state(
         elif asset["id"] in store.touched_asset_ids:
             await db.update("assets", values, id=f"eq.{asset['id']}")
 
+    for b in store.ir_bens:
+        if b["year"] in store.ir_bens_changed:
+            await db.upsert("ir_bens_direitos", {**b, "workspace_id": workspace_id}, "workspace_id,year,asset_id")
     if store.estate_changed and store.estate:
         await db.upsert("estates", {**store.estate, "workspace_id": workspace_id}, "workspace_id")
     gone_heirs = [i for i in store.removed_heir_ids if is_persisted(i)]

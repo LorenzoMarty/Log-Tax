@@ -35,6 +35,7 @@ from app.engine.asset_taxes import carrying_tax, patrimony_summary, sale_tax
 from app.engine.calendar import upcoming_deadlines
 from app.engine.company_schema import CompanyFields, apply_fields, inconsistencies, merge_series
 from app.engine.history import tax_history
+from app.engine.irpf_bens import build_lines
 from app.engine.itcmd import ItcmdInput, compute_itcmd
 from app.engine.partilha import inventory_deadlines, split_estate
 from app.engine.reform_impact import reform_impact
@@ -719,6 +720,47 @@ async def _remove_asset(ctx: ToolContext, a: IdArgs) -> Any:
     if not await ctx.store.remove_asset(a.id):
         raise ToolError(f'Bem "{a.id}" não encontrado.')
     return {"removed": a.id}
+
+
+# ---- IRPF bens e direitos from the patrimony (#182) ----
+class IrBensArgs(_Args):
+    year: int = Field(ge=2000, le=2100)
+
+
+class ConfirmIrBensArgs(IrBensArgs):
+    asset_ids: list[str] | None = Field(default=None, max_length=MAX_ASSETS)
+
+
+async def _ir_bens_lines(ctx: ToolContext, year: int) -> list[dict[str, Any]]:
+    return build_lines(await ctx.store.list_assets(), await ctx.store.list_ir_bens(year - 1), year)
+
+
+@_tool(
+    "preview_ir_bens",
+    "Mostra como ficaria a lista de Bens e Direitos do IRPF do ano informado (year = ano da declaração, ex.: 2026) a partir do patrimônio, com a variação em relação ao ano anterior confirmado. NÃO grava nada. O código do grupo/item da Receita não é preenchido (needsCode): diga ao usuário que ele precisa conferir. Depois peça a confirmação antes de chamar confirm_ir_bens.",
+    IrBensArgs,
+    read_only=True,
+    kinds=("pessoal",),
+)  # fmt: skip
+async def _preview_ir_bens(ctx: ToolContext, a: IrBensArgs) -> Any:
+    lines = await _ir_bens_lines(ctx, a.year)
+    return {"year": a.year, "confirmed": False, "lines": lines, "note": "Valor atual do patrimônio; o usuário precisa confirmar."}
+
+
+@_tool(
+    "confirm_ir_bens",
+    "Confirma e salva a lista de Bens e Direitos do IRPF do ano (year) a partir do patrimônio. Só chame depois que o USUÁRIO viu o preview_ir_bens e disse que confirma; assetIds opcional limita a quais bens (ids de list_assets).",
+    ConfirmIrBensArgs,
+    kinds=("pessoal",),
+)  # fmt: skip
+async def _confirm_ir_bens(ctx: ToolContext, a: ConfirmIrBensArgs) -> Any:
+    lines = await _ir_bens_lines(ctx, a.year)
+    if a.asset_ids is not None:
+        lines = [ln for ln in lines if ln["assetId"] in a.asset_ids]
+    if not lines:
+        raise ToolError("Não há bens para confirmar.")
+    await ctx.store.confirm_ir_bens(a.year, lines)
+    return {"year": a.year, "confirmed": True, "count": len(lines)}
 
 
 # ---- inventory (espólio, herdeiros) ----
