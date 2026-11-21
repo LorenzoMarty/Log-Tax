@@ -52,6 +52,7 @@ class Hit:
 
 class DocumentSearch(Protocol):
     async def search(self, query: str) -> list[Hit]: ...
+    async def names(self) -> list[str]: ...
 
 
 class DbDocumentSearch:
@@ -70,6 +71,10 @@ class DbDocumentSearch:
             limit=str(MAX_HITS),
         )
         return [Hit(str(r["id"]), str(r["name"]), snippet(str(r.get("search_text") or r["name"]), query)) for r in rows]
+
+    async def names(self) -> list[str]:
+        rows = await self._db.select("documents", select="name", workspace_id=f"eq.{self._workspace_id}")
+        return [str(r["name"]) for r in rows]
 
 
 def cited_for_model(hits: list[Hit]) -> list[dict[str, str]]:
