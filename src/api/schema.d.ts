@@ -767,6 +767,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/portal/clients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Portal Clients
+         * @description Client workspaces, the ones needing most attention first (unread notices + missing documents, then name).
+         */
+        get: operations["portal_clients_v1_portal_clients_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/ratings": {
         parameters: {
             query?: never;
@@ -1842,29 +1862,10 @@ export interface components {
             /** Name */
             name: string;
         };
-        /** Deadline */
-        Deadline: {
-            /** Competence */
-            competence?: string | null;
-            /** Confidence */
-            confidence: string;
-            /** Date */
-            date: string;
-            /** Id */
-            id: string;
-            /** Label */
-            label: string;
-            /** Notes */
-            notes?: string | null;
-            /** Requiresvalidation */
-            requiresValidation: boolean;
-            /** Source */
-            source: string;
-        };
         /** DeadlineList */
         DeadlineList: {
             /** Deadlines */
-            deadlines: components["schemas"]["Deadline"][];
+            deadlines: components["schemas"]["app__engine__calendar__Deadline"][];
             /**
              * Holidayscope
              * @default nacional
@@ -2310,6 +2311,26 @@ export interface components {
             competence?: string | null;
             person: components["schemas"]["PersonIn"];
         };
+        /** PortalClient */
+        PortalClient: {
+            /** Kind */
+            kind: string;
+            /** Lastvalidationat */
+            lastValidationAt: string | null;
+            /** Missingdocuments */
+            missingDocuments: number | null;
+            /** Name */
+            name: string;
+            nextDeadline: components["schemas"]["app__api__portal__Deadline"] | null;
+            /** Role */
+            role: string;
+            /** Scoped */
+            scoped: boolean;
+            /** Unreadnotices */
+            unreadNotices: number | null;
+            /** Workspaceid */
+            workspaceId: string;
+        };
         /** PrestadorComparison */
         PrestadorComparison: {
             /** Assumptions */
@@ -2652,6 +2673,32 @@ export interface components {
             rating: "good" | "needs-improvement" | "poor";
             /** Value */
             value: number;
+        };
+        /** Deadline */
+        app__api__portal__Deadline: {
+            /** Date */
+            date: string;
+            /** Label */
+            label: string;
+        };
+        /** Deadline */
+        app__engine__calendar__Deadline: {
+            /** Competence */
+            competence?: string | null;
+            /** Confidence */
+            confidence: string;
+            /** Date */
+            date: string;
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Notes */
+            notes?: string | null;
+            /** Requiresvalidation */
+            requiresValidation: boolean;
+            /** Source */
+            source: string;
         };
     };
     responses: never;
@@ -4007,6 +4054,37 @@ export interface operations {
                     "application/json": {
                         [key: string]: string;
                     };
+                };
+            };
+        };
+    };
+    portal_clients_v1_portal_clients_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalClient"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

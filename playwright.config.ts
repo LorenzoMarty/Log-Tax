@@ -14,10 +14,10 @@ const apiPort = process.env.E2E_API_PORT ?? "8100";
 export default defineConfig({
   testDir: "./e2e",
   ...(fastapi
-    ? { testMatch: /chat-fastapi\.spec\.ts/ }
+    ? { testMatch: /(chat-fastapi|portal)\.spec\.ts/ } // portal.spec.ts (#153) needs the Python API too
     : noSeed
       ? { testMatch: /empty-workspace\.spec\.ts/ }
-      : { testIgnore: [/empty-workspace\.spec\.ts/, /chat-fastapi\.spec\.ts/] }),
+      : { testIgnore: [/empty-workspace\.spec\.ts/, /(chat-fastapi|portal)\.spec\.ts/] }),
   // The tests share one `next dev` server: too many workers make it compile pages under load and flake.
   workers: 3,
   // `next dev` compiles each route on its first visit (seconds, and the workspace page keeps growing): give assertions room.
