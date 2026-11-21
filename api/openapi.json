@@ -2248,6 +2248,7 @@
           },
           "role": {
             "enum": [
+              "admin",
               "editor",
               "commenter",
               "reader"
@@ -3917,6 +3918,27 @@
         "title": "Revenue",
         "type": "object"
       },
+      "RoleIn": {
+        "additionalProperties": false,
+        "description": "Only the owner changes roles (the database re-checks); 'owner' is never settable here, see the transfer route.",
+        "properties": {
+          "role": {
+            "enum": [
+              "admin",
+              "editor",
+              "commenter",
+              "reader"
+            ],
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role"
+        ],
+        "title": "RoleIn",
+        "type": "object"
+      },
       "RuleCase": {
         "properties": {
           "competence": {
@@ -4723,6 +4745,21 @@
           "amount"
         ],
         "title": "TaxLine",
+        "type": "object"
+      },
+      "TransferIn": {
+        "additionalProperties": false,
+        "properties": {
+          "newOwnerId": {
+            "format": "uuid",
+            "title": "Newownerid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "newOwnerId"
+        ],
+        "title": "TransferIn",
         "type": "object"
       },
       "Usage": {
@@ -9633,6 +9670,79 @@
         ]
       }
     },
+    "/v1/workspaces/{workspace_id}/members/{user_id}/role": {
+      "put": {
+        "description": "Promotes to or demotes from admin (or any role). The database lets only the owner, and never the owner row.",
+        "operationId": "set_member_role_v1_workspaces__workspace_id__members__user_id__role_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Member Role",
+        "tags": [
+          "sharing"
+        ]
+      }
+    },
     "/v1/workspaces/{workspace_id}/membership": {
       "delete": {
         "operationId": "leave_workspace_v1_workspaces__workspace_id__membership_delete",
@@ -10447,6 +10557,69 @@
         "summary": "Report Issue",
         "tags": [
           "report"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/transfer": {
+      "post": {
+        "description": "Hands the space to another member; the former owner stays as admin. The database checks and writes the audit row.",
+        "operationId": "transfer_ownership_v1_workspaces__workspace_id__transfer_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Transfer Ownership",
+        "tags": [
+          "sharing"
         ]
       }
     },
