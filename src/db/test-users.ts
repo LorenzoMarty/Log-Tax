@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { SPACE_KINDS, type SpaceKind } from "../workspace/kinds";
 
 // Helpers for integration tests against a local Supabase (see vitest.rls.config.mts).
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -25,10 +26,10 @@ export async function createTestUser(tag: string): Promise<TestUser> {
   return { id: data.user.id, email, client };
 }
 
-export async function createWorkspace(user: TestUser, kind: "empresa" | "pessoal" = "empresa") {
+export async function createWorkspace(user: TestUser, kind: SpaceKind = "empresa") {
   const { data, error } = await user.client
     .from("workspaces")
-    .insert({ name: kind === "empresa" ? "Minha Empresa" : "Vida Pessoal", kind })
+    .insert({ name: SPACE_KINDS[kind].defaultName, kind })
     .select()
     .single();
   if (error) throw error;

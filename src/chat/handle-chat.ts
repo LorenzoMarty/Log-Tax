@@ -10,6 +10,7 @@ import { buildSystemPrompt } from "./system-prompt";
 import { isDestructive } from "./tools";
 import type { Agent, LlmClient, WorkspaceAdmin } from "./types";
 import { loadWorkspaceState, saveWorkspaceState, type DisplayMessage } from "./workspace-state";
+import { isPersonal, isSpaceKind, type SpaceKind } from "@/workspace/kinds";
 
 /** Thrown when a member who is not the owner tries to chat: the AI writes into the owner's workspace. */
 export class ReadOnlyError extends Error {
@@ -32,7 +33,7 @@ export interface ChatReply {
 
 /** Workspace administration through the caller's session: RLS lets only the owner rename or remove. */
 export function workspaceAdmin(sb: SupabaseClient): WorkspaceAdmin {
-  const kindOf = (k: string) => (k === "pessoal" ? "pessoal" : "empresa") as "empresa" | "pessoal";
+  const kindOf = (k: string): SpaceKind => (isSpaceKind(k) ? k : "empresa");
   return {
     async list() {
       const { data: auth } = await sb.auth.getUser();
@@ -115,7 +116,7 @@ export async function handleChat(
     events: result.events.map((e) => ({ name: e.name, status: e.outcome.status })),
     pendingConfirmations: result.pendingConfirmations,
     dashboard: store.getDashboard(),
-    alerts: state.kind === "pessoal" ? [] : alertStatuses(mockEngine, store.getCompany(), store.listAlerts()),
+    alerts: isPersonal(state.kind) ? [] : alertStatuses(mockEngine, store.getCompany(), store.listAlerts()),
     agents,
     messages,
     usage: result.usage,

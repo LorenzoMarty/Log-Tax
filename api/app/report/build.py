@@ -10,6 +10,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
 from app.chat.format import money, pct
+from app.chat.kinds import is_personal
 from app.documents.classify import DOC_LABEL
 from app.documents.storage import MISSING_LABEL
 from app.engine.history import tax_history
@@ -424,6 +425,6 @@ def build_report(
     generated_at: datetime,
 ) -> Report:
     """The report of a workspace: company or personal. `alerts` are the evaluated statuses (see `app.chat.alerts`)."""
-    if kind == "pessoal":
+    if is_personal(kind):
         return _person_report(engine, workspace_name, person, documents, generated_at)
     return _company_report(engine, workspace_name, company, alerts, documents, generated_at)

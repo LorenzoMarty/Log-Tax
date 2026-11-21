@@ -9,6 +9,8 @@ const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${dev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
+  "worker-src 'self'",
+  "manifest-src 'self'",
   "img-src 'self' data: blob:",
   "font-src 'self'",
   `connect-src 'self' ${supabase}${dev ? " ws:" : ""}`.trim(),
@@ -29,7 +31,7 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "X-Frame-Options", value: "DENY" },
-          { key: "Permissions-Policy", value: "camera=(), geolocation=(), payment=()" },
+          { key: "Permissions-Policy", value: "camera=(), geolocation=(), microphone=(self), payment=()" },
         ],
       },
     ];

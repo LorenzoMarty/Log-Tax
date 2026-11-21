@@ -23,6 +23,7 @@ from app.api import (
     missing_documents,
     nfe_import,
     organized_documents,
+    portal,
     report,
     report_links,
     sharing,
@@ -70,6 +71,7 @@ def create_app() -> FastAPI:
     app.include_router(report_links.router)
     app.include_router(sharing.router)
     app.include_router(validations.router)
+    app.include_router(portal.router)
     app.include_router(workspaces.router)
     app.include_router(alert_events.router)
     app.include_router(agents.router)

@@ -75,3 +75,24 @@ export function csvFileName(title: string): string {
   const slug = title.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   return `${slug || "bloco"}.csv`;
 }
+
+/**
+ * The whole dashboard as one CSV: per tabular block a title line, its table and a blank line (#132).
+ * Null when no block has a table. Example: `dashboardCsv(ws)` → `"﻿Para onde está indo?\r\nItem;Valor (R$)\r\n…"`.
+ */
+export function dashboardCsv(widgets: Widget[]): string | null {
+  const lines: string[] = [];
+  for (const w of widgets) {
+    const table = widgetTable(w);
+    if (!table) continue;
+    lines.push(csvCell(w.title), ...[table.head, ...table.rows].map((row) => row.map(csvCell).join(SEPARATOR)));
+    if (ESTIMATE_KINDS.includes(w.kind)) lines.push(csvCell(DISCLAIMER));
+    lines.push("");
+  }
+  return lines.length ? BOM + lines.join("\r\n") + "\r\n" : null;
+}
+
+/** Export file name: title slug plus the date. Example: `exportFileName("Meu painel", "png", new Date("2026-11-21T12:00:00Z")) === "meu-painel-2026-11-21.png"`. */
+export function exportFileName(title: string, ext: "csv" | "png", date = new Date()): string {
+  return csvFileName(title).replace(/\.csv$/, `-${date.toISOString().slice(0, 10)}.${ext}`);
+}

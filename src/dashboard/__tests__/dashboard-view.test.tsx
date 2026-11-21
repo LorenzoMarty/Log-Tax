@@ -1,5 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { DashboardView } from "../dashboard-view";
 import { sampleDashboard } from "../fixtures";
 import { ESTIMATE_KINDS } from "../types";
@@ -16,6 +16,21 @@ describe("DashboardView", () => {
       expect(link?.getAttribute("href")).toMatch(/^data:text\/csv;charset=utf-8,/);
       expect(link?.getAttribute("download")).toMatch(/\.csv$/);
     }
+  });
+
+  it("focus mode reorders and resizes blocks, explains why and leaves the saved dashboard untouched (#124)", () => {
+    const [first, second] = sampleDashboard.widgets;
+    const focus = { intent: "x", reason: "Organizei assim porque teste.", blocks: [{ id: second.id, size: "lg" as const }] };
+    const before = JSON.stringify(sampleDashboard);
+    const exit = vi.fn();
+    render(<DashboardView dashboard={sampleDashboard} focus={focus} onExitFocus={exit} />);
+    expect(screen.getByTestId("focus-banner")).toHaveTextContent("Organizei assim porque teste.");
+    const ids = screen.getAllByTestId(/^widget-(?!skeleton)/).map((e) => e.getAttribute("data-testid"));
+    expect(ids[0]).toBe(`widget-${second.id}`);
+    expect(ids).toContain(`widget-${first.id}`); // not mentioned: kept, after the chosen ones
+    screen.getByRole("button", { name: "Voltar ao painel salvo" }).click();
+    expect(exit).toHaveBeenCalled();
+    expect(JSON.stringify(sampleDashboard)).toBe(before);
   });
 
   it("shows a skeleton while the AI works, even on an empty dashboard (#131)", () => {

@@ -8,7 +8,7 @@ sign-out, sessions and MFA stay in Supabase Auth, in the front-end. Every route 
 
 import re
 import uuid
-from typing import Annotated, Literal
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse, Response
@@ -16,6 +16,7 @@ from pydantic import BaseModel, ConfigDict, StringConstraints
 from pydantic.alias_generators import to_camel
 
 from app.chat.conversation import RatingIn, delete_conversation, rate_message
+from app.chat.kinds import Kind, base_of, spec_of
 from app.chat.state import profile_to_json
 from app.chat.workspaces import DbWorkspaceAdmin
 from app.core.audit import audit, track
@@ -35,8 +36,6 @@ _PERSONAL = re.compile(
     r"carn[êe]-?le[ãa]o|meu sal[áa]rio|minha aposentadoria",
     re.IGNORECASE,
 )
-NAMES = {"empresa": "Minha Empresa", "pessoal": "Vida Pessoal"}
-Kind = Literal["empresa", "pessoal"]
 
 
 def space_kind_for(message: str) -> Kind:
@@ -48,7 +47,7 @@ def _profile(kind: Kind, settings: Settings) -> dict[str, object]:
     """Real spaces start empty: the assistant collects the data in conversation. The fictional example is demo-only."""
     if settings.demo_seed != "1":
         return {}
-    return profile_to_json(seed_company() if kind == "empresa" else seed_person())
+    return profile_to_json(seed_company() if base_of(kind) == "empresa" else seed_person())
 
 
 class _In(BaseModel):
@@ -84,7 +83,7 @@ async def create_default_workspaces(
     if existing:
         return JSONResponse(await admin.list())
     kinds: tuple[Kind, Kind] = ("empresa", "pessoal")
-    rows = [{"name": NAMES[k], "kind": k, "profile": _profile(k, settings)} for k in kinds]
+    rows = [{"name": spec_of(k).default_name, "kind": k, "profile": _profile(k, settings)} for k in kinds]
     await db.insert("workspaces", rows)
     await track(db, "workspace_created")
     return JSONResponse(await admin.list())
@@ -107,7 +106,9 @@ async def ask_from_home(
         workspace_id = found[0]["id"]
     else:
         await ensure_can_create_workspaces(db, str(principal.user_id))
-        [created] = await db.insert("workspaces", {"name": NAMES[kind], "kind": kind, "profile": _profile(kind, settings)})
+        [created] = await db.insert(
+            "workspaces", {"name": spec_of(kind).default_name, "kind": kind, "profile": _profile(kind, settings)}
+        )
         workspace_id = created["id"]
         await track(db, "workspace_created")
     return JSONResponse({"workspaceId": workspace_id, "kind": kind, "message": message})

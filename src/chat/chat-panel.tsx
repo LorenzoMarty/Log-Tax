@@ -6,7 +6,9 @@ import type { Widget } from "@/dashboard/types";
 import { AgentList } from "@/agents/agent-list";
 import { AlertBar } from "@/alerts/alert-bar";
 import type { AlertStatus } from "@/alerts/evaluate";
-import { DashboardView } from "@/dashboard/dashboard-view";
+import { DashboardView, type Focus } from "@/dashboard/dashboard-view";
+import { postLayout, type LayoutChange } from "@/dashboard/layout";
+import { PageTabs, type DashboardPage } from "@/dashboard/page-tabs";
 import { VersionHistory } from "@/dashboard/version-history";
 import { applyWithTransition } from "@/dashboard/view-transition";
 import type { Dashboard } from "@/dashboard/types";
@@ -16,8 +18,10 @@ import { nextQuestions, type SpaceProgress } from "./next-questions";
 import { clearConversation, rateAnswer } from "./actions";
 import { NDJSON, toolProgressLabel, type ChatStreamLine } from "./progress";
 import { RequestExamples } from "./request-examples";
+import { useVoiceInput } from "./voice";
 import type { Agent } from "./types";
 import type { DisplayMessage } from "./workspace-state";
+import { isPersonal } from "@/workspace/kinds";
 
 const REPORT_PATH = /(?<![\w.:/-])(\/workspace\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?:\/relatorio)?)(?![\w/-])/g;
 
@@ -71,10 +75,13 @@ async function readStream(res: Response, onProgress: (text: string) => void) {
   return result as Record<string, never>;
 }
 
-export function ChatPanel(props: { workspaceId: string; initialMessages: DisplayMessage[]; initialDashboard: Dashboard; initialAlerts?: AlertStatus[]; agentId?: string; initialAgents?: Agent[]; workspaceKind?: SpaceProgress["kind"]; initialPrompt?: string }) {
+export function ChatPanel(props: { workspaceId: string; initialMessages: DisplayMessage[]; initialDashboard: Dashboard; initialPages?: DashboardPage[]; initialAlerts?: AlertStatus[]; agentId?: string; initialAgents?: Agent[]; workspaceKind?: SpaceProgress["kind"]; initialPrompt?: string }) {
   const router = useRouter();
   const [messages, setMessages] = useState(props.initialMessages);
   const [dashboard, setDashboard] = useState(props.initialDashboard);
+  const [focus, setFocus] = useState<Focus | null>(null); // temporary layout for one answer (#124); the saved panel is `dashboard`
+  const [pages, setPages] = useState(props.initialPages ?? []);
+  const [activeId, setActiveId] = useState<string | undefined>(props.initialPages?.[0]?.id);
   const [alerts, setAlerts] = useState(props.initialAlerts ?? []);
   const [agents, setAgents] = useState(props.initialAgents ?? []);
   const [pending, setPending] = useState<PendingConfirmation[]>([]);
@@ -91,6 +98,30 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
   const [rated, setRated] = useState<Record<number, 1 | -1>>({});
   const [reasonFor, setReasonFor] = useState<number | null>(null);
   const [reason, setReason] = useState("");
+  const [layoutStatus, setLayoutStatus] = useState("");
+
+  // Dictation (#187): the transcript lands in the input for review; it is never sent by itself.
+  const voiceBase = useRef("");
+  const voice = useVoiceInput((text) => setDraft(`${voiceBase.current}${voiceBase.current && text ? " " : ""}${text}`));
+  const [voiceNoteSeen, setVoiceNoteSeen] = useState(true);
+  useEffect(() => {
+    try {
+      setVoiceNoteSeen(localStorage.getItem("voice-note-seen") === "1");
+    } catch {
+      setVoiceNoteSeen(false); // storage blocked: the note is shown every time
+    }
+  }, []);
+  function toggleVoice() {
+    if (voice.listening) return voice.stop();
+    voiceBase.current = draft.trim();
+    setVoiceNoteSeen(true);
+    try {
+      localStorage.setItem("voice-note-seen", "1");
+    } catch {
+      /* ignore */
+    }
+    voice.start();
+  }
 
   async function send(message: string, approve?: string[], display = message) {
     setBusy(true);
@@ -103,17 +134,26 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
       const res = await fetch(CHAT_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: NDJSON },
-        body: JSON.stringify({ workspaceId: props.workspaceId, agentId: props.agentId, message, approve }),
+        body: JSON.stringify({ workspaceId: props.workspaceId, agentId: props.agentId, pageId: activeId, message, approve }),
         signal: controller.signal,
       });
       const data = res.headers.get("content-type")?.includes(NDJSON) ? await readStream(res, setProgress) : await res.json();
       if (!res.ok) throw new Error(errorText(data.error) ?? "Algo deu errado.");
       setMessages((m) => [...m, { role: "assistant", text: data.text }]);
-      applyWithTransition(() => setDashboard(data.dashboard));
+      applyWithTransition(() => {
+        setDashboard(data.dashboard);
+        setFocus(data.focus ?? null);
+      });
+      if (data.pages?.length) {
+        const added = data.pages.length > pages.length;
+        setPages(data.pages);
+        setActiveId(data.activePageId ?? undefined);
+        if (added) router.refresh(); // a page made by the chat: re-read what the server renders around the dashboard
+      }
       setAlerts(data.alerts ?? []);
       setAgents(data.agents ?? agents);
       setPending(data.pendingConfirmations ?? []);
-      if (props.workspaceKind === "pessoal") router.refresh(); // server panels (inventory) re-read what the tools saved
+      if (isPersonal(props.workspaceKind)) router.refresh(); // server panels (inventory) re-read what the tools saved
     } catch (e) {
       if (controller.signal.aborted) setMessages((m) => [...m, { role: "assistant", text: "Parei. Pode me dizer o que prefere fazer agora." }]);
       else setError(e instanceof Error ? e.message : "Algo deu errado.");
@@ -122,6 +162,24 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
       setProgress("");
       abort.current = null;
     }
+  }
+
+  function openPage(id: string) {
+    const target = pages.find((p) => p.id === id);
+    if (!target) return;
+    setPages((all) => all.map((p) => (p.id === activeId ? { ...p, dashboard } : p))); // keep this page's latest edits (undo/restore)
+    setActiveId(id);
+    setFocus(null);
+    applyWithTransition(() => setDashboard(target.dashboard));
+  }
+
+  /** Manual move/resize (#129): saved as a new version, so "Desfazer" restores it. */
+  async function changeLayout(c: LayoutChange) {
+    setError("");
+    const next = await postLayout(props.workspaceId, c);
+    if (!next) return setError("Não consegui salvar a mudança. Tente de novo.");
+    setDashboard(next);
+    setLayoutStatus(`Painel atualizado (versão ${next.version}).`);
   }
 
   async function rate(index: number, rating: 1 | -1, why?: string) {
@@ -185,8 +243,10 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
       <div className="grid items-start gap-6 lg:grid-cols-[1fr_380px]">
         <div className="order-2 flex min-w-0 flex-col gap-2 lg:order-none">
           {/* versions are recorded by the Python chat only (#370); the TS chat is being removed (#314) */}
-          {CHAT_URL === "/api/v1/chat" && !props.agentId && <VersionHistory workspaceId={props.workspaceId} dashboard={dashboard} onRestored={setDashboard} />}
-          <DashboardView dashboard={dashboard} loading={busy} onAsk={(w) => { setTopic(w); inputRef.current?.focus(); }} />
+          {CHAT_URL === "/api/v1/chat" && !props.agentId && (pages.length < 2 || activeId === pages[0]?.id) && <VersionHistory workspaceId={props.workspaceId} dashboard={dashboard} onRestored={setDashboard} />}
+          <PageTabs pages={pages} activeId={activeId} onSelect={openPage} disabled={busy} />
+          <DashboardView dashboard={dashboard} loading={busy} focus={focus} onExitFocus={() => applyWithTransition(() => setFocus(null))} onAsk={(w) => { setTopic(w); inputRef.current?.focus(); }} onLayout={CHAT_URL === "/api/v1/chat" && !props.agentId && !busy && (pages.length < 2 || activeId === pages[0]?.id) ? changeLayout : undefined} />
+          {layoutStatus && <p role="status" className="sr-only">{layoutStatus}</p>}
         </div>
       <Panel label="Conversa com a IA" className="order-1 min-w-0 lg:order-none lg:sticky lg:top-6">
         <div role="log" aria-label="Mensagens da conversa" aria-live="polite" tabIndex={0} className="flex max-h-[28rem] flex-col gap-3 overflow-y-auto p-1">
@@ -280,6 +340,9 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
         )}
         <form onSubmit={submit} className="flex gap-2">
           <Input ref={inputRef} aria-label="Mensagem" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Quero entender meus impostos..." className="min-w-0 flex-1" />
+          <Button type="button" variant="ghost" disabled={!voice.supported || busy} aria-describedby="voice-help" aria-pressed={voice.listening} onClick={toggleVoice}>
+            {voice.listening ? "Parar de falar" : "Falar"}
+          </Button>
           {busy ? (
             <Button type="button" variant="ghost" onClick={() => abort.current?.abort()}>
               Parar
@@ -289,6 +352,21 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
             Enviar
           </Button>
         </form>
+        <p id="voice-help" className="text-xs text-ink-muted">
+          {!voice.supported
+            ? "Seu navegador não permite falar a mensagem. Digite no campo acima."
+            : !voiceNoteSeen
+              ? "Ao falar, o navegador pode enviar o áudio ao serviço dele para reconhecer a voz. Nós não guardamos nem recebemos o áudio. O texto aparece no campo para você revisar antes de enviar."
+              : "O texto falado aparece no campo para você revisar antes de enviar."}
+        </p>
+        <p aria-live="polite" className={voice.listening ? "text-sm text-brand-ink" : "sr-only"}>
+          {voice.listening ? "Ouvindo… fale agora." : ""}
+        </p>
+        {voice.error && (
+          <p role="alert" className="rounded-[var(--radius-sm)] bg-danger-tint px-4 py-3 text-sm text-danger-ink">
+            {voice.error}
+          </p>
+        )}
       </Panel>
     </div>
     </div>

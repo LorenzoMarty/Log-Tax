@@ -1,6 +1,7 @@
 import { Icon } from "@/ui/log";
 import { csvFileName, widgetCsv } from "./csv";
 import { formatDecimalBrl, monthLabel, progressPercent } from "./money";
+import { ImageButton } from "./export-buttons";
 import type { Point, Widget } from "./types";
 
 export const brl = (n: number) =>
@@ -263,7 +264,7 @@ function CsvLink({ widget }: { widget: Widget }) {
       href={`data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`}
       download={csvFileName(widget.title)}
       aria-label={`Baixar CSV de ${widget.title}`}
-      className="mt-3 inline-block text-xs font-medium text-ink-muted underline print:hidden"
+      className="inline-block text-xs font-medium text-ink-muted underline print:hidden"
     >
       Baixar CSV
     </a>
@@ -272,11 +273,14 @@ function CsvLink({ widget }: { widget: Widget }) {
 
 export function WidgetView({ widget, showDisclaimer, compact = false }: { widget: Widget; showDisclaimer: boolean; compact?: boolean }) {
   return (
-    <section data-testid={`widget-${widget.id}`} className="lg-surface-card h-full text-ink" style={compact ? { padding: "var(--space-3)" } : undefined}>
+    <section data-export-root data-testid={`widget-${widget.id}`} className="lg-surface-card h-full text-ink" style={compact ? { padding: "var(--space-3)" } : undefined}>
       <h3 className="mb-3 text-[14px] leading-5 font-semibold text-ink">{widget.title}</h3>
       <Body w={widget} />
       {showDisclaimer && <p className="mt-3 text-xs font-medium text-ink-subtle">Estimativa ilustrativa, valide com um contador.</p>}
-      <CsvLink widget={widget} />
+      <div data-export-skip className="mt-3 flex gap-3">
+        <CsvLink widget={widget} />
+        <ImageButton title={widget.title} />
+      </div>
     </section>
   );
 }

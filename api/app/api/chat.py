@@ -38,6 +38,8 @@ class ChatIn(BaseModel):
 
     workspace_id: uuid.UUID
     agent_id: uuid.UUID | None = None
+    page_id: uuid.UUID | None = None
+    """The dashboard page open on screen: the blocks of this turn go there."""
     message: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=4000)]
     approve: Annotated[list[Annotated[str, Field(max_length=2000)]], Field(max_length=10)] = []
 
@@ -49,9 +51,12 @@ def public_reply(reply: ChatReply) -> dict[str, Any]:
         "events": reply.events,
         "pendingConfirmations": [{"tool": p.tool, "key": p.key, "summary": p.summary} for p in reply.pending_confirmations],
         "dashboard": reply.dashboard,
+        "pages": reply.pages,
+        "activePageId": reply.active_page_id,
         "alerts": reply.alerts,
         "agents": reply.agents,
         "messages": reply.messages,
+        "focus": reply.focus,
     }
 
 
@@ -87,7 +92,8 @@ async def chat(
     async def run(db: UserDb, cancelled: asyncio.Event, on_tool_start: Any = None) -> ChatReply | None:
         reply = await handle_chat(
             db, llm, settings, user_id=str(principal.user_id), workspace_id=str(body.workspace_id),
-            agent_id=str(body.agent_id) if body.agent_id else None, message=body.message,
+            agent_id=str(body.agent_id) if body.agent_id else None, page_id=str(body.page_id) if body.page_id else None,
+            message=body.message,
             approve=frozenset(body.approve), on_tool_start=on_tool_start, cancelled=cancelled,
         )  # fmt: skip
         if reply is not None:

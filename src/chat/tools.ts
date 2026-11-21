@@ -10,6 +10,7 @@ import type { ToolContext, ToolOutcome, ToolSpec, Scope } from "./types";
 import { normalizeCnpj } from "@/lib/br-ids";
 import { widgetSchema } from "./widget-schema";
 import { companyFieldsSchema, inconsistencies, mergeSeries } from "@/engine/company-schema";
+import { SPACE_KIND_LIST, kindAllows, specOf, type BaseKind } from "@/workspace/kinds";
 
 class ToolError extends Error {}
 class Refusal extends Error {}
@@ -24,7 +25,7 @@ interface Tool<S extends z.ZodType = z.ZodType> {
   /** Uses the tax engine: the reply must carry the estimate disclaimer. */
   engine?: boolean;
   /** Workspace kinds where the tool applies; undefined = all. */
-  kinds?: ("empresa" | "pessoal")[];
+  kinds?: BaseKind[];
   run(ctx: ToolContext, args: z.infer<S>): unknown;
 }
 const defineTool = <S extends z.ZodType>(t: Tool<S>) => t as unknown as Tool;
@@ -275,7 +276,7 @@ const TOOLS: Tool[] = [
   defineTool({
     name: "create_workspace",
     description: "Cria um novo espaço vazio (ex.: uma segunda empresa ou o espaço de outra pessoa) e devolve o caminho para abri-lo. Máximo de 10 espaços.",
-    schema: z.strictObject({ name: z.string().trim().min(1).max(60), kind: z.enum(["empresa", "pessoal"]) }),
+    schema: z.strictObject({ name: z.string().trim().min(1).max(60), kind: z.enum(SPACE_KIND_LIST) }),
     async run(ctx, a) {
       const admin = needWorkspaces(ctx);
       if ((await admin.list()).length >= MAX_WORKSPACES) throw new ToolError(`Você já tem ${MAX_WORKSPACES} espaços. Remova algum antes de criar outro.`);
@@ -329,7 +330,7 @@ const TOOLS: Tool[] = [
     description: "Gera o relatório imprimível do espaço (resumo, impostos, oportunidades, economia potencial, premissas e itens a validar) e devolve o caminho para abri-lo.",
     schema: none,
     run: (ctx) => ({
-      title: ctx.scope.kind === "pessoal" ? "Relatório de Imposto de Renda" : "Relatório tributário",
+      title: specOf(ctx.scope.kind).reportTitle,
       url: `/workspace/${ctx.scope.workspaceId}/relatorio`,
     }),
   }),
@@ -465,7 +466,7 @@ function checkAgentTools(scope: Scope, requested: string[]) {
   if (extra.length) throw new Refusal(`Esta IA não pode conceder ferramentas que não possui: ${extra.join(", ")}.`);
 }
 
-const inKind = (scope: Scope, t: Tool) => !t.kinds || !scope.kind || t.kinds.includes(scope.kind);
+const inKind = (scope: Scope, t: Tool) => kindAllows(scope.kind, t.name, t.kinds);
 const allowed = (scope: Scope, name: string) =>
   (!scope.allowedTools || scope.allowedTools.includes(name)) && inKind(scope, byName.get(name)!);
 

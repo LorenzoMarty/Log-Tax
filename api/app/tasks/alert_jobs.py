@@ -9,6 +9,7 @@ from collections import defaultdict
 from typing import Any
 
 from app.chat.alerts import compute_metrics, evaluate_alerts, next_deadline
+from app.chat.kinds import base_of
 from app.core.config import Settings, get_settings
 from app.core.crypto import decrypt_field
 from app.core.logging import log
@@ -23,7 +24,7 @@ EMBED = "id,rule,active,fired,workspace_id,workspaces(id,name,kind,profile)"
 def _company(workspace: dict[str, Any], settings: Settings) -> CompanyProfile | None:
     """The company of a workspace, or None when it has no data yet (nothing to evaluate)."""
     raw = workspace.get("profile")
-    if workspace.get("kind") != "empresa" or not isinstance(raw, dict) or not raw:
+    if base_of(workspace.get("kind")) != "empresa" or not isinstance(raw, dict) or not raw:
         return None
     if isinstance(raw.get("cnpj"), str):
         raw = {**raw, "cnpj": decrypt_field(raw["cnpj"], settings)}

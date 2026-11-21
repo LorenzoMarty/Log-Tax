@@ -628,6 +628,18 @@
             "title": "Message",
             "type": "string"
           },
+          "pageId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pageid"
+          },
           "workspaceId": {
             "format": "uuid",
             "title": "Workspaceid",
@@ -1513,7 +1525,10 @@
           "kind": {
             "enum": [
               "empresa",
-              "pessoal"
+              "pessoal",
+              "prestador",
+              "patrimonio",
+              "inventario"
             ],
             "title": "Kind",
             "type": "string"
@@ -1532,71 +1547,11 @@
         "title": "CreateIn",
         "type": "object"
       },
-      "Deadline": {
-        "properties": {
-          "competence": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Competence"
-          },
-          "confidence": {
-            "title": "Confidence",
-            "type": "string"
-          },
-          "date": {
-            "title": "Date",
-            "type": "string"
-          },
-          "id": {
-            "title": "Id",
-            "type": "string"
-          },
-          "label": {
-            "title": "Label",
-            "type": "string"
-          },
-          "notes": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Notes"
-          },
-          "requiresValidation": {
-            "title": "Requiresvalidation",
-            "type": "boolean"
-          },
-          "source": {
-            "title": "Source",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "label",
-          "date",
-          "source",
-          "confidence",
-          "requiresValidation"
-        ],
-        "title": "Deadline",
-        "type": "object"
-      },
       "DeadlineList": {
         "properties": {
           "deadlines": {
             "items": {
-              "$ref": "#/components/schemas/Deadline"
+              "$ref": "#/components/schemas/app__engine__calendar__Deadline"
             },
             "title": "Deadlines",
             "type": "array"
@@ -2438,6 +2393,48 @@
         ],
         "type": "string"
       },
+      "LayoutChange": {
+        "description": "A manual move and/or resize of one block (#129).",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "size": {
+            "anyOf": [
+              {
+                "enum": [
+                  "sm",
+                  "md",
+                  "lg"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size"
+          },
+          "to_index": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To Index"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "LayoutChange",
+        "type": "object"
+      },
       "LinkIn": {
         "additionalProperties": false,
         "properties": {
@@ -3133,6 +3130,86 @@
           "person"
         ],
         "title": "PersonRequest",
+        "type": "object"
+      },
+      "PortalClient": {
+        "properties": {
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "lastValidationAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastvalidationat"
+          },
+          "missingDocuments": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Missingdocuments"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "nextDeadline": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/app__api__portal__Deadline"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "scoped": {
+            "title": "Scoped",
+            "type": "boolean"
+          },
+          "unreadNotices": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unreadnotices"
+          },
+          "workspaceId": {
+            "title": "Workspaceid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workspaceId",
+          "name",
+          "kind",
+          "role",
+          "scoped",
+          "unreadNotices",
+          "missingDocuments",
+          "lastValidationAt",
+          "nextDeadline"
+        ],
+        "title": "PortalClient",
         "type": "object"
       },
       "PrestadorComparison": {
@@ -4238,6 +4315,84 @@
           "path"
         ],
         "title": "Vital",
+        "type": "object"
+      },
+      "app__api__portal__Deadline": {
+        "properties": {
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "date"
+        ],
+        "title": "Deadline",
+        "type": "object"
+      },
+      "app__engine__calendar__Deadline": {
+        "properties": {
+          "competence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Competence"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "string"
+          },
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "requiresValidation": {
+            "title": "Requiresvalidation",
+            "type": "boolean"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "date",
+          "source",
+          "confidence",
+          "requiresValidation"
+        ],
+        "title": "Deadline",
         "type": "object"
       }
     }
@@ -6549,6 +6704,60 @@
         ]
       }
     },
+    "/v1/portal/clients": {
+      "get": {
+        "description": "Client workspaces, the ones needing most attention first (unread notices + missing documents, then name).",
+        "operationId": "portal_clients_v1_portal_clients_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PortalClient"
+                  },
+                  "title": "Response Portal Clients V1 Portal Clients Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Portal Clients",
+        "tags": [
+          "portal"
+        ]
+      }
+    },
     "/v1/ratings": {
       "post": {
         "description": "Thumbs up/down (with an optional reason) on one AI answer; one rating per message per user.",
@@ -7636,6 +7845,74 @@
         "summary": "Clear Conversation",
         "tags": [
           "workspaces"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/dashboard/layout": {
+      "post": {
+        "description": "Moves/resizes a block as a new dashboard version, so the manual edit can be undone like a chat one.",
+        "operationId": "change_layout_v1_workspaces__workspace_id__dashboard_layout_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LayoutChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Change Layout",
+        "tags": [
+          "dashboard"
         ]
       }
     },

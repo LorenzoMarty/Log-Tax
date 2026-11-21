@@ -767,6 +767,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/portal/clients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Portal Clients
+         * @description Client workspaces, the ones needing most attention first (unread notices + missing documents, then name).
+         */
+        get: operations["portal_clients_v1_portal_clients_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/ratings": {
         parameters: {
             query?: never;
@@ -1053,6 +1073,26 @@ export interface paths {
          * @description "Apagar conversa": removes the saved conversation and leaves a trace in the audit trail.
          */
         delete: operations["clear_conversation_v1_workspaces__workspace_id__conversation_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/workspaces/{workspace_id}/dashboard/layout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change Layout
+         * @description Moves/resizes a block as a new dashboard version, so the manual edit can be undone like a chat one.
+         */
+        post: operations["change_layout_v1_workspaces__workspace_id__dashboard_layout_post"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1650,6 +1690,8 @@ export interface components {
             approve: string[];
             /** Message */
             message: string;
+            /** Pageid */
+            pageId?: string | null;
             /**
              * Workspaceid
              * Format: uuid
@@ -1816,33 +1858,14 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "empresa" | "pessoal";
+            kind: "empresa" | "pessoal" | "prestador" | "patrimonio" | "inventario";
             /** Name */
             name: string;
-        };
-        /** Deadline */
-        Deadline: {
-            /** Competence */
-            competence?: string | null;
-            /** Confidence */
-            confidence: string;
-            /** Date */
-            date: string;
-            /** Id */
-            id: string;
-            /** Label */
-            label: string;
-            /** Notes */
-            notes?: string | null;
-            /** Requiresvalidation */
-            requiresValidation: boolean;
-            /** Source */
-            source: string;
         };
         /** DeadlineList */
         DeadlineList: {
             /** Deadlines */
-            deadlines: components["schemas"]["Deadline"][];
+            deadlines: components["schemas"]["app__engine__calendar__Deadline"][];
             /**
              * Holidayscope
              * @default nacional
@@ -2045,6 +2068,18 @@ export interface components {
         };
         /** @enum {string} */
         Kind: "heranca" | "doacao";
+        /**
+         * LayoutChange
+         * @description A manual move and/or resize of one block (#129).
+         */
+        LayoutChange: {
+            /** Id */
+            id: string;
+            /** Size */
+            size?: ("sm" | "md" | "lg") | null;
+            /** To Index */
+            to_index?: number | null;
+        };
         /** LinkIn */
         LinkIn: {
             /**
@@ -2275,6 +2310,26 @@ export interface components {
             /** Competence */
             competence?: string | null;
             person: components["schemas"]["PersonIn"];
+        };
+        /** PortalClient */
+        PortalClient: {
+            /** Kind */
+            kind: string;
+            /** Lastvalidationat */
+            lastValidationAt: string | null;
+            /** Missingdocuments */
+            missingDocuments: number | null;
+            /** Name */
+            name: string;
+            nextDeadline: components["schemas"]["app__api__portal__Deadline"] | null;
+            /** Role */
+            role: string;
+            /** Scoped */
+            scoped: boolean;
+            /** Unreadnotices */
+            unreadNotices: number | null;
+            /** Workspaceid */
+            workspaceId: string;
         };
         /** PrestadorComparison */
         PrestadorComparison: {
@@ -2618,6 +2673,32 @@ export interface components {
             rating: "good" | "needs-improvement" | "poor";
             /** Value */
             value: number;
+        };
+        /** Deadline */
+        app__api__portal__Deadline: {
+            /** Date */
+            date: string;
+            /** Label */
+            label: string;
+        };
+        /** Deadline */
+        app__engine__calendar__Deadline: {
+            /** Competence */
+            competence?: string | null;
+            /** Confidence */
+            confidence: string;
+            /** Date */
+            date: string;
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Notes */
+            notes?: string | null;
+            /** Requiresvalidation */
+            requiresValidation: boolean;
+            /** Source */
+            source: string;
         };
     };
     responses: never;
@@ -3977,6 +4058,37 @@ export interface operations {
             };
         };
     };
+    portal_clients_v1_portal_clients_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalClient"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     rate_answer_v1_ratings_post: {
         parameters: {
             query?: never;
@@ -4563,6 +4675,43 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_layout_v1_workspaces__workspace_id__dashboard_layout_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LayoutChange"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

@@ -2,6 +2,9 @@ import { expect, test } from "@playwright/test";
 import { createAndOpen, login } from "./helpers";
 import { sendChatMessage } from "./workspace-actions";
 
+// Long journeys (15+ chat turns, undo/restore, reload) against `next dev` + uvicorn: same budget as the other long specs.
+test.setTimeout(120_000);
+
 // The chat journeys against the FastAPI backend (#307, #315): the browser talks to Next.js, which proxies /api/v1/chat to the
 // Python API (E2E_CHAT_API=fastapi, see playwright.config.ts and the "e2e" job). The model is still the scripted one, but the
 // engine is the real one, so the numbers are the real engine's for the demo company (not the mock's).
@@ -59,6 +62,37 @@ test("company journey through FastAPI: context → diagnosis → dashboard → w
   await expect(page.getByText("Quero organizar meus impostos")).toBeVisible();
   await page.getByText(/Atividade do espaço/).click();
   await expect(page.getByTestId("activity")).toContainText("Confirmou uma ação destrutiva na conversa");
+});
+
+// #124: the question picks a temporary layout (PRD §27); the saved panel is never changed and one tap brings it back.
+test("the panel adapts to the question in focus mode and goes back to the saved one", async ({ page }) => {
+  await login(page, "fastapi-focus");
+  await createAndOpen(page, /Minha Empresa/);
+  await sendChatMessage(page, "Empresa", /52\.155/);
+  await sendChatMessage(page, "Adicione prazos e documentos", /Adicionei/);
+  await sendChatMessage(page, "E se meu faturamento subir para R$ 500 mil?", /89\.250/);
+  const blocks = page.getByTestId(/^widget-(?!skeleton)/);
+  const saved = await blocks.evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")));
+  const banner = page.getByTestId("focus-banner");
+
+  for (const [question, first] of [
+    ["Quanto estou pagando de imposto?", "widget-kpi"],
+    ["Quais documentos faltam?", "widget-documentos"],
+    ["Compare o cenário com a situação atual", "widget-simulacao"],
+    ["Quais os prazos?", "widget-prazos"],
+  ] as const) {
+    await sendChatMessage(page, question, /Organizei assim porque/);
+    await expect(banner).toContainText("painel salvo não mudou");
+    await expect(blocks.first()).toHaveAttribute("data-testid", first);
+    await page.getByRole("button", { name: "Voltar ao painel salvo" }).click();
+    await expect(banner).toHaveCount(0);
+    expect(await blocks.evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")))).toEqual(saved);
+  }
+
+  await sendChatMessage(page, "Quais documentos faltam?", /Organizei assim porque/);
+  await page.reload(); // the focus was never saved
+  await expect(banner).toHaveCount(0);
+  expect(await blocks.evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")))).toEqual(saved);
 });
 
 test("personal journey through FastAPI: the real engine does not invent a 2026 income-tax result", async ({ page }) => {
@@ -262,4 +296,86 @@ test("pause, resume and delete an alert from the management list", async ({ page
   await row.getByRole("button", { name: "Apagar" }).click();
   await row.getByRole("button", { name: "Confirmar exclusão" }).click();
   await expect(page.getByTestId("managed-alert")).toHaveCount(0);
+});
+
+test("dashboard pages through FastAPI: create by chat, switch, persist, remove with confirmation (#123)", async ({ page }) => {
+  await login(page, "fastapi-pages");
+  await createAndOpen(page, /Minha Empresa/);
+  const tabs = page.getByRole("navigation", { name: "Páginas do painel" });
+  await expect(tabs).toHaveCount(0); // one page: no navigation
+
+  await sendChatMessage(page, "Crie uma página só de oportunidades", /Criei a página "Oportunidades"/);
+  await expect(tabs.getByRole("button", { name: "Oportunidades" })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByTestId("widget-text").or(page.getByTestId("widget-opportunities"))).toBeVisible();
+
+  await tabs.getByRole("button", { name: "Painel tributário" }).click(); // the main page is still empty
+  await expect(page.getByText(/nenhum bloco/i)).toBeVisible();
+  await page.reload();
+  await expect(tabs.getByRole("button", { name: "Oportunidades" })).toBeVisible();
+  await tabs.getByRole("button", { name: "Oportunidades" }).click();
+
+  await sendChatMessage(page, "Remova a página de oportunidades", /Você confirma/);
+  await expect(tabs).toBeVisible(); // nothing is removed before the click
+  await page.getByRole("button", { name: "Confirmar" }).click();
+  await expect(tabs).toHaveCount(0);
+  await page.reload();
+  await expect(tabs).toHaveCount(0);
+});
+
+// Manual move/resize (#129): saved as a new version, so it survives a reload and "Desfazer" restores the old layout.
+test("owner reorders and resizes blocks with buttons; reload keeps it and undo restores it", async ({ page }) => {
+  await login(page, "fastapi");
+  await createAndOpen(page, /Minha Empresa/);
+  await sendChatMessage(page, "Quero organizar meus impostos", /Empresa ou Pessoal/);
+  await sendChatMessage(page, "Empresa", /52\.155/);
+
+  const order = () => page.getByTestId(/^widget-/).evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")));
+  const before = await order();
+  expect(before.length).toBeGreaterThan(1);
+  const swapped = [before[1], before[0], ...before.slice(2)];
+
+  await page.getByRole("button", { name: /^Mover para baixo: / }).first().click();
+  await expect.poll(order).toEqual(swapped);
+  await page.reload();
+  await expect.poll(order).toEqual(swapped);
+
+  await page.getByRole("button", { name: "Desfazer" }).click();
+  await expect.poll(order).toEqual(before);
+
+  const size = page.getByLabel(/^Tamanho: /).first();
+  const original = await size.inputValue();
+  await size.selectOption("lg");
+  await page.reload();
+  await expect(size).toHaveValue("lg");
+  await page.getByRole("button", { name: "Desfazer" }).click();
+  await expect(size).toHaveValue(original);
+});
+
+// #179: the service provider's journey in a personal space: missing data becomes a question, then the three options show up
+// in the panel with their premises, the deadlines and the checklist; the medium-confidence rules keep the validation note.
+test("prestador de serviço: conversa, comparação PF x MEI x Simples e painel com premissas", async ({ page }) => {
+  await login(page, "prestador");
+  await createAndOpen(page, /Vida Pessoal/);
+
+  await sendChatMessage(page, "Sou prestador de serviço e recebo R$ 10 mil por mês", /Em qual anexo do Simples/);
+  await expect(page.getByTestId("widget-prestador-opcoes")).toHaveCount(0);
+
+  await sendChatMessage(
+    page,
+    "Sou prestador de serviço, faturo R$ 10 mil por mês, com despesas de R$ 1 mil, anexo III",
+    /Comparei por mês sobre R\$ 10\.000.*precisam de validação/,
+  );
+  const options = page.getByTestId("widget-prestador-opcoes");
+  await expect(options).toContainText("Pessoa física");
+  await expect(options).toContainText("MEI");
+  await expect(options).toContainText("Simples Nacional");
+  await expect(options).toContainText("Não pode ser usada"); // R$ 120 mil a year is over the MEI limit
+  await expect(page.getByTestId("widget-prestador-comparativo")).toBeVisible();
+  await expect(page.getByTestId("widget-prestador-impostos")).toBeVisible();
+  await expect(page.getByTestId("widget-prestador-prazos")).toContainText("carnê-leão");
+  await expect(page.getByTestId("widget-prestador-checklist")).toContainText("livro-caixa");
+  await expect(page.getByTestId("widget-prestador-premissas")).toContainText("aguardam validação de um profissional");
+
+  await page.reload(); // what the Python API saved is what the panel reads back
+  await expect(page.getByTestId("widget-prestador-opcoes")).toContainText("Simples Nacional");
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { csvCell, csvFileName, widgetCsv, widgetTable } from "../csv";
+import { csvCell, csvFileName, dashboardCsv, exportFileName, widgetCsv, widgetTable } from "../csv";
 import { sampleDashboard } from "../fixtures";
 import type { Widget } from "../types";
 
@@ -58,5 +58,25 @@ describe("csvFileName", () => {
   it("is a plain, accent-free slug", () => {
     expect(csvFileName("Para onde está indo?")).toBe("para-onde-esta-indo.csv");
     expect(csvFileName("???")).toBe("bloco.csv");
+  });
+});
+
+describe("dashboardCsv", () => {
+  it("stacks every tabular block with its title, BOM first, skipping text blocks", () => {
+    const csv = dashboardCsv([breakdown, { id: "t", kind: "text", title: "Nota", size: "sm", body: "x" }])!;
+    expect(csv.charCodeAt(0)).toBe(0xfeff);
+    expect(csv).toContain("Para onde está indo?\r\nItem;Valor (R$)\r\nICMS;21000,5\r\n");
+    expect(csv).not.toContain("Nota");
+  });
+
+  it("guards formulas in block titles and is null without tables", () => {
+    expect(dashboardCsv([{ ...breakdown, title: "=1+1" }])).toContain("'=1+1\r\n");
+    expect(dashboardCsv([])).toBeNull();
+  });
+});
+
+describe("exportFileName", () => {
+  it("appends the date before the extension", () => {
+    expect(exportFileName("Meu painel", "png", new Date("2026-11-21T12:00:00Z"))).toBe("meu-painel-2026-11-21.png");
   });
 });

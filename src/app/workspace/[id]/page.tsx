@@ -7,7 +7,10 @@ import { AlertBar } from "@/alerts/alert-bar";
 import { alertStatuses } from "@/alerts/evaluate";
 import { ChatPanel } from "@/chat/chat-panel";
 import { loadWorkspaceState } from "@/chat/workspace-state";
+import { EditableDashboard } from "@/dashboard/editable-dashboard";
 import { DashboardView } from "@/dashboard/dashboard-view";
+import type { DashboardPage } from "@/dashboard/page-tabs";
+import type { Dashboard } from "@/dashboard/types";
 import { VersionHistory } from "@/dashboard/version-history";
 import { DocumentsPanel, type DocumentRow } from "@/documents/documents-panel";
 import { openStored } from "@/documents/storage";
@@ -22,6 +25,7 @@ import { MESSAGES } from "@/sharing/messages";
 import { ROLE_LABEL } from "@/sharing/schema";
 import { ActivityPanel, type ActivityRow } from "@/sharing/activity-panel";
 import { SharePanel, type InviteRow, type MemberRow } from "@/sharing/share-panel";
+import { isPersonal } from "@/workspace/kinds";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -49,13 +53,17 @@ export default async function WorkspaceChatPage({
   const isOwner = state.role === "owner";
   if (!isOwner && ia) notFound(); // specialised agents are conversations: owner only
 
+  // The pages of the dashboard (#123): the first is the main one; a specialised AI has its own single panel.
+  const { data: pageRows } = ia ? { data: [] } : await supabase.from("dashboards").select("id, data").eq("workspace_id", id).is("agent_id", null).order("created_at");
+  const pages: DashboardPage[] = (pageRows ?? []).filter((r) => r.data).map((r) => ({ id: r.id, name: (r.data as Dashboard).name, dashboard: r.data as Dashboard }));
+
   const { data: documents } = await supabase
     .from("documents")
     .select("id, name, doc_type, extracted, size_bytes, mime_type, created_at")
     .eq("workspace_id", id)
     .order("created_at", { ascending: false });
   const [{ data: estate }, { data: heirs }, { data: assets }] =
-    state.kind === "pessoal"
+    isPersonal(state.kind)
       ? await Promise.all([
           supabase.from("estates").select("deceased_name, died_at, uf").eq("workspace_id", id).maybeSingle(),
           supabase.from("heirs").select("id, name, relationship, share").eq("workspace_id", id).order("created_at"),
@@ -88,10 +96,10 @@ export default async function WorkspaceChatPage({
       ])
     : [{ data: [] }, { data: [] }, { data: [] }];
 
-  const alerts = state.kind === "pessoal" ? [] : alertStatuses(mockEngine, state.company, state.alerts);
+  const alerts = isPersonal(state.kind) ? [] : alertStatuses(mockEngine, state.company, state.alerts);
   const notice = msg ? MESSAGES[msg] : undefined;
   const documentsPanel = <DocumentsPanel workspaceId={id} documents={((documents ?? []) as DocumentRow[]).map((d) => ({ ...d, extracted: openStored(d.extracted) }))} canEdit={isOwner} />;
-  const assetsPanel = state.kind === "pessoal" ? <AssetsPanel assets={(assets ?? []) as AssetRow[]} /> : null;
+  const assetsPanel = isPersonal(state.kind) ? <AssetsPanel assets={(assets ?? []) as AssetRow[]} /> : null;
   const commentsPanel = (
     <Comments
       workspaceId={id}
@@ -142,11 +150,12 @@ export default async function WorkspaceChatPage({
             initialAgents={state.agents}
             initialMessages={state.messages}
             initialDashboard={state.dashboard}
+            initialPages={pages}
             initialAlerts={alerts}
             workspaceKind={state.kind}
             initialPrompt={pergunta?.slice(0, 1000)}
           />
-          {state.kind !== "pessoal" && <AlertManager workspaceId={id} alerts={state.alerts} />}
+          {!isPersonal(state.kind) && <AlertManager workspaceId={id} alerts={state.alerts} />}
           <SharePanel workspaceId={id} defaultOpen={Boolean(notice)} members={(members ?? []) as MemberRow[]} invites={(invites ?? []) as InviteRow[]} />
           {assetsPanel}
           {inventoryPanel}
@@ -167,8 +176,14 @@ export default async function WorkspaceChatPage({
             </form>
           </div>
           <AlertBar alerts={alerts} />
-          <VersionHistory workspaceId={id} dashboard={state.dashboard} readOnly />
-          <DashboardView dashboard={state.dashboard} />
+          {state.role === "editor" ? (
+            <EditableDashboard workspaceId={id} initial={state.dashboard} />
+          ) : (
+            <>
+              <VersionHistory workspaceId={id} dashboard={state.dashboard} readOnly />
+              <DashboardView dashboard={state.dashboard} />
+            </>
+          )}
           {assetsPanel}
           {inventoryPanel}
           {documentsPanel}

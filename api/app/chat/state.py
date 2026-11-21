@@ -13,7 +13,8 @@ from typing import Any, Literal
 from pydantic.alias_generators import to_camel
 
 from app.chat.dashboard import Dashboard, History
-from app.chat.store import Kind, MemoryStore
+from app.chat.kinds import Kind, base_of, is_personal
+from app.chat.store import MemoryStore, Page
 from app.chat.types import Agent, Msg
 from app.chat.versions import get_version, list_versions, record_versions
 from app.core.config import Settings
@@ -92,9 +93,11 @@ def empty_dashboard(workspace_id: str) -> Dashboard:
 
 
 async def load_workspace_state(
-    db: UserDb, workspace_id: str, settings: Settings, agent_id: str | None = None
+    db: UserDb, workspace_id: str, settings: Settings, agent_id: str | None = None, page_id: str | None = None
 ) -> WorkspaceState | None:
-    """Everything the chat needs. With `agent_id` the conversation is that agent's own; None if it is not in this workspace."""
+    """Everything the chat needs. With `agent_id` the conversation is that agent's own; None if it is not in this workspace.
+
+    `page_id` is the dashboard page open on screen (#123): the blocks of this turn go there unless the model switches."""
     workspaces = await db.select("workspaces", select="id,name,kind,profile", id=f"eq.{workspace_id}")
     if not workspaces:
         return None
@@ -114,7 +117,7 @@ async def load_workspace_state(
         workspace_id=f"eq.{workspace_id}",
         agent_id=f"eq.{agent_id}" if agent_id else "is.null",
         order="created_at",
-        limit="1",
+        **({"limit": "1"} if agent_id else {}),  # the main conversation sees every page of the workspace dashboard
     )
     alerts = await db.select("alerts", select="id,rule,active", workspace_id=f"eq.{workspace_id}", order="created_at")
     agent_rows = await db.select(
@@ -153,8 +156,8 @@ async def load_workspace_state(
         raw = {**raw, "cnpj": decrypt_field(raw["cnpj"], settings)}  # the CNPJ is stored encrypted and opened here
     has_data = isinstance(raw, dict) and len(raw) > 0
     fallback = seed_company() if demo else blank
-    company = (normalize_profile(raw, fallback) if has_data else fallback) if ws["kind"] == "empresa" else blank
-    if ws["kind"] == "pessoal":
+    company = (normalize_profile(raw, fallback) if has_data else fallback) if base_of(ws["kind"]) == "empresa" else blank
+    if is_personal(ws["kind"]):
         person = _person_from(raw) if has_data and isinstance(raw, dict) else (seed_person() if demo else PersonProfile())
     else:
         person = seed_person() if demo else PersonProfile()
@@ -169,7 +172,12 @@ async def load_workspace_state(
 
     if agent and not (dashboards and dashboards[0].get("data")):
         present = {**present, "id": agent["id"], "name": f"Painel de {agent['name']}"}
+    pages = [Page(r["id"], History(d := r.get("data") or empty_dashboard(workspace_id)), d["version"]) for r in dashboards]
+    if not agent and pages:
+        present = (next((p for p in pages if p.id == page_id), None) or pages[0]).history.present
     store = MemoryStore(
+        pages=[] if agent else pages,
+        active_page=None if agent or not pages else next((p.id for p in pages if p.history.present is present), None),
         load_versions=load_versions,
         company=company,
         person=person,
@@ -209,7 +217,7 @@ async def save_workspace_state(
 ) -> list[Agent]:
     """Saves the turn. Returns the agents as persisted, so brand-new ones come back with their real ids."""
     store = state.store
-    if state.kind == "pessoal":
+    if is_personal(state.kind):
         profile = profile_to_json(store.person)
     else:
         profile = profile_to_json(store.company)
@@ -218,7 +226,7 @@ async def save_workspace_state(
     before = await db.select("workspaces", select="profile", id=f"eq.{workspace_id}")
     await db.update("workspaces", {"profile": profile}, id=f"eq.{workspace_id}")
     old, new = ((before[0].get("profile") if before else None) or {}).get("regime"), str(profile.get("regime"))
-    if state.kind == "empresa" and old and old != new:
+    if base_of(state.kind) == "empresa" and old and old != new:
         await notify_event(
             settings,
             workspace_id,
@@ -227,21 +235,40 @@ async def save_workspace_state(
             f"O regime tributário mudou de {REGIME_LABEL.get(old, old)} para {REGIME_LABEL.get(new, new)}.",
         )
 
-    dashboard = store.history.present
-    row = {
-        "workspace_id": workspace_id,
-        "name": dashboard["name"],
-        "data": dashboard,
-        "version": dashboard["version"],
-        "updated_at": _now(),
-    }
-    if state.dashboard_row_id:
-        await db.update("dashboards", row, id=f"eq.{state.dashboard_row_id}")
-    elif state.agent is None or dashboard["widgets"]:  # an agent that never built a panel does not get an empty one
-        await db.insert("dashboards", {**row, "agent_id": state.agent["id"] if state.agent else None})
-    # ponytail: versions (#122) are per workspace, so only the main dashboard keeps them; agent panels have none yet
-    if state.agent is None and dashboard["version"] != state.loaded_version:
-        await record_versions(db, workspace_id, [*store.history.past, dashboard])
+    store.flush_page()
+
+    def dashboard_row(dashboard: Dashboard) -> dict[str, Any]:
+        return {
+            "workspace_id": workspace_id,
+            "name": dashboard["name"],
+            "data": dashboard,
+            "version": dashboard["version"],
+            "updated_at": _now(),
+        }
+
+    if state.agent:
+        dashboard = store.history.present
+        if state.dashboard_row_id:
+            await db.update("dashboards", dashboard_row(dashboard), id=f"eq.{state.dashboard_row_id}")
+        elif dashboard["widgets"]:  # an agent that never built a panel does not get an empty one
+            await db.insert("dashboards", {**dashboard_row(dashboard), "agent_id": state.agent["id"]})
+    else:
+        gone_pages = [i for i in store.removed_page_ids if is_persisted(i)]
+        if gone_pages:
+            await db.delete("dashboards", id=f"in.({','.join(gone_pages)})", workspace_id=f"eq.{workspace_id}")
+        for page in store.pages:
+            dashboard = page.history.present
+            if not is_persisted(page.id):
+                [created] = await db.insert("dashboards", {**dashboard_row(dashboard), "agent_id": None})
+                if store.active_page == page.id:
+                    store.active_page = created["id"]
+                page.id = created["id"]
+            elif dashboard["version"] != page.loaded_version:
+                await db.update("dashboards", dashboard_row(dashboard), id=f"eq.{page.id}")
+        # ponytail: versions (#122) are per workspace: only the first page keeps them (agent panels and other pages: none yet)
+        main = store.pages[0]
+        if main.history.present["version"] != main.loaded_version:
+            await record_versions(db, workspace_id, [*main.history.past, main.history.present])
 
     new_alerts = [
         {"workspace_id": workspace_id, "rule": a["rule"], "active": a["active"]}
