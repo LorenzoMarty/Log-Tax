@@ -5,6 +5,7 @@ created with. Unlike the TypeScript version the chat uses the real engine. Retur
 """
 
 import asyncio
+import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
@@ -34,6 +35,22 @@ EVENT_OF_TOOL = {
     "create_agent": "agent_created",
     "create_workspace": "workspace_created",
 }
+
+
+def documents_change_target(tool: str, raw_args: str) -> str | None:
+    """The agent a create/update tool call set a document permission on (its name or id), else None."""
+    if tool not in ("create_agent", "update_agent"):
+        return None
+    try:
+        args = json.loads(raw_args)
+    except ValueError:
+        return None
+    if not isinstance(args, dict):
+        return None
+    body = args.get("patch") if tool == "update_agent" else args
+    if not isinstance(body, dict) or body.get("documents") is None:
+        return None
+    return str(body.get("name") or args.get("id") or "")[:300] or None
 
 
 class ReadOnlyError(Exception):
@@ -83,12 +100,25 @@ async def handle_chat(
         raise ReadOnlyError
     agent = state.agent
     engine = RealEngine()
+    allowed_docs = agent.get("documents") if agent else None
     scope = Scope(
-        workspace_id, state.workspace_name, state.kind, agent["id"] if agent else None, tuple(agent["tools"]) if agent else None
+        workspace_id,
+        state.workspace_name,
+        state.kind,
+        agent["id"] if agent else None,
+        tuple(agent["tools"]) if agent else None,
+        None if allowed_docs is None else tuple(allowed_docs),
     )
     # Approvals come from the user's click on the client, never from the model.
     tools = ToolRegistry(
-        ToolContext(scope, state.store, engine, approve, DbWorkspaceAdmin(db, user_id), DbDocumentSearch(db, scope.workspace_id))
+        ToolContext(
+            scope,
+            state.store,
+            engine,
+            approve,
+            DbWorkspaceAdmin(db, user_id),
+            DbDocumentSearch(db, scope.workspace_id, scope.allowed_documents),
+        )
     )
     store = state.store
     system = build_system_prompt(
@@ -113,6 +143,10 @@ async def handle_chat(
     for e in result.events:
         if e.outcome["status"] == "ok" and is_destructive(e.name):
             await audit(db, workspace_id, "destructive_action", e.name)
+    # A change of which documents an AI may read is a permission change (#134): it goes in the audit trail too.
+    for e in result.events:
+        if e.outcome["status"] == "ok" and (target := documents_change_target(e.name, e.args)):
+            await audit(db, workspace_id, "agent_documents_changed", target)
     # Funnel steps (only for people who opted in; the event carries the step name, never the content).
     for step in dict.fromkeys(
         EVENT_OF_TOOL[e.name] for e in result.events if e.outcome["status"] == "ok" and e.name in EVENT_OF_TOOL

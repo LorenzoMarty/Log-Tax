@@ -100,6 +100,22 @@
       "AgentPatchIn": {
         "additionalProperties": false,
         "properties": {
+          "documents": {
+            "anyOf": [
+              {
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "maxItems": 200,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Documents"
+          },
           "name": {
             "anyOf": [
               {

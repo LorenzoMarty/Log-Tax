@@ -17,6 +17,7 @@ from dataclasses import dataclass, field, is_dataclass, replace
 from datetime import UTC, date, datetime
 from decimal import ROUND_DOWN, ROUND_HALF_UP, Decimal
 from typing import Annotated, Any, Literal
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, TypeAdapter, ValidationError, create_model, model_validator
 from pydantic.alias_generators import to_camel
@@ -428,10 +429,15 @@ class AlertArgs(_Args):
         return self
 
 
+DocumentIds = Annotated[list[UUID], Field(max_length=200)]
+
+
 class CreateAgentArgs(_Args):
     name: str = Field(min_length=1)
     objective: str = Field(min_length=1)
     tools: list[str]
+    documents: DocumentIds | None = None
+    """Ids of the documents this AI may read; omit for every document, [] for none."""
 
 
 class FromTemplateArgs(_Args):
@@ -442,6 +448,8 @@ class AgentPatch(_Args):
     name: str | None = Field(default=None, min_length=1)
     objective: str | None = Field(default=None, min_length=1)
     tools: list[str] | None = None
+    documents: DocumentIds | None = None
+    """Ids of the documents this AI may read; [] = none. Answers "essa IA pode usar os documentos que já enviei?"."""
 
 
 class UpdateAgentArgs(_Args):
@@ -1456,7 +1464,12 @@ async def _delete_alert(ctx: ToolContext, a: IdArgs) -> Any:
 )
 async def _create_agent(ctx: ToolContext, a: CreateAgentArgs) -> Any:
     _check_agent_tools(ctx.scope, a.tools)
-    return await ctx.store.add_agent(a.model_dump())
+    values = a.model_dump(mode="json")
+    if a.documents is None:
+        values.pop("documents")
+    else:
+        await _check_agent_documents(ctx, values["documents"])
+    return await ctx.store.add_agent(values)
 
 
 @_tool(
@@ -1486,7 +1499,12 @@ async def _create_agent_from_template(ctx: ToolContext, a: FromTemplateArgs) -> 
 async def _update_agent(ctx: ToolContext, a: UpdateAgentArgs) -> Any:
     if a.patch.tools is not None:
         _check_agent_tools(ctx.scope, a.patch.tools)
-    return _need(await ctx.store.update_agent(a.id, a.patch.model_dump(exclude_unset=True)), f'IA "{a.id}" não encontrada.')
+    patch = a.patch.model_dump(mode="json", exclude_unset=True)
+    if "documents" in patch:
+        if patch["documents"] is None:
+            raise ToolError("Informe a lista de documentos (vazia para nenhum).")
+        await _check_agent_documents(ctx, patch["documents"])
+    return _need(await ctx.store.update_agent(a.id, patch), f'IA "{a.id}" não encontrada.')
 
 
 @_tool(
@@ -1520,6 +1538,15 @@ def _check_agent_tools(scope: Scope, requested: list[str]) -> None:
     extra = [t for t in requested if t not in scope.allowed_tools]
     if extra:
         raise RefusalError(f"Esta IA não pode conceder ferramentas que não possui: {', '.join(extra)}.")
+
+
+async def _check_agent_documents(ctx: ToolContext, requested: list[str]) -> None:
+    """An agent can only hand out documents it can read itself, and only ones of this workspace."""
+    held = ctx.scope.allowed_documents
+    if held is not None and (extra := [d for d in requested if d not in held]):
+        raise RefusalError(f"Esta IA não pode conceder documentos que não pode ler: {len(extra)} id(s).")
+    if ctx.documents is not None and (gone := await ctx.documents.missing(requested)):
+        raise ToolError(f"Documentos não encontrados neste espaço: {', '.join(gone)}.")
 
 
 def _in_kind(scope: Scope, tool: Tool) -> bool:

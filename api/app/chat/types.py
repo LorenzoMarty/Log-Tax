@@ -31,6 +31,8 @@ class Agent(TypedDict):
     name: str
     objective: str
     tools: list[str]
+    documents: NotRequired[list[str] | None]
+    """Document ids this agent may read (#134). Absent/None = every document of the workspace; [] = none."""
 
 
 @dataclass(frozen=True)

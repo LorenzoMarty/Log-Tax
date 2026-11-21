@@ -6,6 +6,7 @@ untrusted. Visibility is the caller's own session (RLS) plus the workspace filte
 
 import re
 import unicodedata
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any, Protocol
 
@@ -57,36 +58,67 @@ class DocumentSearch(Protocol):
     async def names(self) -> list[str]: ...
     async def arrived(self) -> list[tuple[str, str]]: ...
     async def get(self, document_id: str) -> dict[str, Any] | None: ...
+    async def missing(self, document_ids: Sequence[str]) -> list[str]: ...
 
 
 class DbDocumentSearch:
-    """Bound to ONE workspace, like the chat store: the query never names another."""
+    """Bound to ONE workspace, like the chat store: the query never names another.
 
-    def __init__(self, db: UserDb, workspace_id: str) -> None:
+    `allowed_ids` is the agent's document permission (#134): None = every document of the workspace, a tuple = only those
+    (empty = none). Every read goes through `_scope`, so an id the model makes up or copies is refused here, not in the prompt.
+    """
+
+    def __init__(self, db: UserDb, workspace_id: str, allowed_ids: Sequence[str] | None = None) -> None:
         self._db = db
         self._workspace_id = workspace_id
+        self._allowed = None if allowed_ids is None else tuple(allowed_ids)
+
+    def _scope(self) -> dict[str, str] | None:
+        """Row filters every query carries; None when the agent may read nothing (no query is made at all)."""
+        filters = {"workspace_id": f"eq.{self._workspace_id}"}
+        if self._allowed is None:
+            return filters
+        return {**filters, "id": f"in.({','.join(self._allowed)})"} if self._allowed else None
 
     async def search(self, query: str) -> list[Hit]:
+        if (scope := self._scope()) is None:
+            return []
         rows = await self._db.select(
             "documents",
             select="id,name,search_text",
-            workspace_id=f"eq.{self._workspace_id}",
+            **scope,
             search_tsv=f"wfts(portuguese).{query}",
             limit=str(MAX_HITS),
         )
         return [Hit(str(r["id"]), str(r["name"]), snippet(str(r.get("search_text") or r["name"]), query)) for r in rows]
 
     async def names(self) -> list[str]:
-        rows = await self._db.select("documents", select="name", workspace_id=f"eq.{self._workspace_id}")
+        if (scope := self._scope()) is None:
+            return []
+        rows = await self._db.select("documents", select="name", **scope)
         return [str(r["name"]) for r in rows]
 
     async def arrived(self) -> list[tuple[str, str]]:
         """(doc_type, created_at) of every document, what the missing-documents checklist ticks from (#143)."""
-        rows = await self._db.select("documents", select="doc_type,created_at", workspace_id=f"eq.{self._workspace_id}")
+        if (scope := self._scope()) is None:
+            return []
+        rows = await self._db.select("documents", select="doc_type,created_at", **scope)
         return [(str(r["doc_type"]), str(r["created_at"])) for r in rows]
+
+    async def missing(self, document_ids: Sequence[str]) -> list[str]:
+        """The ids that are not documents of THIS workspace (to validate a permission list). Ignores the agent's own list."""
+        if not document_ids:
+            return []
+        rows = await self._db.select(
+            "documents", select="id", id=f"in.({','.join(document_ids)})", workspace_id=f"eq.{self._workspace_id}"
+        )
+        found = {str(r["id"]) for r in rows}
+        return [d for d in document_ids if d not in found]
 
     async def get(self, document_id: str) -> dict[str, Any] | None:
         """One document of THIS workspace as the model may read it: type, fields with confidence, untrusted text."""
+        if self._allowed is not None and document_id not in self._allowed:
+            return None
         rows = await self._db.select(
             "documents",
             select="id,name,doc_type,extracted,search_text",
