@@ -2,12 +2,12 @@
 
 from typing import Any
 
-from app.chat.store import Kind
+from app.chat.kinds import KINDS, Kind
 from app.db.client import UserDb
 
 
 def _kind(value: str) -> Kind:
-    return "pessoal" if value == "pessoal" else "empresa"
+    return value if value in KINDS else "empresa"  # type: ignore[return-value]
 
 
 def _view(row: dict[str, Any]) -> dict[str, str]:

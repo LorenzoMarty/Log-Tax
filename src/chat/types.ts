@@ -1,6 +1,7 @@
 import type { Action } from "@/dashboard/reducer";
 import type { Dashboard } from "@/dashboard/types";
 import type { CompanyProfile, PersonProfile, TaxEngine } from "@/engine";
+import type { SpaceKind } from "@/workspace/kinds";
 
 // ---- LLM boundary (provider-agnostic) ----
 export interface ToolCall {
@@ -39,7 +40,7 @@ export interface LlmClient {
 export interface Scope {
   workspaceId: string;
   workspaceName?: string;
-  kind?: "empresa" | "pessoal";
+  kind?: SpaceKind;
   agentId?: string;
   /** Undefined = every tool. An agent only ever gets the tools it was created with. */
   allowedTools?: readonly string[];
@@ -88,8 +89,8 @@ export interface ChatStore {
 
 /** The user's workspaces, for the tools that create, rename and remove them. RLS decides what each call may touch. */
 export interface WorkspaceAdmin {
-  list(): Promise<{ id: string; name: string; kind: "empresa" | "pessoal" }[]>;
-  create(name: string, kind: "empresa" | "pessoal"): Promise<{ id: string; name: string; kind: "empresa" | "pessoal" }>;
+  list(): Promise<{ id: string; name: string; kind: SpaceKind }[]>;
+  create(name: string, kind: SpaceKind): Promise<{ id: string; name: string; kind: SpaceKind }>;
   rename(id: string, name: string): Promise<boolean>;
   /** False when nothing was removed (not found or not the owner). */
   remove(id: string): Promise<boolean>;

@@ -14,6 +14,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from fastapi.responses import JSONResponse, Response
 
+from app.chat.kinds import base_of
 from app.chat.state import profile_to_json
 from app.core.br_ids import normalize_cnpj
 from app.core.config import Settings, get_settings
@@ -70,7 +71,7 @@ async def _import(
     if await db.rpc("my_role", {"ws": ws}) != "owner":
         return error_response(403, "forbidden", "Só quem é dono do espaço importa notas.")
     rows = await db.select("workspaces", select="kind,profile", id=f"eq.{ws}")
-    if not rows or rows[0]["kind"] != "empresa":
+    if not rows or base_of(rows[0]["kind"]) != "empresa":
         return error_response(404, "not_found", "Não encontrei o que você pediu.")
     raw: Any = rows[0].get("profile")
     cnpj = decrypt_field(raw["cnpj"], settings) if isinstance(raw, dict) and isinstance(raw.get("cnpj"), str) else ""

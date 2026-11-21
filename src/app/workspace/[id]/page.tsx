@@ -25,6 +25,7 @@ import { MESSAGES } from "@/sharing/messages";
 import { ROLE_LABEL } from "@/sharing/schema";
 import { ActivityPanel, type ActivityRow } from "@/sharing/activity-panel";
 import { SharePanel, type InviteRow, type MemberRow } from "@/sharing/share-panel";
+import { isPersonal } from "@/workspace/kinds";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -62,7 +63,7 @@ export default async function WorkspaceChatPage({
     .eq("workspace_id", id)
     .order("created_at", { ascending: false });
   const [{ data: estate }, { data: heirs }, { data: assets }] =
-    state.kind === "pessoal"
+    isPersonal(state.kind)
       ? await Promise.all([
           supabase.from("estates").select("deceased_name, died_at, uf").eq("workspace_id", id).maybeSingle(),
           supabase.from("heirs").select("id, name, relationship, share").eq("workspace_id", id).order("created_at"),
@@ -95,10 +96,10 @@ export default async function WorkspaceChatPage({
       ])
     : [{ data: [] }, { data: [] }, { data: [] }];
 
-  const alerts = state.kind === "pessoal" ? [] : alertStatuses(mockEngine, state.company, state.alerts);
+  const alerts = isPersonal(state.kind) ? [] : alertStatuses(mockEngine, state.company, state.alerts);
   const notice = msg ? MESSAGES[msg] : undefined;
   const documentsPanel = <DocumentsPanel workspaceId={id} documents={((documents ?? []) as DocumentRow[]).map((d) => ({ ...d, extracted: openStored(d.extracted) }))} canEdit={isOwner} />;
-  const assetsPanel = state.kind === "pessoal" ? <AssetsPanel assets={(assets ?? []) as AssetRow[]} /> : null;
+  const assetsPanel = isPersonal(state.kind) ? <AssetsPanel assets={(assets ?? []) as AssetRow[]} /> : null;
   const commentsPanel = (
     <Comments
       workspaceId={id}
@@ -154,7 +155,7 @@ export default async function WorkspaceChatPage({
             workspaceKind={state.kind}
             initialPrompt={pergunta?.slice(0, 1000)}
           />
-          {state.kind !== "pessoal" && <AlertManager workspaceId={id} alerts={state.alerts} />}
+          {!isPersonal(state.kind) && <AlertManager workspaceId={id} alerts={state.alerts} />}
           <SharePanel workspaceId={id} defaultOpen={Boolean(notice)} members={(members ?? []) as MemberRow[]} invites={(invites ?? []) as InviteRow[]} />
           {assetsPanel}
           {inventoryPanel}

@@ -3,8 +3,8 @@
 
 import re
 from collections.abc import Sequence
-from typing import Literal
 
+from app.chat.kinds import Kind, spec_of
 from app.chat.types import Agent
 from app.engine.types import DISCLAIMER
 
@@ -32,17 +32,11 @@ _RULES = [
     "Para mudar o painel use as ferramentas de dashboard; nunca escreva código nem HTML.",
 ]
 
-_PERSON_SPACE = (
-    "Este espaço é de pessoa física (Imposto de Renda). Use get_ir_diagnosis para calcular e comparar a declaração simplificada e a "
-    "completa, e save_person_data para registrar o que o usuário informar (renda, INSS, dependentes, despesas, imposto retido). "
-    "As ferramentas de empresa não estão disponíveis aqui."
-)
-
 
 def build_system_prompt(
     workspace_name: str,
     *,
-    kind: Literal["empresa", "pessoal"] | None = None,
+    kind: Kind | None = None,
     agent: dict[str, str] | None = None,
     agents: Sequence[Agent] = (),
     memories: Sequence[str] = (),
@@ -51,8 +45,8 @@ def build_system_prompt(
         "Você é a IA do Log Tax, assistente de inteligência tributária. Responda sempre em português do Brasil, em linguagem simples, e explique qualquer termo técnico que usar.",
         f"Espaço atual: {workspace_name}.",
     ]
-    if kind == "pessoal":
-        lines.append(_PERSON_SPACE)
+    if kind and (prompt := spec_of(kind).prompt):
+        lines.append(prompt)
     if agent:
         lines.append(f'Você atua como "{agent["name"]}". Objetivo: {agent["objective"]}')
     if agents:
