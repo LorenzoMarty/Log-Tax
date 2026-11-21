@@ -21,6 +21,9 @@ type AuditAction = Literal[
     "mfa_enabled",
     "mfa_disabled",
     "mfa_recovery_used",
+    "report_link_created",
+    "report_link_revoked",
+    "report_link_opened",
 ]
 
 AUDIT_LABEL: dict[str, str] = {
@@ -38,6 +41,9 @@ AUDIT_LABEL: dict[str, str] = {
     "mfa_enabled": "Ativou a verificação em duas etapas",
     "mfa_disabled": "Desativou a verificação em duas etapas",
     "mfa_recovery_used": "Usou um código de recuperação",
+    "report_link_created": "Criou um link do relatório",
+    "report_link_revoked": "Revogou um link do relatório",
+    "report_link_opened": "Alguém abriu um link do relatório",
 }
 AUDIT_ACTIONS: tuple[str, ...] = get_args(AuditAction.__value__)
 

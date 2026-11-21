@@ -100,3 +100,9 @@ async def user_db(
 ) -> AsyncIterator[UserDb]:
     async with open_db(principal, settings) as db:
         yield db
+
+
+async def anon_db(settings: Settings = Depends(get_settings)) -> AsyncIterator[UserDb]:
+    """A `UserDb` with no user: the anon role, which can only call the RPCs granted to it (public report links)."""
+    async with httpx.AsyncClient(base_url=settings.supabase_url.rstrip("/"), timeout=15) as http:
+        yield UserDb(http, settings.supabase_anon_key, settings.supabase_anon_key)
