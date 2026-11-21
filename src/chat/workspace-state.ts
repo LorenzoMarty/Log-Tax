@@ -50,8 +50,10 @@ export async function loadWorkspaceState(sb: SupabaseClient, workspaceId: string
   const conversation = agentId
     ? sb.from("agent_conversations").select("history, messages").eq("agent_id", agentId).eq("workspace_id", workspaceId).maybeSingle()
     : sb.from("conversations").select("history, messages").eq("workspace_id", workspaceId).maybeSingle();
+  const dashboards = sb.from("dashboards").select("id, data").eq("workspace_id", workspaceId);
   const [dash, alerts, agents, conv, mems] = await Promise.all([
-    sb.from("dashboards").select("id, data").eq("workspace_id", workspaceId).order("created_at").limit(1).maybeSingle(),
+    // The main dashboard has no agent; an agent's conversation shows that agent's own panel (#139).
+    (agentId ? dashboards.eq("agent_id", agentId) : dashboards.is("agent_id", null)).order("created_at").limit(1).maybeSingle(),
     sb.from("alerts").select("id, rule, active").eq("workspace_id", workspaceId).order("created_at"),
     sb.from("agents").select("id, name, objective, config").eq("workspace_id", workspaceId).order("created_at"),
     conversation,
@@ -79,7 +81,7 @@ export async function loadWorkspaceState(sb: SupabaseClient, workspaceId: string
     role: (role ?? "reader") as WorkspaceState["role"],
     company,
     person,
-    dashboard: dash.data?.data ?? emptyDashboard(workspaceId),
+    dashboard: dash.data?.data ?? (agent ? { ...emptyDashboard(workspaceId), id: agent.id, name: `Painel de ${agent.name}` } : emptyDashboard(workspaceId)),
     dashboardRowId: dash.data?.id,
     alerts: (alerts.data ?? []) as Alert[],
     agents: agentList,
@@ -99,12 +101,8 @@ export async function saveWorkspaceState(
   ok(await sb.from("workspaces").update({ profile: s.kind === "pessoal" ? s.person : s.company.cnpj ? { ...s.company, cnpj: encryptField(s.company.cnpj) } : s.company }).eq("id", workspaceId), "workspaces");
 
   const dashRow = { workspace_id: workspaceId, name: s.dashboard.name, data: s.dashboard, version: s.dashboard.version, updated_at: new Date().toISOString() };
-  ok(
-    s.dashboardRowId
-      ? await sb.from("dashboards").update(dashRow).eq("id", s.dashboardRowId)
-      : await sb.from("dashboards").insert(dashRow),
-    "dashboards",
-  );
+  if (s.dashboardRowId) ok(await sb.from("dashboards").update(dashRow).eq("id", s.dashboardRowId), "dashboards");
+  else if (!s.agentId || s.dashboard.widgets.length > 0) ok(await sb.from("dashboards").insert({ ...dashRow, agent_id: s.agentId ?? null }), "dashboards"); // an agent that never built a panel gets none
 
   const newAlerts = s.alerts.filter((a) => !UUID.test(a.id)).map((a) => ({ workspace_id: workspaceId, rule: a.rule, active: a.active }));
   if (newAlerts.length) ok(await sb.from("alerts").insert(newAlerts), "alerts");
