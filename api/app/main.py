@@ -25,6 +25,7 @@ from app.api import (
     report_links,
     sharing,
     usage,
+    validations,
     vitals,
     workspaces,
 )
@@ -64,6 +65,7 @@ def create_app() -> FastAPI:
     app.include_router(report.router)
     app.include_router(report_links.router)
     app.include_router(sharing.router)
+    app.include_router(validations.router)
     app.include_router(workspaces.router)
     app.include_router(alert_events.router)
     app.include_router(agents.router)
