@@ -5902,6 +5902,64 @@
         ]
       }
     },
+    "/v1/workspaces/{workspace_id}/agent-dashboards": {
+      "get": {
+        "description": "Members read (RLS). Only agents that built a panel appear; the main dashboard is not listed here.",
+        "operationId": "list_agent_dashboards_v1_workspaces__workspace_id__agent_dashboards_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Agent Dashboards",
+        "tags": [
+          "agents"
+        ]
+      }
+    },
     "/v1/workspaces/{workspace_id}/agents/{agent_id}": {
       "delete": {
         "operationId": "delete_agent_v1_workspaces__workspace_id__agents__agent_id__delete",
