@@ -95,6 +95,28 @@ test("the panel adapts to the question in focus mode and goes back to the saved 
   expect(await blocks.evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")))).toEqual(saved);
 });
 
+// #118 (PRD §28): the interface gives context to the conversation. Clicking "Perguntar" on the ICMS line and asking "por quê?"
+// explains that line, with the keyboard only. The server reads the block from the saved panel; the client sends just the ids.
+test("asking about the ICMS line of a block explains that line, by keyboard", async ({ page }) => {
+  await login(page, "fastapi-ask");
+  await createAndOpen(page, /Minha Empresa/);
+  await sendChatMessage(page, "Empresa", /52\.155/);
+  const line = page.getByTestId("widget-breakdown").getByRole("button", { name: /Perguntar sobre esta linha: ICMS/ });
+  const amount = (await page.getByTestId("widget-breakdown").locator("li", { hasText: "ICMS" }).locator("span.tabular-nums").innerText()).trim();
+
+  await line.focus();
+  await page.keyboard.press("Enter"); // no mouse: the button is a native one
+  await expect(page.getByRole("status").filter({ hasText: "Perguntando sobre" })).toContainText("ICMS");
+  await expect(page.getByLabel("Mensagem")).toBeFocused();
+
+  await sendChatMessage(page, "por quê?", /Sobre a linha "ICMS/);
+  const answer = page.locator('[data-role="assistant"]').last();
+  await expect(answer).toContainText('do bloco "Para onde está indo?"');
+  await expect(answer).toContainText(amount.replace(/\s/g, " ")); // the value of that very line
+  await expect(page.getByText('Sobre "ICMS (SP)" em "Para onde está indo?": por quê?')).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Perguntando sobre" })).toHaveCount(0); // the chosen line is used once
+});
+
 test("personal journey through FastAPI: the real engine does not invent a 2026 income-tax result", async ({ page }) => {
   await login(page, "fastapi-pf");
   await createAndOpen(page, /Vida Pessoal/);

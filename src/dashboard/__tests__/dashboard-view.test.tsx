@@ -5,6 +5,22 @@ import { sampleDashboard } from "../fixtures";
 import { ESTIMATE_KINDS } from "../types";
 
 describe("DashboardView", () => {
+  it("asks about one line of a block with a button reachable by keyboard (#118)", () => {
+    const onAsk = vi.fn();
+    render(<DashboardView dashboard={sampleDashboard} onAsk={onAsk} />);
+    const line = screen.getByRole("button", { name: "Perguntar sobre esta linha: ICMS" });
+    expect(line.tagName).toBe("BUTTON"); // a native button: Tab focuses it, Enter and Space press it
+    line.click();
+    expect(onAsk).toHaveBeenCalledWith(expect.objectContaining({ id: "breakdown" }), "ICMS");
+    screen.getByRole("button", { name: "Perguntar sobre isto: Para onde está indo?" }).click();
+    expect(onAsk).toHaveBeenLastCalledWith(expect.objectContaining({ id: "breakdown" }));
+  });
+
+  it("shows no line buttons without onAsk", () => {
+    render(<DashboardView dashboard={sampleDashboard} />);
+    expect(screen.queryByRole("button", { name: /Perguntar sobre/ })).toBeNull();
+  });
+
   it("offers a CSV download on every block with a table, named after the block (#132)", () => {
     render(<DashboardView dashboard={sampleDashboard} />);
     for (const w of sampleDashboard.widgets) {

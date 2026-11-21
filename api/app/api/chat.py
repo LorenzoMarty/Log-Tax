@@ -20,6 +20,7 @@ from app.chat.budget import BUDGET_EXHAUSTED, record_tokens, tokens_left
 from app.chat.handle_chat import ChatReply, ReadOnlyError, handle_chat
 from app.chat.llm_factory import get_llm
 from app.chat.orchestrator import TurnCancelledError
+from app.chat.panel_context import PanelContext
 from app.chat.progress import NDJSON, done_line, error_line, tool_line
 from app.core.auth import Principal, current_user
 from app.core.config import Settings, get_settings
@@ -42,6 +43,8 @@ class ChatIn(BaseModel):
     """The dashboard page open on screen: the blocks of this turn go there."""
     message: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=4000)]
     approve: Annotated[list[Annotated[str, Field(max_length=2000)]], Field(max_length=10)] = []
+    context: PanelContext | None = None
+    """The block (and line) the user asked about on the panel (#118): only ids/labels; the server reads the data itself."""
 
 
 def public_reply(reply: ChatReply) -> dict[str, Any]:
@@ -93,7 +96,7 @@ async def chat(
         reply = await handle_chat(
             db, llm, settings, user_id=str(principal.user_id), workspace_id=str(body.workspace_id),
             agent_id=str(body.agent_id) if body.agent_id else None, page_id=str(body.page_id) if body.page_id else None,
-            message=body.message,
+            message=body.message, context=body.context,
             approve=frozenset(body.approve), on_tool_start=on_tool_start, cancelled=cancelled,
         )  # fmt: skip
         if reply is not None:

@@ -12,6 +12,7 @@ from typing import Any
 from app.chat.alerts import alert_statuses
 from app.chat.kinds import is_personal
 from app.chat.orchestrator import PendingConfirmation, run_turn
+from app.chat.panel_context import PanelContext, build_panel_context
 from app.chat.state import load_workspace_state, save_workspace_state
 from app.chat.store import Scope, ToolContext
 from app.chat.system_prompt import build_system_prompt
@@ -72,6 +73,7 @@ async def handle_chat(
     agent_id: str | None = None,
     page_id: str | None = None,
     approve: frozenset[str] = frozenset(),
+    context: PanelContext | None = None,
     on_tool_start: Callable[[str], None] | None = None,
     cancelled: asyncio.Event | None = None,
 ) -> ChatReply | None:
@@ -97,11 +99,13 @@ async def handle_chat(
         agents=[] if agent else store.agents,
         memories=[m["text"] for m in store.memories],
     )
+    # The clicked block comes from the saved panel (every page), as data before the question; the transcript keeps the question.
+    block = build_panel_context([w for p in store.pages for w in p.history.present["widgets"]], context) if context else None
     result = await run_turn(
         llm=llm,
         tools=tools,
         history=state.history,
-        user_message=message,
+        user_message=f"{block}\n\n{message}" if block else message,
         system=system,
         on_tool_start=on_tool_start,
         cancelled=cancelled,

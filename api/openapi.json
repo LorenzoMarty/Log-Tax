@@ -656,6 +656,16 @@
             "title": "Approve",
             "type": "array"
           },
+          "context": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PanelContext"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "message": {
             "maxLength": 4000,
             "minLength": 1,
@@ -2972,6 +2982,36 @@
           "simples"
         ],
         "type": "string"
+      },
+      "PanelContext": {
+        "additionalProperties": false,
+        "description": "What the client sends: the block id and, optionally, the label of one line of it.",
+        "properties": {
+          "blockId": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Blockid",
+            "type": "string"
+          },
+          "row": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Row"
+          }
+        },
+        "required": [
+          "blockId"
+        ],
+        "title": "PanelContext",
+        "type": "object"
       },
       "PersonDiagnosis": {
         "properties": {

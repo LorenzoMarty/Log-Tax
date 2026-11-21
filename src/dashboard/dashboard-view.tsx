@@ -37,8 +37,8 @@ function WidgetSkeleton() {
   );
 }
 
-/** `onAsk` adds a "Perguntar sobre isto" button to every block: the chat uses the chosen block as context. */
-export function DashboardView({ dashboard, loading = false, onAsk, onLayout: layoutEdits, focus, onExitFocus }: { dashboard: Dashboard; loading?: boolean; onAsk?: (widget: Widget) => void; onLayout?: (change: LayoutChange) => void; focus?: Focus | null; onExitFocus?: () => void }) {
+/** `onAsk` adds a "Perguntar sobre isto" button to every block (and "Perguntar" to each line of the blocks that list lines): the chat uses the chosen block, and line, as context. */
+export function DashboardView({ dashboard, loading = false, onAsk, onLayout: layoutEdits, focus, onExitFocus }: { dashboard: Dashboard; loading?: boolean; onAsk?: (widget: Widget, row?: string) => void; onLayout?: (change: LayoutChange) => void; focus?: Focus | null; onExitFocus?: () => void }) {
   const widgets = focus ? applyFocus(dashboard.widgets, focus) : dashboard.widgets;
   const onLayout = focus ? undefined : layoutEdits; // the temporary view is never edited: positions would not match the saved panel
   const compact = dashboard.density === "compact";
@@ -85,7 +85,7 @@ export function DashboardView({ dashboard, loading = false, onAsk, onLayout: lay
                 })
               }
             >
-              <WidgetView widget={w} compact={compact} showDisclaimer={ESTIMATE_KINDS.includes(w.kind)} />
+              <WidgetView widget={w} compact={compact} showDisclaimer={ESTIMATE_KINDS.includes(w.kind)} onAskRow={onAsk && ((row) => onAsk(w, row))} />
               {onAsk && (
                 <button type="button" aria-label={`Perguntar sobre isto: ${w.title}`} onClick={() => onAsk(w)} className="mt-1 text-sm font-medium text-ink underline underline-offset-2">
                   Perguntar sobre isto

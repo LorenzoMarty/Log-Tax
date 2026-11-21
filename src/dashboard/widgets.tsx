@@ -66,7 +66,17 @@ function LineChart({ data, label }: { data: Point[]; label: string }) {
   );
 }
 
-function Body({ w }: { w: Widget }) {
+/** "Perguntar sobre esta linha": a small keyboard-reachable button next to one line of a block (#118); hidden from exports. */
+function AskRow({ label, onAskRow }: { label: string; onAskRow?: (label: string) => void }) {
+  if (!onAskRow) return null;
+  return (
+    <button data-export-skip type="button" aria-label={`Perguntar sobre esta linha: ${label}`} onClick={() => onAskRow(label)} className="text-xs font-medium text-ink-muted underline underline-offset-2">
+      Perguntar
+    </button>
+  );
+}
+
+function Body({ w, onAskRow }: { w: Widget; onAskRow?: (label: string) => void }) {
   switch (w.kind) {
     case "kpi":
       return (
@@ -89,6 +99,7 @@ function Body({ w }: { w: Widget }) {
                 <span>{i.label}</span>
                 <span className="tabular-nums">{brl(i.amount)}</span>
               </div>
+              <AskRow label={i.label} onAskRow={onAskRow} />
               <div className="lg-stat-bar mt-2">
                 <span style={{ width: `${(i.amount / max) * 100}%` }} />
               </div>
@@ -103,6 +114,7 @@ function Body({ w }: { w: Widget }) {
           {w.items.map((i) => (
             <li key={i.title} className="flex justify-between gap-2">
               <span>{i.title}</span>
+              <AskRow label={i.title} onAskRow={onAskRow} />
               <span className="whitespace-nowrap font-semibold tabular-nums text-brand-ink">{brl(i.monthlySavings)}/mês</span>
             </li>
           ))}
@@ -120,6 +132,7 @@ function Body({ w }: { w: Widget }) {
               <time dateTime={i.date} className="tabular-nums text-ink-muted">
                 {new Date(`${i.date}T12:00:00`).toLocaleDateString("pt-BR")}
               </time>
+              <AskRow label={i.label} onAskRow={onAskRow} />
             </li>
           ))}
         </ul>
@@ -142,6 +155,7 @@ function Body({ w }: { w: Widget }) {
                   <td>{r.label}</td>
                   <td className="lg-num">{r.today}</td>
                   <td className="lg-num">{r.potential}</td>
+                  {onAskRow && <td><AskRow label={r.label} onAskRow={onAskRow} /></td>}
                 </tr>
               ))}
             </tbody>
@@ -160,6 +174,7 @@ function Body({ w }: { w: Widget }) {
               </span>
               <span className={i.done ? "text-ink-muted line-through" : ""}>{i.label}</span>
               <span className="sr-only">{i.done ? " (feito)" : " (pendente)"}</span>
+              <AskRow label={i.label} onAskRow={onAskRow} />
             </li>
           ))}
         </ul>
@@ -190,6 +205,7 @@ function Body({ w }: { w: Widget }) {
                 <tr key={i.label}>
                   <td>{i.label}</td>
                   <td className="lg-num">{formatDecimalBrl(i.amount)}</td>
+                  {onAskRow && <td><AskRow label={i.label} onAskRow={onAskRow} /></td>}
                 </tr>
               ))}
             </tbody>
@@ -271,11 +287,11 @@ function CsvLink({ widget }: { widget: Widget }) {
   );
 }
 
-export function WidgetView({ widget, showDisclaimer, compact = false }: { widget: Widget; showDisclaimer: boolean; compact?: boolean }) {
+export function WidgetView({ widget, showDisclaimer, compact = false, onAskRow }: { widget: Widget; showDisclaimer: boolean; compact?: boolean; onAskRow?: (label: string) => void }) {
   return (
     <section data-export-root data-testid={`widget-${widget.id}`} className="lg-surface-card h-full text-ink" style={compact ? { padding: "var(--space-3)" } : undefined}>
       <h3 className="mb-3 text-[14px] leading-5 font-semibold text-ink">{widget.title}</h3>
-      <Body w={widget} />
+      <Body w={widget} onAskRow={onAskRow} />
       {showDisclaimer && <p className="mt-3 text-xs font-medium text-ink-subtle">Estimativa ilustrativa, valide com um contador.</p>}
       <div data-export-skip className="mt-3 flex gap-3">
         <CsvLink widget={widget} />
