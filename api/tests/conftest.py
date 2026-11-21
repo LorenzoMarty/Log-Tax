@@ -44,3 +44,11 @@ def anonymous(monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
     get_settings.cache_clear()
     yield TestClient(create_app(), raise_server_exceptions=False)
     get_settings.cache_clear()
+
+
+@pytest.fixture(autouse=True)
+def _clear_status_cache() -> None:
+    """The suspension lookup is cached per user (#393); tests reuse one user id, so each starts clean."""
+    from app.core import auth
+
+    auth._status_cache.clear()

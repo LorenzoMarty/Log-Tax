@@ -193,17 +193,38 @@ def test_a_suspended_account_gets_403_in_portuguese(
     assert (res.status_code, "suspensa" in res.text) == ((403, True) if locked else (200, False))
 
 
-def test_a_failed_status_lookup_does_not_lock_people_out(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize("failure", ["network", "http500"])
+def test_a_failed_status_lookup_fails_closed(monkeypatch: pytest.MonkeyPatch, failure: str) -> None:
     monkeypatch.setenv("LOGTAX_SUPABASE_URL", URL)
     monkeypatch.setenv("LOGTAX_SUPABASE_JWT_SECRET", SECRET)
     monkeypatch.setenv("LOGTAX_SUPABASE_ANON_KEY", "anon")
     get_settings.cache_clear()
 
     def boom(request: httpx.Request) -> httpx.Response:
+        if failure == "http500":
+            return httpx.Response(500, json={})
         raise httpx.ConnectError("down")
 
     _status_client(monkeypatch, boom)
     client = TestClient(create_app(), raise_server_exceptions=False, headers={"Authorization": f"Bearer {token()}"})
     res = client.get("/v1/me")
     get_settings.cache_clear()
-    assert res.status_code == 200
+    assert res.status_code == 503 and res.json()["error"]["code"] == "account_status_unavailable"  # #393: never fail open
+
+
+def test_the_status_is_cached_for_a_few_seconds(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LOGTAX_SUPABASE_URL", URL)
+    monkeypatch.setenv("LOGTAX_SUPABASE_JWT_SECRET", SECRET)
+    monkeypatch.setenv("LOGTAX_SUPABASE_ANON_KEY", "anon")
+    get_settings.cache_clear()
+    calls: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
+        return httpx.Response(200, json=[])
+
+    _status_client(monkeypatch, handler)
+    client = TestClient(create_app(), raise_server_exceptions=False, headers={"Authorization": f"Bearer {token()}"})
+    assert [client.get("/v1/me").status_code for _ in range(3)] == [200, 200, 200]
+    get_settings.cache_clear()
+    assert len(calls) == 1
