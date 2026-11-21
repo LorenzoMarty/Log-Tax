@@ -20,7 +20,7 @@ from app.chat.budget import BUDGET_EXHAUSTED, record_tokens, tokens_left
 from app.chat.handle_chat import ChatReply, ReadOnlyError, handle_chat
 from app.chat.llm_factory import get_llm
 from app.chat.orchestrator import TurnCancelledError
-from app.chat.progress import NDJSON, done_line, error_line, tool_line
+from app.chat.progress import NDJSON, done_line, error_line, text_line, tool_line
 from app.core.auth import Principal, current_user
 from app.core.config import Settings, get_settings
 from app.core.errors import error_response
@@ -89,12 +89,12 @@ async def chat(
     except RuntimeError:
         return error_response(503, "llm_unavailable", "IA indisponível: configure OPENAI_API_KEY.")
 
-    async def run(db: UserDb, cancelled: asyncio.Event, on_tool_start: Any = None) -> ChatReply | None:
+    async def run(db: UserDb, cancelled: asyncio.Event, on_tool_start: Any = None, on_text: Any = None) -> ChatReply | None:
         reply = await handle_chat(
             db, llm, settings, user_id=str(principal.user_id), workspace_id=str(body.workspace_id),
             agent_id=str(body.agent_id) if body.agent_id else None, page_id=str(body.page_id) if body.page_id else None,
             message=body.message,
-            approve=frozenset(body.approve), on_tool_start=on_tool_start, cancelled=cancelled,
+            approve=frozenset(body.approve), on_tool_start=on_tool_start, on_text=on_text, cancelled=cancelled,
         )  # fmt: skip
         if reply is not None:
             _log_metrics(request, principal, body, reply, started)
@@ -142,7 +142,12 @@ async def _stream(run: Any, principal: Principal, settings: Settings, body: Chat
     async def work() -> None:
         try:
             async with open_db(principal, settings) as db:
-                reply = await run(db, cancelled, lambda name: queue.put_nowait(tool_line(name)))
+                reply = await run(
+                    db,
+                    cancelled,
+                    lambda name: queue.put_nowait(tool_line(name)),
+                    lambda delta: queue.put_nowait(text_line(delta)),
+                )
             queue.put_nowait(error_line("Espaço não encontrado.") if reply is None else done_line(public_reply(reply)))
         except ReadOnlyError as exc:
             queue.put_nowait(error_line(str(exc)))

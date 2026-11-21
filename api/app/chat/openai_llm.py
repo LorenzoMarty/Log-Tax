@@ -7,6 +7,8 @@ Cancelling the asyncio task closes the HTTP request, which is how "stop" reaches
 """
 
 import asyncio
+import json
+from collections.abc import Callable
 from typing import Any
 
 import httpx
@@ -70,8 +72,8 @@ class OpenAiLlm:
         self._model = model
         self._retry_delay = retry_delay
 
-    async def respond(self, *, system: str, history: list[Msg], tools: list[ToolSpec]) -> LlmTurn:
-        body = {
+    def _body(self, system: str, history: list[Msg], tools: list[ToolSpec]) -> dict[str, Any]:
+        return {
             "model": self._model,
             "instructions": redact(system),
             "input": [i for m in history for i in _to_input(m)],
@@ -81,7 +83,9 @@ class OpenAiLlm:
             ],
             "store": False,
         }
-        res = await self._post(body)
+
+    @staticmethod
+    def _turn(res: dict[str, Any]) -> LlmTurn:
         items: list[dict[str, Any]] = res.get("output", [])
         usage = res.get("usage")
         return LlmTurn(
@@ -92,6 +96,50 @@ class OpenAiLlm:
             items=items,
             usage=Usage(usage["input_tokens"], usage["output_tokens"]) if usage else None,
         )
+
+    async def respond(self, *, system: str, history: list[Msg], tools: list[ToolSpec]) -> LlmTurn:
+        return self._turn(await self._post(self._body(system, history, tools)))
+
+    async def respond_stream(
+        self, *, system: str, history: list[Msg], tools: list[ToolSpec], on_text: Callable[[str], None]
+    ) -> LlmTurn:
+        """Same call with `stream: true`: each `output_text.delta` goes to `on_text`; the turn comes from `response.completed`.
+
+        Retries only apply until the provider starts answering: once text may have reached the user, a failure is final.
+        """
+        body = {**self._body(system, history, tools), "stream": True}
+        for attempt in range(MAX_RETRIES + 1):
+            last = attempt == MAX_RETRIES
+            try:
+                async with self._client.stream("POST", "/responses", json=body) as response:
+                    if response.is_success:
+                        return await self._read_events(response, on_text)
+                    if response.status_code not in RETRY_STATUSES or last:
+                        raise LlmError(f"OpenAI returned HTTP {response.status_code}", response.status_code)
+                    wait = _retry_after(response, attempt, self._retry_delay)
+            except httpx.TransportError as exc:
+                if last:
+                    raise LlmError(f"OpenAI request failed: {type(exc).__name__}") from exc
+                wait = _retry_after(None, attempt, self._retry_delay)
+            await asyncio.sleep(wait)
+        raise AssertionError("unreachable")  # pragma: no cover
+
+    async def _read_events(self, response: httpx.Response, on_text: Callable[[str], None]) -> LlmTurn:
+        async for line in response.aiter_lines():
+            if not line.startswith("data:"):
+                continue
+            try:
+                event = json.loads(line[5:].strip())
+            except ValueError:
+                continue
+            kind = event.get("type")
+            if kind == "response.output_text.delta" and event.get("delta"):
+                on_text(event["delta"])
+            elif kind == "response.completed":
+                return self._turn(event.get("response") or {})
+            elif kind in {"response.failed", "response.incomplete", "error"}:
+                raise LlmError(f"OpenAI stream ended with {kind}")
+        raise LlmError("OpenAI stream ended before completing")
 
     async def _post(self, body: dict[str, Any]) -> dict[str, Any]:
         for attempt in range(MAX_RETRIES + 1):

@@ -8,6 +8,7 @@ import asyncio
 import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import Any
 
 from app.chat.system_prompt import build_system_prompt
 from app.chat.trim_history import trim_history
@@ -51,12 +52,16 @@ def _dumps(value: object) -> str:
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
 
 
-async def _respond(llm: LlmClient, cancelled: asyncio.Event | None, **req: object) -> LlmTurn:
-    """Runs the model call, dropping it as soon as the turn is cancelled."""
-    call = asyncio.ensure_future(llm.respond(**req))  # type: ignore[arg-type]
+async def _respond(
+    llm: LlmClient, cancelled: asyncio.Event | None, on_text: Callable[[str], None] | None = None, **req: object
+) -> LlmTurn:
+    """Runs the model call, dropping it as soon as the turn is cancelled. With `on_text` and a streaming client, text is live."""
+    stream = getattr(llm, "respond_stream", None) if on_text is not None else None
+    coro = stream(on_text=on_text, **req) if stream is not None else llm.respond(**req)  # type: ignore[arg-type]
+    call: asyncio.Future[LlmTurn] = asyncio.ensure_future(coro)
     if cancelled is None:
         return await call
-    stop = asyncio.ensure_future(cancelled.wait())
+    stop: asyncio.Future[Any] = asyncio.ensure_future(cancelled.wait())
     try:
         done, _ = await asyncio.wait({call, stop}, return_when=asyncio.FIRST_COMPLETED)
         if call in done:
@@ -76,6 +81,7 @@ async def run_turn(
     workspace_name: str = "seu espaço",
     system: str | None = None,
     on_tool_start: Callable[[str], None] | None = None,
+    on_text: Callable[[str], None] | None = None,
     cancelled: asyncio.Event | None = None,
 ) -> TurnResult:
     system = system if system is not None else build_system_prompt(workspace_name)
@@ -90,7 +96,7 @@ async def run_turn(
 
     for _ in range(MAX_STEPS):
         check()
-        turn = await _respond(llm, cancelled, system=system, history=msgs, tools=tools.specs())
+        turn = await _respond(llm, cancelled, on_text, system=system, history=msgs, tools=tools.specs())
         if turn.usage:
             result.input_tokens += turn.usage.input
             result.output_tokens += turn.usage.output
