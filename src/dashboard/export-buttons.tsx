@@ -47,14 +47,18 @@ export function DashboardExportMenu({ title, csv }: { title: string; csv: string
       <summary className="cursor-pointer text-sm font-medium text-ink underline underline-offset-2">Exportar</summary>
       <div className="mt-2 flex flex-col items-start gap-2">
         {csv && (
-          <a
-            href={`data:text/csv;charset=utf-8,${encodeURIComponent(csv)}`}
-            download={exportFileName(title, "csv")}
+          <button
+            type="button"
+            onClick={() => {
+              const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+              save(url, exportFileName(title, "csv"));
+              URL.revokeObjectURL(url);
+            }}
             aria-label={`Baixar CSV do painel ${title}`}
             className="text-sm text-ink-muted underline"
           >
             Baixar CSV do painel
-          </a>
+          </button>
         )}
         <ImageButton title={title} className="text-sm" />
       </div>
