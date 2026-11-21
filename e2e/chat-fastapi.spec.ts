@@ -297,6 +297,7 @@ test("owner reorders and resizes blocks with buttons; reload keeps it and undo r
   await expect(size).toHaveValue("lg");
   await page.getByRole("button", { name: "Desfazer" }).click();
   await expect(size).toHaveValue(original);
+});
 
 // #122: attach an NF-e in the chat (same upload path and consent), the AI reads it and answers about it.
 const NFE = `<?xml version="1.0"?><nfeProc><NFe><infNFe>
