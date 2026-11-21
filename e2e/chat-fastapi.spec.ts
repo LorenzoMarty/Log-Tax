@@ -74,3 +74,17 @@ test("the Python chat is closed without a session and keeps the contract's error
   expect(res.status()).toBe(401);
   expect((await res.json()).error.code).toBe("unauthorized");
 });
+
+
+// #166: the CNPJ fills the company proposal; the API runs with LOG_TAX_CNPJ_STUB=1 (only 11.222.333/0001-81 is found, never BrasilAPI).
+test("informar o CNPJ preenche nome, CNAE, UF e município", async ({ page }) => {
+  await login(page, "cnpj");
+  await createAndOpen(page, /Minha Empresa/);
+  await sendChatMessage(page, "Meu CNPJ é 11.222.333/0001-81", /LOG TAX DEMONSTRACAO LTDA: CNAE 6201501, 6202300, São Paulo\/SP/);
+});
+
+test("serviço fora do ar vira pergunta manual, não erro", async ({ page }) => {
+  await login(page, "cnpj-down");
+  await createAndOpen(page, /Minha Empresa/);
+  await sendChatMessage(page, "Meu CNPJ é 11.444.777/0001-61", /fora do ar\. Me diga os dados da empresa/);
+});

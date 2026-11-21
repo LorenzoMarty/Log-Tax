@@ -30,7 +30,7 @@ export default defineConfig({
             cwd: "api",
             url: `http://localhost:${apiPort}/health`,
             reuseExistingServer: false,
-            env: { LOG_TAX_DEMO_SEED: "1", LOG_TAX_LLM: "scripted", LOGTAX_ENVIRONMENT: "development", DOCUMENT_QUOTA_BYTES: "1048576" },
+            env: { LOG_TAX_DEMO_SEED: "1", LOG_TAX_LLM: "scripted", LOG_TAX_CNPJ_STUB: "1", LOGTAX_ENVIRONMENT: "development", DOCUMENT_QUOTA_BYTES: "1048576" },
           },
         ]
       : []),

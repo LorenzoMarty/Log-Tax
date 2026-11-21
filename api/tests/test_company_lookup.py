@@ -8,8 +8,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.api import company_lookup
-from app.api.company_lookup import fetch_company
 from app.db.client import user_db
+from app.integrations.cnpj import fetch_company
 from tests.conftest import USER
 from tests.fake_db import FakeDb
 
