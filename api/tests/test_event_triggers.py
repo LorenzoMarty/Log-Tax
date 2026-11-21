@@ -11,9 +11,10 @@ from app.chat.tools import AlertArgs
 from app.core.config import Settings
 from app.engine.opportunities import Opportunity, OpportunitySet
 from app.engine.result import Ok
+from app.engine.rulebook import RuleBook, RuleVersion
 from app.engine.types import CompanyProfile
 from app.tasks import event_alerts
-from app.tasks.event_alerts import evaluate_scheduled_events, record_event_notices
+from app.tasks.event_alerts import evaluate_scheduled_events, record_event_notices, rule_change_notices
 from tests.fake_db import FakeDb
 
 WS = "ws-1"
@@ -28,11 +29,11 @@ COMPANY = {
     "monthlyPurchases": 180000,
     "profitMargin": 0.08,
 }
-NONE = {"new_opportunity": 0, "missing_document": 0}
+NONE = {"new_opportunity": 0, "missing_document": 0, "rule_changed": 0}
 
 
 def test_the_other_event_rules_have_their_own_shapes() -> None:
-    for event in ("member_joined", "regime_changed", "new_opportunity"):
+    for event in ("member_joined", "regime_changed", "new_opportunity", "rule_changed"):
         assert AlertArgs.model_validate({"event": event}).model_dump(by_alias=True, exclude_none=True) == {"event": event}
     ok = AlertArgs.model_validate({"event": "missing_document", "daysBefore": 5})
     assert ok.model_dump(by_alias=True, exclude_none=True) == {"event": "missing_document", "daysBefore": 5}
@@ -99,3 +100,30 @@ async def test_scheduled_events_notify_new_opportunities_and_missing_documents_o
     db.tables["alert_events"].clear()
     db.tables["alerts"][1]["rule"]["daysBefore"] = 0
     assert (await evaluate_scheduled_events(db, Settings(), day))["missing_document"] == 0  # type: ignore[arg-type]
+
+
+def _version(rule_id: str, valid_from: str) -> RuleVersion[None]:
+    return RuleVersion(rule_id, f"Regra {rule_id}", "BR", valid_from, "lei", "high", False, None)
+
+
+def test_a_rule_change_is_a_new_version_starting_in_the_month_never_a_first_version() -> None:
+    book = RuleBook([_version("a", "2025-01"), _version("a", "2026-03"), _version("b", "2026-03")])
+    assert [k for k, _ in rule_change_notices(book, "2026-03")] == ["rule:a:2026-03"]  # b's first version is not a change
+    assert "Regra a" in rule_change_notices(book, "2026-03")[0][1] and "03/2026" in rule_change_notices(book, "2026-03")[0][1]
+    assert rule_change_notices(book, "2026-04") == []
+
+
+async def test_the_rule_changed_alert_fires_once_per_version_and_needs_no_company(monkeypatch: pytest.MonkeyPatch) -> None:
+    book = RuleBook([_version("a", "2025-01"), _version("a", "2026-03")])
+
+    class FakeEngine:
+        def __init__(self) -> None:
+            self.book = book
+
+    monkeypatch.setattr(event_alerts, "RealEngine", FakeEngine)
+    db = FakeDb()
+    ws = str(db.seed("workspaces", name="Loja", kind="empresa", profile={}, owner_id="u")["id"])
+    db.seed("alerts", workspace_id=ws, rule={"event": "rule_changed"}, active=True, fired=False)
+    assert (await evaluate_scheduled_events(db, Settings(), date(2026, 3, 10)))["rule_changed"] == 1  # type: ignore[arg-type]
+    assert (await evaluate_scheduled_events(db, Settings(), date(2026, 3, 20)))["rule_changed"] == 0  # type: ignore[arg-type]
+    assert (await evaluate_scheduled_events(db, Settings(), date(2026, 4, 1)))["rule_changed"] == 0  # type: ignore[arg-type]

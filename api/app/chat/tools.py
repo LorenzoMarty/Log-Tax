@@ -395,7 +395,10 @@ class AlertArgs(_Args):
     metric: Literal["monthlyTotal", "effectiveRate", "annualSavings", "daysToDeadline"] | None = None
     operator: Literal["gt", "lt", "within"] | None = None
     threshold: float | None = None
-    event: Literal["document_uploaded", "member_joined", "regime_changed", "new_opportunity", "missing_document"] | None = None
+    event: (
+        Literal["document_uploaded", "member_joined", "regime_changed", "new_opportunity", "missing_document", "rule_changed"]
+        | None
+    ) = None
     doc_type: str | None = None
     days_before: int | None = None
 
@@ -1403,7 +1406,8 @@ async def _dashboard_delete_page(ctx: ToolContext, a: IdArgs) -> Any:
     "operator within e threshold N (0 a 60): dispara quando a próxima obrigação estiver a N dias ou menos. "
     'Para avisar quando um documento for enviado (ex.: "me avise quando subirem uma nota fiscal") use event document_uploaded '
     "(sem metric/operator/threshold) e, se quiser, docType com o tipo do documento. Outros eventos, também sem metric: "
-    "member_joined (alguém entrou no espaço), regime_changed (o regime tributário mudou), new_opportunity (surgiu uma "
+    "member_joined (alguém entrou no espaço), regime_changed (o regime tributário mudou), rule_changed (uma regra tributária "
+    "ganhou nova versão em vigor), new_opportunity (surgiu uma "
     'oportunidade de economia) e missing_document com daysBefore N (0 a 60; ex.: "me avise 5 dias antes do vencimento se faltar '
     'documento"): avisa quando faltar documento do mês a N dias ou menos do próximo vencimento.',
     AlertArgs,
