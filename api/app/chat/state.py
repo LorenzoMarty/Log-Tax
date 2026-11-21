@@ -20,8 +20,10 @@ from app.core.config import Settings
 from app.core.crypto import decrypt_field, encrypt_field
 from app.db.client import UserDb
 from app.engine.company_schema import normalize_profile
+from app.engine.compare import REGIME_LABEL
 from app.engine.seed import seed_company, seed_person
 from app.engine.types import CompanyProfile, PersonProfile
+from app.tasks.event_alerts import notify_event
 
 _UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE)
 Role = Literal["owner", "editor", "commenter", "reader"]
@@ -213,7 +215,17 @@ async def save_workspace_state(
         profile = profile_to_json(store.company)
         if isinstance(profile.get("cnpj"), str):
             profile["cnpj"] = encrypt_field(profile["cnpj"], settings)
+    before = await db.select("workspaces", select="profile", id=f"eq.{workspace_id}")
     await db.update("workspaces", {"profile": profile}, id=f"eq.{workspace_id}")
+    old, new = ((before[0].get("profile") if before else None) or {}).get("regime"), str(profile.get("regime"))
+    if state.kind == "empresa" and old and old != new:
+        await notify_event(
+            settings,
+            workspace_id,
+            "regime_changed",
+            f"regime:{old}>{new}@{_now()}",
+            f"O regime tributário mudou de {REGIME_LABEL.get(old, old)} para {REGIME_LABEL.get(new, new)}.",
+        )
 
     dashboard = store.history.present
     row = {

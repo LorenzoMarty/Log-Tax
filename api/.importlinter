@@ -37,3 +37,5 @@ ignore_imports =
     app.api.cron -> app.tasks.jobs
     app.api.account -> app.tasks.accounts
     app.api.documents -> app.tasks.event_alerts
+    app.api.sharing -> app.tasks.event_alerts
+    app.chat.state -> app.tasks.event_alerts

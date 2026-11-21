@@ -11,12 +11,13 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, date, datetime
 from typing import Any, Literal
 
-from app.core.config import Settings
+from app.core.config import Settings, get_settings
 from app.core.logging import log
 from app.db.client import UserDb
 from app.engine.real_engine import RealEngine
 from app.tasks.agent_jobs import run_proactive_agents
 from app.tasks.alert_jobs import evaluate_all_alerts
+from app.tasks.event_alerts import evaluate_scheduled_events
 from app.tasks.system import service_client
 
 Job = dict[str, Any]
@@ -82,6 +83,7 @@ async def _retention(job: Job, db: UserDb) -> None:
 async def _alerts(job: Job, db: UserDb) -> None:
     """Evaluates every active alert and records a notice when one turns over its limit (see `alert_jobs`)."""
     await evaluate_all_alerts(db)
+    await evaluate_scheduled_events(db, get_settings())
 
 
 async def _proactive_agents(job: Job, db: UserDb) -> None:
