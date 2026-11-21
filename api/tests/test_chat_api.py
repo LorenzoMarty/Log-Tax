@@ -74,6 +74,7 @@ def test_a_turn_answers_with_the_reply_and_persists_it(signed_in: TestClient, db
         "alerts",
         "agents",
         "messages",
+        "focus",
     }  # no `usage`
     assert body["events"][0] == {"name": "get_tax_diagnosis", "status": "ok"} and [
         w["id"] for w in body["dashboard"]["widgets"]
@@ -233,3 +234,13 @@ def test_a_page_is_created_by_chat_and_removed_only_after_the_confirmation(signe
     key = asked["pendingConfirmations"][0]["key"]
     done = post(signed_in, ws, "Sim, pode confirmar.", approve=[key]).json()
     assert [p["name"] for p in done["pages"]] == ["Painel tributário"] and done["activePageId"] == done["pages"][0]["id"]
+
+
+def test_a_question_gets_a_temporary_focus_and_the_saved_panel_stays_intact(signed_in: TestClient, db: FakeDb) -> None:
+    ws = workspace(db)
+    post(signed_in, ws, "Empresa")
+    saved = post(signed_in, ws, "Adicione prazos e documentos").json()["dashboard"]
+    assert post(signed_in, ws, "Por que você chegou nessa conclusão?").json()["focus"] is None
+    body = post(signed_in, ws, "Quais documentos faltam?").json()
+    assert body["focus"]["blocks"][0] == {"id": "documentos", "size": "lg"} and "Organizei assim porque" in body["text"]
+    assert body["dashboard"] == saved  # the saved panel (and its version) did not move
