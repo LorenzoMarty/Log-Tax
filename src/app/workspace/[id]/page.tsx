@@ -122,6 +122,11 @@ export default async function WorkspaceChatPage({
           </h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {isOwner && (
+            <Link href={`/workspace/${id}/memoria`} className="lg-btn lg-btn-ghost lg-btn-sm">
+              O que a IA lembra
+            </Link>
+          )}
           {isOwner && state.agent && (
             <Link href={`/workspace/${id}/ia/${state.agent.id}`} className="lg-btn lg-btn-ghost lg-btn-sm">
               Editar esta IA
