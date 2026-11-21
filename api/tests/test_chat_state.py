@@ -370,6 +370,33 @@ async def test_an_agent_conversation_only_gets_that_agents_tools() -> None:
     assert db.tables["agent_conversations"][0]["agent_id"] == agent["id"] and "conversations" not in db.tables
 
 
+async def test_agent_memory_is_isolated_from_other_agents_and_the_workspace_chat() -> None:
+    db = FakeDb()
+    ws = workspace(db)
+    a = db.seed("agents", workspace_id=ws, name="A", objective="o", config={"tools": []})
+    b = db.seed("agents", workspace_id=ws, name="B", objective="o", config={"tools": []})
+    db.seed("workspace_memories", workspace_id=ws, text="geral", agent_id=None)
+    db.seed("workspace_memories", workspace_id=ws, text="só da A", agent_id=a["id"])
+    db.seed("workspace_memories", workspace_id=ws, text="só da B", agent_id=b["id"])
+
+    async def texts(agent_id: str | None) -> list[str]:
+        state = await load_workspace_state(db, ws, BLANK, agent_id)  # type: ignore[arg-type]
+        assert state is not None
+        return [m["text"] for m in state.store.memories]
+
+    assert await texts(a["id"]) == ["geral", "só da A"]
+    assert await texts(b["id"]) == ["geral", "só da B"]
+    assert await texts(None) == ["geral"]
+
+    # a fact told to agent A is saved with A's id and never shows up for B
+    state = await load_workspace_state(db, ws, BLANK, a["id"])  # type: ignore[arg-type]
+    assert state is not None
+    await state.store.add_memory("novo da A")
+    await save_workspace_state(db, ws, state, [], [], BLANK)  # type: ignore[arg-type]
+    assert await texts(b["id"]) == ["geral", "só da B"]
+    assert "novo da A" in await texts(a["id"])
+
+
 async def test_a_personal_workspace_has_no_alert_statuses_and_uses_the_person_tools() -> None:
     db = FakeDb()
     ws = workspace(db, kind="pessoal", name="Eu")

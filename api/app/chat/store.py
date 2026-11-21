@@ -98,6 +98,7 @@ class MemoryStore:
     touched_alert_ids: set[str] = field(default_factory=set)
     agents: list[Agent] = field(default_factory=list)
     memories: list[Memory] = field(default_factory=list)
+    agent_id: str | None = None  # set in an agent conversation: new memories are that agent's own ("scope": "agent")
     removed_memory_ids: list[str] = field(default_factory=list)
     assets: list[Asset] = field(default_factory=list)
     removed_asset_ids: list[str] = field(default_factory=list)
@@ -192,7 +193,7 @@ class MemoryStore:
         return self.memories
 
     async def add_memory(self, text: str) -> Memory:
-        memory = {"id": f"new-memory-{self._next()}", "text": text}
+        memory = {"id": f"new-memory-{self._next()}", "text": text, **({"scope": "agent"} if self.agent_id else {})}
         self.memories.append(memory)
         return memory
 
