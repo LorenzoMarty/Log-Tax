@@ -9,7 +9,19 @@ SIMPLES = {
     "series": [*SERIES_2025, {"month": "2026-01", "revenue": {"comercio": "50000"}}],
 }
 PRESUMIDO = {"regime": "presumido", "activity": "comercio", "monthlyRevenue": "100000", "monthlyPurchases": "60000", "uf": "SP"}
-ROUTES = ["diagnose", "simulate", "opportunities", "person", "history", "deadlines", "reform-impact", "prestador", "itcmd"]
+ROUTES = [
+    "diagnose",
+    "simulate",
+    "opportunities",
+    "person",
+    "history",
+    "deadlines",
+    "reform-impact",
+    "prestador",
+    "itcmd",
+    "asset-sale",
+    "asset-carrying-tax",
+]
 
 
 def test_every_engine_route_needs_a_signed_in_user(anonymous: TestClient) -> None:
@@ -128,3 +140,14 @@ def test_the_openapi_contract_describes_the_engine_routes(signed_in: TestClient)
     for route in ROUTES:
         assert f"/v1/engine/{route}" in spec["paths"]
     assert "/v1/engine/rules" in spec["paths"]
+
+
+def test_asset_sale_and_carrying_tax_routes(signed_in: TestClient) -> None:
+    sale = {"competence": "2026-11", "kind": "imovel", "saleValue": "500000", "costBasis": "300000"}
+    ok = signed_in.post("/v1/engine/asset-sale", json=sale).json()
+    assert ok["status"] == "ok" and ok["value"]["tax"] == "30000.00" and ok["value"]["assumptions"]
+    ask = signed_in.post("/v1/engine/asset-sale", json={**sale, "costBasis": None}).json()
+    assert ask == {"status": "insufficient_data", "missing": ["costBasis"]}
+    assert signed_in.post("/v1/engine/asset-carrying-tax", json={"tax": "ipva"}).json()["status"] == "insufficient_data"
+    got = signed_in.post("/v1/engine/asset-carrying-tax", json={"tax": "ipva", "annualAmount": "2400"}).json()
+    assert got["value"]["monthly"] == "200.00"
