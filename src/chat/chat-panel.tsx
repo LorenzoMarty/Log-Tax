@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { Widget } from "@/dashboard/types";
 import { AgentList } from "@/agents/agent-list";
@@ -71,6 +72,7 @@ async function readStream(res: Response, onProgress: (text: string) => void) {
 }
 
 export function ChatPanel(props: { workspaceId: string; initialMessages: DisplayMessage[]; initialDashboard: Dashboard; initialAlerts?: AlertStatus[]; agentId?: string; initialAgents?: Agent[]; workspaceKind?: SpaceProgress["kind"]; initialPrompt?: string }) {
+  const router = useRouter();
   const [messages, setMessages] = useState(props.initialMessages);
   const [dashboard, setDashboard] = useState(props.initialDashboard);
   const [alerts, setAlerts] = useState(props.initialAlerts ?? []);
@@ -111,6 +113,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
       setAlerts(data.alerts ?? []);
       setAgents(data.agents ?? agents);
       setPending(data.pendingConfirmations ?? []);
+      if (props.workspaceKind === "pessoal") router.refresh(); // server panels (inventory) re-read what the tools saved
     } catch (e) {
       if (controller.signal.aborted) setMessages((m) => [...m, { role: "assistant", text: "Parei. Pode me dizer o que prefere fazer agora." }]);
       else setError(e instanceof Error ? e.message : "Algo deu errado.");

@@ -385,7 +385,60 @@ def _lookup_reply(p: list[ToolOutcome], _t: str) -> str:
     )
 
 
+_ESTATE = re.compile(r"^abrir o esp[óo]lio de (.+?),\s*falecid[oa] em (\d{2})/(\d{2})/(\d{4})(?:,\s*em ([A-Za-z]{2}))?", _I)
+_ASSET = re.compile(r"^cadastrar (im[óo]vel|ve[íi]culo|d[íi]vida)\s+(.+?)\s+de\s+R\$", _I)
+_HEIR = re.compile(r"^cadastrar herdeir[oa] ([^,]+),\s*([^,]+),\s*(\d+(?:[.,]\d+)?)\s*%", _I)
+_ASSET_KIND = {"im": "imovel", "ve": "veiculo", "dí": "divida", "di": "divida"}
+
+
+def _estate_step(_p: list[ToolOutcome], text: str, _s: str) -> dict[str, Any]:
+    m = _ESTATE.search(text)
+    assert m
+    args: dict[str, Any] = {"deceasedName": m.group(1), "diedAt": f"{m.group(4)}-{m.group(3)}-{m.group(2)}"}
+    if m.group(5):
+        args["uf"] = m.group(5).upper()
+    return _call("set_estate", **args)
+
+
+def _asset_step(_p: list[ToolOutcome], text: str, _s: str) -> dict[str, Any]:
+    m = _ASSET.search(text)
+    assert m
+    kind = _ASSET_KIND[m.group(1)[:2].lower()]
+    return _call("add_asset", kind=kind, description=m.group(2), value=_wire(revenue_from(text)))
+
+
+def _heir_step(_p: list[ToolOutcome], text: str, _s: str) -> dict[str, Any]:
+    m = _HEIR.search(text)
+    assert m
+    return _call("add_heir", name=m.group(1).strip(), relationship=m.group(2).strip(), share=float(m.group(3).replace(",", ".")))
+
+
+def _inventory_reply(p: list[ToolOutcome], _t: str) -> str:
+    r = _first(p)
+    d = r["data"] if r and _ok(r) else None  # get_inventory answers plain JSON, not an engine envelope
+    if not d:
+        return "Ainda não consegui abrir o inventário. Me diga o nome do falecido e a data do óbito, com calma."
+    heirs = ", ".join(f"{h['name']} {_num(h['share']):.0f}% ({money(h['amount'])})" for h in d["heirs"])
+    pend = f" Falta resolver: {' '.join(d['pendencias'])}" if d["pendencias"] else " Não há pendências."
+    return (
+        f"Sinto muito pela sua perda. Aqui está o inventário: patrimônio líquido de {money(d['netEstate'])}, "
+        f"{len(d['assets'])} bens e {len(d['heirs'])} herdeiros: {heirs}.{pend}"
+    )
+
+
+def _saved_reply(ok_text: str) -> Reply:
+    return lambda p, _t: ok_text if _ok(_first(p)) else "Não consegui registrar isso. Pode conferir os dados e tentar de novo?"
+
+
 PLANS: list[Plan] = [
+    _plan(
+        r"^abrir o esp[óo]lio",
+        [_estate_step],
+        _saved_reply("Sinto muito pela sua perda. Abri o espólio com carinho: vou te ajudar a organizar tudo, no seu tempo."),
+    ),
+    _plan(r"^cadastrar (im[óo]vel|ve[íi]culo|d[íi]vida)", [_asset_step], _saved_reply("Anotei o item no patrimônio do espólio.")),
+    _plan(r"^cadastrar herdeir", [_heir_step], _saved_reply("Anotei o herdeiro e o quinhão dele.")),
+    _plan(r"resumo do invent[áa]rio", [lambda _p, _t, _s: _call("get_inventory")], _inventory_reply),
     _plan(
         r"\bcnpj\s*(?:é|e|:)?\s*" + _CNPJ.pattern,
         [lambda _p, text, _s: _call("lookup_company", cnpj=_CNPJ.search(text).group())],  # type: ignore[union-attr]

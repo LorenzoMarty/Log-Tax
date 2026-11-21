@@ -114,3 +114,31 @@ test("serviço fora do ar vira pergunta manual, não erro", async ({ page }) => 
   await createAndOpen(page, /Minha Empresa/);
   await sendChatMessage(page, "Meu CNPJ é 11.444.777/0001-61", /fora do ar\. Me diga os dados da empresa/);
 });
+
+// #183, #185: an inventory built through the conversation (estate, 2 assets, 3 heirs) shows up in the inventory panel.
+test("criar um inventário com 2 bens e 3 herdeiros pela conversa e ver o painel", async ({ page }) => {
+  await login(page, "inventario");
+  await createAndOpen(page, /Vida Pessoal/);
+
+  await sendChatMessage(page, "Abrir o espólio de João Silva, falecido em 15/10/2026, em SP", /Sinto muito pela sua perda/);
+  await sendChatMessage(page, "Cadastrar imóvel Apartamento no centro de R$ 400 mil", /Anotei o item/);
+  await sendChatMessage(page, "Cadastrar veículo Carro de R$ 80 mil", /Anotei o item/);
+  await sendChatMessage(page, "Cadastrar herdeira Ana Silva, filha, 50%", /Anotei o herdeiro/);
+  await sendChatMessage(page, "Cadastrar herdeiro Bruno Silva, filho, 30%", /Anotei o herdeiro/);
+  await sendChatMessage(page, "Cadastrar herdeiro Carla Silva, filha, 20%", /Anotei o herdeiro/);
+  await sendChatMessage(page, "Mostrar o resumo do inventário", /R\$ 480\.000.*3 herdeiros/);
+
+  const panel = page.getByTestId("inventory-panel");
+  await expect(panel).toContainText("Inventário de João Silva");
+  await expect(page.getByTestId("inventory-net")).toContainText("480.000");
+  await expect(page.getByTestId("inventory-heir")).toHaveCount(3);
+  await expect(page.getByTestId("inventory-pending")).toHaveCount(0);
+  await expect(page.getByTestId("inventory-deadlines")).toContainText("15/12/2026");
+  await expect(page.getByTestId("inventory-deadlines")).toContainText("ainda não foi conferido");
+  await expect(page.getByTestId("inventory-checklist")).toContainText("Certidão de óbito (falta)");
+  await expect(page.getByTestId("inventory-split")).toContainText("240.000,00");
+
+  // what the Python API saved is what the panel reads back
+  await page.reload();
+  await expect(page.getByTestId("inventory-heir")).toHaveCount(3);
+});
