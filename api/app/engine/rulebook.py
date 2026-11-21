@@ -88,6 +88,9 @@ class RuleBook:
                     raise ValueError(f"rule {rule_id}: version {prev.valid_from} overlaps {cur.valid_from}")
         self._by_id = by_id
 
+    def versions(self) -> list[RuleVersion]:  # type: ignore[type-arg]
+        return [v for items in self._by_id.values() for v in items]
+
     def ids(self) -> list[str]:
         return list(self._by_id)
 
