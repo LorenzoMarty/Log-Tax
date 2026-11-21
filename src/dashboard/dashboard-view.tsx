@@ -71,7 +71,7 @@ export function DashboardView({ dashboard, loading = false, onAsk, onLayout: lay
       )}
       {widgets.length === 0 && !loading ? (
         <div data-testid="empty-hint" className="text-sm text-ink-muted">
-          <p>Ainda não há números aqui: o painel só mostra o que você informar. Conte à IA, na conversa:</p>
+          <p>Nenhum bloco ainda: o painel só mostra o que você informar. Conte à IA, na conversa:</p>
           <ul className="mt-2 list-disc pl-5">
             {MISSING[baseKind].map((m) => (
               <li key={m}>{m}</li>
