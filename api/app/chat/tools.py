@@ -15,7 +15,7 @@ import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field, is_dataclass, replace
 from datetime import date
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import ROUND_DOWN, ROUND_HALF_UP, Decimal
 from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, TypeAdapter, ValidationError, create_model, model_validator
@@ -29,11 +29,13 @@ from app.chat.store import Kind, Scope, ToolContext
 from app.chat.types import ToolOutcome, ToolSpec
 from app.core.br_ids import normalize_cnpj
 from app.documents.classify import DOC_LABEL
+from app.documents.inventory import inventory_checklist
 from app.documents.search import cited_for_model
 from app.engine.calendar import upcoming_deadlines
 from app.engine.company_schema import CompanyFields, apply_fields, inconsistencies, merge_series
 from app.engine.history import tax_history
 from app.engine.itcmd import ItcmdInput, compute_itcmd
+from app.engine.partilha import inventory_deadlines, split_estate
 from app.engine.reform_impact import reform_impact
 from app.engine.result import EngineResult, InsufficientData, NoneFound, NotApplicable, Ok
 from app.engine.split_payment import split_payment_impact
@@ -821,6 +823,85 @@ async def _get_inventory(ctx: ToolContext, a: NoArgs) -> Any:
     if estate and estate.get("uf") and net > 0:
         out["itcmd"] = _env(compute_itcmd(ctx.engine.book, ctx.engine.competence, ItcmdInput(estate["uf"], "heranca", net)))
     return out
+
+
+@_tool(
+    "get_inventory_deadlines",
+    "Prazos legais do inventário a partir da data do óbito: abertura em até 2 meses (CPC art. 611) como itens prontos para um bloco deadlines do painel (widget), e o que NÃO se sabe (prazo do ITCMD da UF não conferido). Nunca invente prazos além dos retornados.",
+    NoArgs,
+    read_only=True,
+    kinds=("pessoal",),
+)  # fmt: skip
+async def _get_inventory_deadlines(ctx: ToolContext, a: NoArgs) -> Any:
+    estate = _need(await ctx.store.get_estate(), "Registre antes o espólio com a data do óbito (set_estate).")
+    out = inventory_deadlines(date.fromisoformat(estate["died_at"]), estate.get("uf"), date.today())
+    out["widget"] = {
+        "id": "prazos-inventario",
+        "title": "Prazos do inventário",
+        "size": "md",
+        "kind": "deadlines",
+        "items": out["items"],
+    }
+    return out
+
+
+@_tool(
+    "get_inventory_checklist",
+    "Checklist dos documentos que costumam ser exigidos no inventário, marcados como entregues quando há arquivo com nome correspondente no espaço. Retorna um bloco checklist pronto para o painel (widget).",
+    NoArgs,
+    read_only=True,
+    kinds=("pessoal",),
+)  # fmt: skip
+async def _get_inventory_checklist(ctx: ToolContext, a: NoArgs) -> Any:
+    names = await ctx.documents.names() if ctx.documents is not None else []
+    items = inventory_checklist(names)
+    widget = {"id": "docs-inventario", "title": "Documentos do inventário", "size": "md", "kind": "checklist", "items": items}
+    return {"missing": sum(not i["done"] for i in items), "widget": widget}
+
+
+class PartilhaArgs(_Args):
+    meacao_heir_id: str | None = None
+
+
+@_tool(
+    "simulate_partilha",
+    "Simula a partilha do patrimônio líquido entre os herdeiros pelos quinhões, em centavos exatos (a soma fecha), com o ITCMD de cada herdeiro quando a UF é suportada. Meação: só informe meacaoHeirId (id do cônjuge, de get_inventory) se o USUÁRIO disse que há meação; ela separa 50% do líquido para esse cônjuge fora da herança. NUNCA presuma o regime de bens.",
+    PartilhaArgs,
+    read_only=True,
+    engine=True,
+    kinds=("pessoal",),
+)  # fmt: skip
+async def _simulate_partilha(ctx: ToolContext, a: PartilhaArgs) -> Any:
+    estate, heirs, items = await ctx.store.get_estate(), await ctx.store.list_heirs(), await ctx.store.list_assets()
+    net = sum((Decimal(i["value"]) * (-1 if i["kind"] == "divida" else 1) for i in items), Decimal(0))
+    if not heirs or _shares_total(heirs) != 100:
+        raise ToolError("Cadastre os herdeiros com quinhões somando 100% antes de simular a partilha.")
+    if net <= 0:
+        raise ToolError("Não há patrimônio líquido positivo para partilhar.")
+    meacao = Decimal(0)
+    if a.meacao_heir_id is not None:
+        if all(h["id"] != a.meacao_heir_id for h in heirs):
+            raise ToolError(f'Herdeiro "{a.meacao_heir_id}" não encontrado.')
+        meacao = (net / 2).quantize(Decimal("0.01"), ROUND_DOWN)
+    base = net - meacao
+    rows = []
+    for h, s in zip(heirs, split_estate(base, [(h["id"], Decimal(h["share"])) for h in heirs]), strict=True):
+        row: dict[str, Any] = {"id": h["id"], "name": h["name"], "share": h["share"], "amount": str(s.amount)}
+        if h["id"] == a.meacao_heir_id:
+            row["meacao"] = str(meacao)
+        if estate and estate.get("uf") and s.amount > 0:
+            row["itcmd"] = _env(
+                compute_itcmd(ctx.engine.book, ctx.engine.competence, ItcmdInput(estate["uf"], "heranca", s.amount))
+            )
+        rows.append(row)
+    return {
+        "netEstate": str(net),
+        "meacao": str(meacao),
+        "heirage": str(base),
+        "heirs": rows,
+        "notes": ["Meação não é herança e não entra no ITCMD."] * bool(meacao)
+        + ["Simulação estimativa: confirme com advogado ou contador."],
+    }
 
 
 # ---- workspaces ----

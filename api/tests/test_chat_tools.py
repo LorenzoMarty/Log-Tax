@@ -23,6 +23,7 @@ from app.chat.tools import (
     tool_parameters,
 )
 from app.chat.untrusted import wrap_untrusted
+from app.engine.partilha import split_estate
 from app.engine.real_engine import RealEngine
 from app.engine.types import CompanyProfile
 
@@ -84,7 +85,7 @@ async def call(reg: ToolRegistry, name: str, args: Any = None, untrusted: bool =
 
 # ---- catalogue and schemas ----
 def test_every_tool_has_a_clean_json_schema_and_the_flags_are_consistent() -> None:
-    assert len(TOOL_NAMES) == len(set(TOOL_NAMES)) == 46
+    assert len(TOOL_NAMES) == len(set(TOOL_NAMES)) == 49
     for t in TOOLS:
         schema = tool_parameters(t)
         text = json.dumps(schema)
@@ -106,7 +107,7 @@ def test_specs_follow_the_workspace_kind_and_the_agent_allow_list() -> None:
     assert not {"get_tax_diagnosis", "run_simulation", "create_alert"} & set(names("pessoal"))
     assert "get_tax_diagnosis" in names("empresa") and not {"get_ir_diagnosis", "save_person_data"} & set(names("empresa"))
     assert names("empresa", ("get_tax_diagnosis", "get_ir_diagnosis")) == ["get_tax_diagnosis"]
-    assert len(names(None)) == 46
+    assert len(names(None)) == 49
 
 
 async def test_unknown_wrong_kind_and_not_allowed_tools_are_refused_at_runtime() -> None:
@@ -540,3 +541,36 @@ async def test_inventory_tools_build_an_estate_with_two_assets_and_three_heirs()
     assert (await call(empresa, "get_inventory"))["status"] == "refused"
     store.heirs = [{"id": str(i), "share": "0.01"} for i in range(50)]
     assert "50 herdeiros" in (await call(reg, "add_heir", {"name": "x", "share": 1}))["message"]
+
+
+class _Names:
+    async def search(self, query: str) -> list[Any]:
+        return []
+
+    async def names(self) -> list[str]:
+        return ["Certidão de Óbito.pdf"]
+
+
+async def test_inventory_deadlines_checklist_and_partilha() -> None:
+    reg, store = make(Scope(WS, kind="pessoal"), competence="2026-11")
+    assert (await call(reg, "get_inventory_deadlines"))["status"] == "error"
+    await call(reg, "set_estate", {"deceasedName": "Maria", "diedAt": "2025-12-31", "uf": "SP"})
+    d = (await call(reg, "get_inventory_deadlines"))["data"]
+    assert d["items"][0]["date"] == "2026-02-28" and d["overdue"] is True and "ITCMD" in d["unknown"][0]
+    assert validate_widget(d["widget"]) is not None
+    ctx = ToolContext(Scope(WS, kind="pessoal"), store, RealEngine("2026-11"), documents=_Names())  # type: ignore[arg-type]
+    c = dict(await ToolRegistry(ctx).invoke("get_inventory_checklist", "{}", untrusted_in_context=False))["data"]
+    assert c["missing"] == 9 and c["widget"]["items"][0]["done"] is True
+    assert (await call(reg, "get_inventory_checklist"))["data"]["missing"] == 10
+    assert (await call(reg, "simulate_partilha"))["status"] == "error"
+    await call(reg, "add_asset", {"kind": "imovel", "description": "Casa", "value": 100})
+    a = (await call(reg, "add_heir", {"name": "A", "share": 33.33}))["data"]
+    await call(reg, "add_heir", {"name": "B", "share": 33.33})
+    await call(reg, "add_heir", {"name": "C", "share": 33.34})
+    sim = (await call(reg, "simulate_partilha"))["data"]
+    assert sum(Decimal(h["amount"]) for h in sim["heirs"]) == Decimal(100) and sim["meacao"] == "0"
+    with_m = (await call(reg, "simulate_partilha", {"meacaoHeirId": a["id"]}))["data"]
+    assert with_m["meacao"] == "50.00" and sum(Decimal(h["amount"]) for h in with_m["heirs"]) == Decimal(50)
+    assert (await call(reg, "simulate_partilha", {"meacaoHeirId": "x"}))["status"] == "error"
+    odd = split_estate(Decimal("0.05"), [("a", Decimal("50")), ("b", Decimal("50"))])
+    assert [s.amount for s in odd] == [Decimal("0.03"), Decimal("0.02")]
