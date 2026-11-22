@@ -41,7 +41,9 @@ export async function openSharePanel(page: Page): Promise<void> {
 export async function inviteToWorkspace(page: Page, email: string, role: ShareRole): Promise<void> {
   await openSharePanel(page);
   await page.getByLabel(/Email de quem vai receber/).fill(email);
-  await page.getByLabel("Papel").selectOption({ label: role });
+  // Scoped to the invite form: every member row also has a role select now ("Papel de <email>"), and getByLabel matches substrings.
+  const form = page.locator("form").filter({ has: page.getByLabel(/Email de quem vai receber/) });
+  await form.locator('select[name="role"]').selectOption({ label: role });
   await page.getByRole("button", { name: "Convidar" }).click();
   // After the redirect the dev server can render a blank page (the "clientReferenceManifest" glitch, runs 44897885342 and
   // 44899350471: no notice for 15s and 60s); the notice comes from the URL, so a reload shows it.
