@@ -89,7 +89,7 @@ def test_opportunities_and_person(signed_in: TestClient) -> None:
     value = person.json()["value"]
     assert value["best"] in ("completa", "simplificada") and D(value["simplified"]["deductions"]) == D("16754.34")
     assert (
-        signed_in.post("/v1/engine/person", json={"competence": "2026-03", "person": {"annualGrossIncome": "1000"}}).json()[
+        signed_in.post("/v1/engine/person", json={"competence": "2027-03", "person": {"annualGrossIncome": "1000"}}).json()[
             "status"
         ]
         == "not_applicable"
@@ -129,8 +129,8 @@ def test_rules_lists_every_version_with_source_and_what_has_lapsed(signed_in: Te
     r = signed_in.get("/v1/engine/rules", params={"today": "2026-11"})
     assert r.status_code == 200
     body = r.json()
-    assert len(body["changelog"]) == 33 and all(e["source"] for e in body["changelog"])
-    assert sorted(x["id"] for x in body["lapsed"]) == ["irpf-anual-deducoes", "irpf-tabela-anual"]
+    assert len(body["changelog"]) == 35 and all(e["source"] for e in body["changelog"])
+    assert body["lapsed"] == []
     assert signed_in.get("/v1/engine/rules", params={"today": "bad"}).status_code == 422
     assert signed_in.get("/v1/engine/rules").status_code == 200
 

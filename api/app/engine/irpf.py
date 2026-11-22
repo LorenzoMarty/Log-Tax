@@ -50,6 +50,25 @@ def ir_tax_cents(base_cents: int, table: dict[str, Any]) -> int:
     return max(0, mul_rate(base_cents, bracket["rate"], rounding_for("IRPF")) - to_cents(bracket["deduction"]))
 
 
+def annual_ir_cents(base_cents: int, income_cents: int, table: dict[str, Any]) -> int:
+    """Annual IRPF: the table on the base minus the annual reducer of Lei 15.270/2025 (calendar year 2026 on), if any.
+
+    The reducer looks at the taxable income of the year (docs/fontes-legais.md): R$ 2.694,15 up to R$ 60.000,00; from there
+    R$ 8.429,73 - 0,095575 x income up to R$ 88.200,00; never below zero nor above the tax itself.
+    """
+    tax = ir_tax_cents(base_cents, table)
+    reducer = table.get("reducer")
+    if reducer is None or tax == 0:
+        return tax
+    if income_cents <= to_cents(reducer["fullUpTo"]):
+        cut = to_cents(reducer["fullAmount"])
+    elif income_cents <= to_cents(reducer["phaseOutUpTo"]):
+        cut = max(0, to_cents(reducer["phaseOutConstant"]) - mul_rate(income_cents, reducer["phaseOutFactor"]))
+    else:
+        cut = 0
+    return max(0, tax - cut)
+
+
 def diagnose_person(book: RuleBook, competence: str, p: PersonProfile) -> EngineResult[PersonDiagnosis]:
     """Annual IRPF in both models. The competence year is the calendar year of the income: its own table and deductions."""
     if p.annual_gross_income is None:
@@ -57,20 +76,14 @@ def diagnose_person(book: RuleBook, competence: str, p: PersonProfile) -> Engine
     table_rule: RuleVersion[dict[str, Any]] | None = book.at("irpf-tabela-anual", competence)
     rules_rule: RuleVersion[dict[str, Any]] | None = book.at("irpf-anual-deducoes", competence)
     if table_rule is None or rules_rule is None:
-        year = competence[:4]
-        extra = (
-            " (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)"
-            if int(year) >= 2026
-            else ""
-        )
-        return NotApplicable(f"A tabela anual do IRPF do ano-calendário {year} ainda não foi conferida{extra}.")
+        return NotApplicable(f"A tabela anual do IRPF do ano-calendário {competence[:4]} ainda não foi conferida.")
     table, rules = table_rule.data, rules_rule.data
     gross = p.annual_gross_income
     withheld = p.tax_withheld
 
     def scenario(model: Model, deductions_cents: int) -> IrScenario:
         base = max(0, to_cents(gross) - deductions_cents)
-        tax = ir_tax_cents(base, table)
+        tax = annual_ir_cents(base, to_cents(gross), table)
         balance = None if withheld is None else from_cents(to_cents(withheld) - tax)
         return IrScenario(model, from_cents(deductions_cents), from_cents(base), from_cents(tax), balance)
 
@@ -128,6 +141,7 @@ def diagnose_person(book: RuleBook, competence: str, p: PersonProfile) -> Engine
                 "Sem o imposto retido na fonte, não é possível calcular restituição nem imposto a pagar."
                 if withheld is None
                 else "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+                *(["O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela."] if "reducer" in table else []),
                 *validation,
                 f"Regras versão {version}.",
             ],

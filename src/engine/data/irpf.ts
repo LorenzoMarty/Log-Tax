@@ -89,9 +89,12 @@ export const IRPF_MONTHLY: RuleVersion<IrpfMonthlyTable>[] = [
 /** Annual progressive table (DIRPF) of one calendar year; limits and deductions as published, not derived. */
 export interface IrpfAnnualTable {
   brackets: { upTo: number; rate: number; deduction: number }[];
+  /** Lei 15.270/2025 annual reducer (from calendar year 2026): applied on the tax, looking at the taxable income of the year. */
+  reducer?: { fullUpTo: number; fullAmount: number; phaseOutUpTo: number; phaseOutConstant: number; phaseOutFactor: number };
 }
 
 const ANNUAL_2025 = "Receita Federal, Tributação de 2025, incidência anual a partir do exercício 2026 (ano-calendário 2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2025";
+const ANNUAL_2026 = "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026";
 const ANNUAL_2024 = "Receita Federal, Tributação de 2024, incidência anual no exercício 2025 (ano-calendário 2024): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/copy_of_2024";
 
 /**
@@ -99,8 +102,8 @@ const ANNUAL_2024 = "Receita Federal, Tributação de 2024, incidência anual no
  * (2025: four months of the old table and eight of the new one), and they reconcile exactly with them: for example
  * 2.259,20 x 4 + 2.428,80 x 8 = 28.467,20 and 169,44 x 4 + 182,16 x 8 = 2.135,04. Values were read from a summarised
  * fetch of the Receita pages, so they stay flagged for human validation (#98).
- * The 2026 rules (Lei 15.270/2025: exemption up to R$ 5.000 a month and a reducer up to R$ 7.350) are NOT modelled:
- * the sources disagreed on the annual figures, so the engine answers "not applicable" for the 2026 calendar year.
+ * The 2026 version (table, reducer and deductions) was read on the official page downloaded with curl on 2026-11-21;
+ * see docs/fontes-legais.md. Calendar years from 2027 have no version: the engine answers "not applicable".
  */
 export const IRPF_ANNUAL_TABLE: RuleVersion<IrpfAnnualTable>[] = [
   {
@@ -141,6 +144,27 @@ export const IRPF_ANNUAL_TABLE: RuleVersion<IrpfAnnualTable>[] = [
       ],
     },
   },
+  {
+    id: "irpf-tabela-anual",
+    name: "Tabela progressiva anual do IRPF (DIRPF)",
+    jurisdiction: "Federal",
+    validFrom: "2026-01",
+    validUntil: "2026-12",
+    source: ANNUAL_2026,
+    confidence: "medium",
+    requiresValidation: true,
+    notes: "Lida na página oficial da Receita (baixada com curl em 2026-11-21; docs/fontes-legais.md). O redutor anual usa como renda o total tributável informado (annualGrossIncome): a página diz \"rendimentos tributáveis sujeitos ao ajuste anual\" e não detalha se é antes ou depois das deduções.",
+    data: {
+      brackets: [
+        { upTo: 29_145.6, rate: 0, deduction: 0 },
+        { upTo: 33_919.8, rate: 0.075, deduction: 2185.92 },
+        { upTo: 45_012.6, rate: 0.15, deduction: 4729.91 },
+        { upTo: 55_976.16, rate: 0.225, deduction: 8105.85 },
+        { upTo: Infinity, rate: 0.275, deduction: 10_904.66 },
+      ],
+      reducer: { fullUpTo: 60_000, fullAmount: 2694.15, phaseOutUpTo: 88_200, phaseOutConstant: 8429.73, phaseOutFactor: 0.095575 },
+    },
+  },
 ];
 
 /** Deductions and limits of the annual declaration, per calendar year. */
@@ -162,7 +186,19 @@ export const IRPF_ANNUAL: RuleVersion<IrpfAnnualRules>[] = [
     source: "Receita Federal, Tributação de 2024 e 2025 (dependente R$ 2.275,08; instrução R$ 3.561,50; desconto simplificado de 20% até R$ 16.754,34): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2025",
     confidence: "medium",
     requiresValidation: true,
-    notes: "O limite do desconto simplificado e as deduções de 2026 em diante não foram conferidos (uma fonte cita R$ 17.640).",
+    notes: "O percentual de 20% do desconto simplificado não consta na página da Receita (Lei 9.250/1995 não lida). Para 2026, veja a versão seguinte.",
     data: { simplifiedRate: 0.2, simplifiedCap: 16_754.34, educationCap: 3561.5, dependentYear: 2275.08 },
+  },
+  {
+    id: "irpf-anual-deducoes",
+    name: "Deduções e desconto simplificado da DIRPF",
+    jurisdiction: "Federal",
+    validFrom: "2026-01",
+    validUntil: "2026-12",
+    source: "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+    confidence: "medium",
+    requiresValidation: true,
+    notes: "Valores lidos na página oficial baixada com curl em 2026-11-21 (docs/fontes-legais.md). O percentual de 20% do desconto simplificado não consta na página: foi mantido da versão anterior e não foi conferido na Lei 9.250/1995.",
+    data: { simplifiedRate: 0.2, simplifiedCap: 17_640, educationCap: 3561.5, dependentYear: 2275.08 },
   },
 ];

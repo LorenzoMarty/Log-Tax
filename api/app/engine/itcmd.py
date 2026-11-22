@@ -47,6 +47,7 @@ def compute_itcmd(book: RuleBook, competence: str, i: ItcmdInput) -> EngineResul
     rate = Decimal(str(rates[i.kind]))
     tax = from_cents(mul_rate(to_cents(i.base_value), rate))
     version = f"real-{competence}"
+    deadline = _deadline_note(rates, i.kind)
     return Ok(
         ItcmdResult(
             uf=i.uf.upper(),
@@ -56,6 +57,7 @@ def compute_itcmd(book: RuleBook, competence: str, i: ItcmdInput) -> EngineResul
             tax=tax,
             assumptions=[
                 "Alíquota única da UF sobre a base informada; isenções, deduções, prazo e multa por atraso não estão modelados.",
+                *deadline,
                 *(["A regra ainda aguarda validação de um profissional."] if rule.requires_validation else []),
                 f"Regras versão {version}.",
             ],
@@ -64,3 +66,20 @@ def compute_itcmd(book: RuleBook, competence: str, i: ItcmdInput) -> EngineResul
             rules_used=[ref_of(rule)],
         )
     )
+
+
+def _pct(rate: object) -> str:
+    return f"{(Decimal(str(rate)) * 100).normalize():f}".replace(".", ",")
+
+
+def _deadline_note(rates: dict[str, Any], kind: Kind) -> list[str]:
+    """Payment deadline and late fine of the UFs whose law was read (docs/fontes-legais.md): MG, Lei 14.941 arts. 13 and 22."""
+    days, fine = rates.get("prazoHerancaDias"), rates.get("multaMora")
+    if days is None or fine is None or kind != "heranca":
+        return []
+    return [
+        f"Prazo de pagamento da herança: {days} dias da abertura da sucessão. Multa de mora: "
+        f"{_pct(fine['porDia'])}% ao dia até o {fine['ateDia']}º dia, "
+        f"{_pct(fine['ate60Dias'])}% do 31º ao 60º dia e {_pct(fine['apos60Dias'])}% depois do 60º, "
+        "sobre o imposto (juros e demais acréscimos não modelados)."
+    ]

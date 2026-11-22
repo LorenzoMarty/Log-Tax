@@ -99,6 +99,8 @@ create policy invites_insert on public.workspace_invites for insert to authentic
   );
 
 -- An invite never changes the role of an owner or an admin (use set_member_role for that).
+-- Keeps the page cut of 20261128010000_scoped_dashboard_pages.sql (dashboard_ids): this definition replaces that one, so
+-- dropping the column here would silently widen a page-scoped invite to every page.
 create or replace function public.accept_invite(invite_id uuid) returns uuid
 language plpgsql security definer set search_path = ''
 as $$
@@ -117,12 +119,14 @@ begin
   if (select role from public.workspace_members where workspace_id = inv.workspace_id and user_id = (select auth.uid())) not in ('owner', 'admin') then
     delete from public.member_scopes where workspace_id = inv.workspace_id and user_id = (select auth.uid());
     if inv.scope is not null then
-      insert into public.member_scopes (workspace_id, user_id, kinds, document_ids)
+      insert into public.member_scopes (workspace_id, user_id, kinds, document_ids, dashboard_ids)
       values (
         inv.workspace_id, (select auth.uid()),
         array(select jsonb_array_elements_text(inv.scope -> 'kinds')),
         case when jsonb_typeof(inv.scope -> 'documentIds') = 'array'
-          then array(select jsonb_array_elements_text(inv.scope -> 'documentIds'))::uuid[] end
+          then array(select jsonb_array_elements_text(inv.scope -> 'documentIds'))::uuid[] end,
+        case when jsonb_typeof(inv.scope -> 'dashboardIds') = 'array'
+          then array(select jsonb_array_elements_text(inv.scope -> 'dashboardIds'))::uuid[] end
       );
     end if;
   end if;

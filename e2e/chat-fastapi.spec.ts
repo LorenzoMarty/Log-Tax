@@ -117,14 +117,21 @@ test("asking about the ICMS line of a block explains that line, by keyboard", as
   await expect(page.getByRole("status").filter({ hasText: "Perguntando sobre" })).toHaveCount(0); // the chosen line is used once
 });
 
-test("personal journey through FastAPI: the real engine does not invent a 2026 income-tax result", async ({ page }) => {
+test("personal journey through FastAPI: the real engine answers only for years it has confirmed rules for", async ({ page }) => {
   await login(page, "fastapi-pf");
   await createAndOpen(page, /Vida Pessoal/);
   await expect(page.getByText(/nenhum bloco/i)).toBeVisible();
 
-  // The IRPF annual table of 2026 is not confirmed yet: the engine says so instead of estimating, and nothing is drawn.
-  await sendChatMessage(page, "Quero entender meu imposto de renda", /Preciso da sua renda anual/);
-  await expect(page.getByTestId(/^widget-/)).toHaveCount(0);
+  // The IRPF annual table of 2026 is confirmed (docs/fontes-legais.md, #93): the engine now calculates and draws the result.
+  // For a year without confirmed rules it says so instead of estimating and draws nothing, so the test follows the
+  // year it runs in: the first branch holds while 2026 rules are in force, the second once the year has no rules.
+  await sendChatMessage(page, "Quero entender meu imposto de renda", /Preciso da sua renda anual|seu imposto de renda estimado é/);
+  const reply = await page.locator('[data-role="assistant"]').last().innerText();
+  if (/Preciso da sua renda anual/.test(reply)) {
+    await expect(page.getByTestId(/^widget-/)).toHaveCount(0);
+  } else {
+    await expect(page.getByTestId(/^widget-/).first()).toBeVisible();
+  }
   await expect(page.getByTestId("alert-banner")).toHaveCount(0);
   await sendChatMessage(page, "Empresa", /Não consegui calcular/);
 });
