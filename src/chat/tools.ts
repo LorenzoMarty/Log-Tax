@@ -1,5 +1,5 @@
 import { upcomingDeadlines } from "@/engine/calendar";
-import { taxHistory } from "@/engine/history";
+import { taxHistory, type TaxHistory } from "@/engine/history";
 import { DEFAULT_RULEBOOK } from "@/engine/real-engine";
 import { reformImpact } from "@/engine/reform-impact";
 import { benefitSunset, type BenefitSunset } from "@/engine/benefit-sunset";
@@ -94,6 +94,33 @@ export function cashImpactWidget(cents: number, floatDays: number, assumptions: 
   };
 }
 
+const brlReais = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+/**
+ * The tax history blocks (#100): a line with the months that have recorded data (a gap is never drawn as a value) and,
+ * when two months were compared, one compare row. Empty when no month has data.
+ * Example: `taxHistoryWidgets(taxHistory(company, "2026-03", 12, "2025-03"))` -> [line, compare].
+ */
+export function taxHistoryWidgets(h: TaxHistory): Widget[] {
+  const data = h.points.flatMap((p) => (p.status === "ok" ? [{ label: p.month, value: p.monthlyTotal }] : []));
+  if (!data.length) return [];
+  const widgets: Widget[] = [{ id: "historico-mensal", kind: "line", title: "Imposto por competência (meses com dados gravados)", size: "lg", data }];
+  const c = h.comparison;
+  if (c) {
+    const pct = c.deltaPct === null ? "" : ` (${(c.deltaPct * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%)`;
+    widgets.push({
+      id: "historico-ano-a-ano",
+      kind: "compare",
+      title: "Imposto do mês, comparação entre competências",
+      size: "md",
+      labels: [c.from, c.to],
+      rows: [{ label: "Imposto do mês", today: brlReais(c.fromTotal), potential: brlReais(c.toTotal) }],
+      summary: `Variação de ${brlReais(c.delta)}${pct}. Cada mês usa a regra vigente na competência. Estimativa, não substitui contador.`,
+    });
+  }
+  return widgets;
+}
+
 const TOOLS: Tool[] = [
   defineTool({
     name: "get_tax_diagnosis",
@@ -186,6 +213,25 @@ const TOOLS: Tool[] = [
     }),
     engine: true,
     run: (ctx, a) => taxHistory(ctx.store.getCompany(), a.to, a.months ?? 12, a.compareWith),
+  }),
+  defineTool({
+    name: "add_tax_history_block",
+    kinds: ["empresa"],
+    description:
+      "Cria no painel o gráfico de imposto por competência (até 24 meses) e, com compareWith, a comparação entre dois meses. Só desenha meses com dados gravados; sem histórico não cria nada e devolve o que falta, nunca estima.",
+    schema: z.strictObject({
+      to: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "mês no formato AAAA-MM"),
+      months: z.int().min(1).max(24).optional(),
+      compareWith: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "mês no formato AAAA-MM").optional(),
+    }),
+    engine: true,
+    run(ctx, a) {
+      const history = taxHistory(ctx.store.getCompany(), a.to, a.months ?? 12, a.compareWith);
+      const widgets = taxHistoryWidgets(history);
+      if (widgets.length) for (const id of ["historico-mensal", "historico-ano-a-ano"]) ctx.store.dispatch({ type: "remove", id });
+      for (const widget of widgets) ctx.store.dispatch({ type: "add", widget });
+      return history;
+    },
   }),
   defineTool({
     name: "get_reform_impact",
