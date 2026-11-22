@@ -118,14 +118,21 @@ test("asking about the ICMS line of a block explains that line, by keyboard", as
   await expect(page.getByRole("status").filter({ hasText: "Perguntando sobre" })).toHaveCount(0); // the chosen line is used once
 });
 
-test("personal journey through FastAPI: the real engine does not invent a 2026 income-tax result", async ({ page }) => {
+test("personal journey through FastAPI: the real engine answers only for years it has confirmed rules for", async ({ page }) => {
   await login(page, "fastapi-pf");
   await createAndOpen(page, /Vida Pessoal/);
   await expect(page.getByText(/nenhum bloco/i)).toBeVisible();
 
-  // The IRPF annual table of 2026 is not confirmed yet: the engine says so instead of estimating, and nothing is drawn.
-  await sendChatMessage(page, "Quero entender meu imposto de renda", /Preciso da sua renda anual/);
-  await expect(page.getByTestId(/^widget-/)).toHaveCount(0);
+  // The IRPF annual table of 2026 is confirmed (docs/fontes-legais.md, #93): the engine now calculates and draws the result.
+  // For a year without confirmed rules it says so instead of estimating and draws nothing, so the test follows the
+  // year it runs in: the first branch holds while 2026 rules are in force, the second once the year has no rules.
+  await sendChatMessage(page, "Quero entender meu imposto de renda", /Preciso da sua renda anual|seu imposto de renda estimado é/);
+  const reply = await page.locator('[data-role="assistant"]').last().innerText();
+  if (/Preciso da sua renda anual/.test(reply)) {
+    await expect(page.getByTestId(/^widget-/)).toHaveCount(0);
+  } else {
+    await expect(page.getByTestId(/^widget-/).first()).toBeVisible();
+  }
   await expect(page.getByTestId("alert-banner")).toHaveCount(0);
   await sendChatMessage(page, "Empresa", /Não consegui calcular/);
 });
@@ -431,7 +438,8 @@ test("prestador de serviço: conversa, comparação PF x MEI x Simples e painel 
   await page.reload(); // what the Python API saved is what the panel reads back
   await expect(page.getByTestId("widget-prestador-opcoes")).toContainText("Simples Nacional");
 });
-// Criterio de pronto do #129: so teclado, anunciado por leitor de tela, e sem violacoes axe no desktop e no celular.
+
+// #129: keyboard only, announced by a screen reader live region, and no axe violations on desktop and phone.
 test("owner reorders and resizes blocks using only the keyboard, announced in a live region, with no axe violations", async ({ page }) => {
   await login(page, "fastapi");
   await createAndOpen(page, /Minha Empresa/);
@@ -441,7 +449,10 @@ test("owner reorders and resizes blocks using only the keyboard, announced in a 
   for (const width of [1280, 375]) {
     await page.setViewportSize({ width, height: 800 });
     await page.waitForLoadState("networkidle");
-    const { violations } = await new AxeBuilder({ page }).include('[role="group"][aria-label^="Organizar bloco"]').withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
+    const { violations } = await new AxeBuilder({ page })
+      .include('[role="group"][aria-label^="Organizar bloco"]')
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+      .analyze();
     expect(violations.map((v) => `${v.id}: ${v.help}`), `axe at ${width}px`).toEqual([]);
   }
 
@@ -452,356 +463,4 @@ test("owner reorders and resizes blocks using only the keyboard, announced in a 
   await page.keyboard.press("Enter");
   await expect.poll(order).toEqual([before[1], before[0], ...before.slice(2)]);
   await expect(page.getByRole("status").filter({ hasText: /posição 2 de/ })).toBeAttached();
-
-  await sendChatMessage(page, "por quê?", /Sobre a linha "ICMS/);
-  const answer = page.locator('[data-role="assistant"]').last();
-  await expect(answer).toContainText('do bloco "Para onde está indo?"');
-  await expect(answer).toContainText(amount.replace(/\s/g, " ")); // the value of that very line
-  await expect(page.getByText('Sobre "ICMS (SP)" em "Para onde está indo?": por quê?')).toBeVisible();
-  await expect(page.getByRole("status").filter({ hasText: "Perguntando sobre" })).toHaveCount(0); // the chosen line is used once
-});
-
-test("personal journey through FastAPI: the real engine does not invent a 2026 income-tax result", async ({ page }) => {
-  await login(page, "fastapi-pf");
-  await createAndOpen(page, /Vida Pessoal/);
-  await expect(page.getByText(/nenhum bloco/i)).toBeVisible();
-
-  // The IRPF annual table of 2026 is not confirmed yet: the engine says so instead of estimating, and nothing is drawn.
-  await sendChatMessage(page, "Quero entender meu imposto de renda", /Preciso da sua renda anual/);
-  await expect(page.getByTestId(/^widget-/)).toHaveCount(0);
-  await expect(page.getByTestId("alert-banner")).toHaveCount(0);
-  await sendChatMessage(page, "Empresa", /Não consegui calcular/);
-});
-
-// #133: the agent detail screen talks to PATCH/DELETE /v1/workspaces/{ws}/agents/{id} on the Python API.
-test("edit an agent on its detail screen and delete it with confirmation", async ({ page }) => {
-  await login(page, "agentedit");
-  await createAndOpen(page, /Minha Empresa/);
-  await sendChatMessage(page, "Crie uma IA para minha empresa", /Criei a "IA da Empresa"/);
-  const nav = page.getByRole("navigation", { name: "Minhas IAs" });
-  await nav.getByRole("link", { name: /IA da Empresa/ }).click();
-  await page.getByRole("link", { name: "Editar esta IA" }).click();
-  await expect(page.getByRole("heading", { name: "IA da Empresa", level: 1 })).toBeVisible();
-  await page.waitForLoadState("networkidle"); // hydrate before submitting, or the form posts natively
-  await page.getByLabel("Objetivo").fill("Vigiar o caixa");
-  await page.getByRole("checkbox").first().click();
-  await page.getByRole("button", { name: "Salvar alterações" }).click();
-  await expect(page.getByText("Alterações salvas.")).toBeVisible();
-  await page.getByRole("link", { name: "Voltar ao espaço" }).click();
-  await expect(nav).toContainText("Vigiar o caixa");
-
-  await nav.getByRole("link", { name: /IA da Empresa/ }).click();
-  await page.getByRole("link", { name: "Editar esta IA" }).click();
-  await page.waitForLoadState("networkidle");
-  await page.getByRole("button", { name: "Excluir IA" }).click();
-  await page.getByRole("button", { name: "Confirmar exclusão" }).click();
-  await expect(page).toHaveURL(/\/workspace\/[0-9a-f-]{36}$/);
-  await expect(page.getByRole("navigation", { name: "Minhas IAs" })).toHaveCount(0);
-});
-
-// #127: the AI adds the new blocks (projection, payroll, goal) and the page renders them from decimal strings.
-test("the AI adds projection, payroll and goal blocks", async ({ page }) => {
-  await login(page, "blocks");
-  await createAndOpen(page, /Minha Empresa/);
-
-  await sendChatMessage(page, "Adicione uma previsão dos impostos", /Adicionei a projeção do imposto/);
-  const projection = page.getByTestId("widget-projecao-imposto");
-  await expect(projection).toBeVisible();
-  await expect(projection.getByRole("img", { name: "Projeção do imposto" })).toBeVisible();
-  await expect(projection).toContainText("Barras claras são projeção");
-  await expect(projection).toContainText(/estimativa ilustrativa/i);
-
-  await sendChatMessage(page, "Mostra também minha folha", /encargos da folha/);
-  await sendChatMessage(page, "Crie uma meta de R$ 5 mil", /Adicionei a meta/);
-  const goal = page.getByTestId("widget-meta");
-  await expect(goal.getByRole("progressbar", { name: "Meta de economia" })).toHaveAttribute("aria-valuenow", "0");
-  await expect(goal).toContainText("R$ 5.000,00");
-
-  await page.reload();
-  await expect(page.getByTestId("widget-projecao-imposto")).toBeVisible();
-  await expect(page.getByTestId("widget-meta")).toBeVisible();
-});
-
-// #139: an AI that may edit the panel keeps its own page, linked to it, and the page goes away with the AI.
-test("an AI keeps its own panel, and deleting the AI removes it", async ({ page }) => {
-  await login(page, "agentpanel");
-  await createAndOpen(page, /Minha Empresa/);
-  await sendChatMessage(page, "Crie uma IA com painel próprio", /Criei a "IA do Painel"/);
-  const wsId = /\/workspace\/([0-9a-f-]{36})/.exec(page.url())![1];
-  const nav = page.getByRole("navigation", { name: "Minhas IAs" });
-  await nav.getByRole("link", { name: /IA do Painel/ }).click();
-  await expect(page.getByRole("heading", { name: "Painel de IA do Painel", level: 2 })).toBeVisible();
-
-  await sendChatMessage(page, "Crie uma meta de R$ 5 mil", /Adicionei a meta/);
-  await expect(page.getByTestId("widget-meta")).toBeVisible();
-  await page.reload();
-  await expect(page.getByTestId("widget-meta")).toBeVisible(); // saved on the AI's own panel
-  await page.getByRole("link", { name: /Assistente geral/ }).click();
-  await expect(page.getByTestId("widget-meta")).toHaveCount(0); // the main panel is untouched
-
-  const panels = async () => (await page.request.get(`/api/v1/workspaces/${wsId}/agent-dashboards`)).json();
-  expect(await panels()).toHaveLength(1);
-
-  await nav.getByRole("link", { name: /IA do Painel/ }).click();
-  await page.getByRole("link", { name: "Editar esta IA" }).click();
-  await page.waitForLoadState("networkidle");
-  await page.getByRole("button", { name: "Excluir IA" }).click();
-  await page.getByRole("button", { name: "Confirmar exclusão" }).click();
-  await expect(page).toHaveURL(/\/workspace\/[0-9a-f-]{36}$/);
-  expect(await panels()).toEqual([]);
-});
-
-test("the Python chat is closed without a session and keeps the contract's error shape", async ({ request }) => {
-  const res = await request.post("/api/v1/chat", { data: { workspaceId: "00000000-0000-0000-0000-000000000000", message: "oi" } });
-  expect(res.status()).toBe(401);
-  expect((await res.json()).error.code).toBe("unauthorized");
-});
-
-// #180: assets live in the Python chat only, so this journey runs in the FastAPI pass.
-test("assets through FastAPI: 'quero acompanhar esse apartamento' registers it in the patrimony panel", async ({ page }) => {
-  await login(page, "bens");
-  await createAndOpen(page, /Vida Pessoal/);
-  await expect(page.getByRole("region", { name: "Patrimônio" })).toContainText("Nenhum bem cadastrado");
-
-  await sendChatMessage(page, "quero acompanhar esse apartamento", /Qual é o valor/);
-  await page.reload();
-  const asset = page.getByRole("region", { name: "Patrimônio" }).getByTestId("asset");
-  await expect(asset).toHaveCount(1);
-  await expect(asset).toContainText("Apartamento");
-  await expect(asset).toContainText("Imóvel");
-});
-
-// #166: the CNPJ fills the company proposal; the API runs with LOG_TAX_CNPJ_STUB=1 (only 11.222.333/0001-81 is found, never BrasilAPI).
-test("informar o CNPJ preenche nome, CNAE, UF e município", async ({ page }) => {
-  await login(page, "cnpj");
-  await createAndOpen(page, /Minha Empresa/);
-  await sendChatMessage(page, "Meu CNPJ é 11.222.333/0001-81", /LOG TAX DEMONSTRACAO LTDA: CNAE 6201501, 6202300, São Paulo\/SP/);
-});
-
-// #328: the alphanumeric CNPJ (Receita, since 2026-07-31) is looked up with its letters; the stub finds 12.ABC.345/01DE-35.
-test("informar um CNPJ alfanumérico preenche a proposta sem perder as letras", async ({ page }) => {
-  await login(page, "cnpj-alfa");
-  await createAndOpen(page, /Minha Empresa/);
-  await sendChatMessage(page, "Meu CNPJ é 12.ABC.345/01DE-35", /LOG TAX DEMONSTRACAO LTDA: CNAE 6201501, 6202300, São Paulo\/SP/);
-});
-
-test("serviço fora do ar vira pergunta manual, não erro", async ({ page }) => {
-  await login(page, "cnpj-down");
-  await createAndOpen(page, /Minha Empresa/);
-  await sendChatMessage(page, "Meu CNPJ é 11.444.777/0001-61", /fora do ar\. Me diga os dados da empresa/);
-});
-
-// #183, #185: an inventory built through the conversation (estate, 2 assets, 3 heirs) shows up in the inventory panel.
-test("criar um inventário com 2 bens e 3 herdeiros pela conversa e ver o painel", async ({ page }) => {
-  await login(page, "inventario");
-  await createAndOpen(page, /Vida Pessoal/);
-
-  await sendChatMessage(page, "Abrir o espólio de João Silva, falecido em 15/10/2026, em SP", /Sinto muito pela sua perda/);
-  await sendChatMessage(page, "Cadastrar imóvel Apartamento no centro de R$ 400 mil", /Anotei o item/);
-  await sendChatMessage(page, "Cadastrar veículo Carro de R$ 80 mil", /Anotei o item/);
-  await sendChatMessage(page, "Cadastrar herdeira Ana Silva, filha, 50%", /Anotei o herdeiro/);
-  await sendChatMessage(page, "Cadastrar herdeiro Bruno Silva, filho, 30%", /Anotei o herdeiro/);
-  await sendChatMessage(page, "Cadastrar herdeiro Carla Silva, filha, 20%", /Anotei o herdeiro/);
-  await sendChatMessage(page, "Mostrar o resumo do inventário", /R\$ 480\.000.*3 herdeiros/);
-
-  const panel = page.getByTestId("inventory-panel");
-  await expect(panel).toContainText("Inventário de João Silva");
-  await expect(page.getByTestId("inventory-net")).toContainText("480.000");
-  await expect(page.getByTestId("inventory-heir")).toHaveCount(3);
-  await expect(page.getByTestId("inventory-pending")).toHaveCount(0);
-  await expect(page.getByTestId("inventory-deadlines")).toContainText("15/12/2026");
-  await expect(page.getByTestId("inventory-deadlines")).toContainText("ainda não foi conferido");
-  await expect(page.getByTestId("inventory-checklist")).toContainText("Certidão de óbito (falta)");
-  await expect(page.getByTestId("inventory-split")).toContainText("240.000,00");
-
-  // what the Python API saved is what the panel reads back
-  await page.reload();
-  await expect(page.getByTestId("inventory-heir")).toHaveCount(3);
-});
-
-// #186: "crie uma IA para o inventário do meu pai" produces the PRD §10 configuration (template Inventário).
-test("criar a IA do Inventário pelo chat a partir do modelo", async ({ page }) => {
-  await login(page, "agentinv");
-  await createAndOpen(page, /Vida Pessoal/);
-  await sendChatMessage(page, "Crie uma IA para o inventário do meu pai", /Criei a "IA do Inventário"/);
-  const nav = page.getByRole("navigation", { name: "Minhas IAs" });
-  await expect(nav).toContainText("IA do Inventário");
-  await expect(nav).toContainText("Acompanhar patrimônio, documentos, impostos e obrigações do inventário");
-  await expect(nav).toContainText("9 ferramentas");
-});
-
-
-// Alert management (#137) against the FastAPI backend: by chat ("cancela aquele alerta" asks first) and by the screen.
-test("cancel an alert by chat asks for confirmation, then removes it", async ({ page }) => {
-  await login(page, "alerts-chat");
-  await createAndOpen(page, /Minha Empresa/);
-  await sendChatMessage(page, "Me avise se meus impostos passarem de R$ 20 mil", /20\.000/);
-  await page.reload();
-  await expect(page.getByTestId("managed-alert")).toHaveCount(1);
-
-  await sendChatMessage(page, "cancela aquele alerta", /Você confirma/);
-  await expect(page.getByTestId("managed-alert")).toHaveCount(1); // nothing is removed before the user confirms
-  await page.getByRole("button", { name: "Confirmar" }).click();
-  await expect(page.locator('[data-role="assistant"]').filter({ hasText: /apaguei o alerta/ }).last()).toBeVisible();
-
-  await page.reload();
-  await expect(page.getByTestId("managed-alert")).toHaveCount(0);
-});
-
-test("pause, resume and delete an alert from the management list", async ({ page }) => {
-  await login(page, "alerts-ui");
-  await createAndOpen(page, /Minha Empresa/);
-  await sendChatMessage(page, "Me avise se meus impostos passarem de R$ 20 mil", /20\.000/);
-  await page.reload();
-
-  const row = page.getByTestId("managed-alert");
-  await expect(row).toContainText("Impostos por mês acima de R$ 20.000");
-  await expect(row).toContainText("ativo");
-  await row.getByRole("button", { name: "Pausar" }).click();
-  await expect(row).toContainText("pausado");
-  await row.getByRole("button", { name: "Reativar" }).click();
-  await expect(row).toContainText("ativo");
-
-  await row.getByRole("button", { name: "Apagar" }).click();
-  await expect(row).toContainText("Apagar este alerta?");
-  await row.getByRole("button", { name: "Cancelar" }).click();
-  await expect(row).toBeVisible();
-  await row.getByRole("button", { name: "Apagar" }).click();
-  await row.getByRole("button", { name: "Confirmar exclusão" }).click();
-  await expect(page.getByTestId("managed-alert")).toHaveCount(0);
-});
-
-test("dashboard pages through FastAPI: create by chat, switch, persist, remove with confirmation (#123)", async ({ page }) => {
-  await login(page, "fastapi-pages");
-  await createAndOpen(page, /Minha Empresa/);
-  const tabs = page.getByRole("navigation", { name: "Páginas do painel" });
-  await expect(tabs).toHaveCount(0); // one page: no navigation
-
-  await sendChatMessage(page, "Crie uma página só de oportunidades", /Criei a página "Oportunidades"/);
-  await expect(tabs.getByRole("button", { name: "Oportunidades" })).toHaveAttribute("aria-current", "page");
-  await expect(page.getByTestId("widget-text").or(page.getByTestId("widget-opportunities"))).toBeVisible();
-
-  await tabs.getByRole("button", { name: "Painel tributário" }).click(); // the main page is still empty
-  await expect(page.getByText(/nenhum bloco/i)).toBeVisible();
-  await page.reload();
-  await expect(tabs.getByRole("button", { name: "Oportunidades" })).toBeVisible();
-  await tabs.getByRole("button", { name: "Oportunidades" }).click();
-
-  await sendChatMessage(page, "Remova a página de oportunidades", /Você confirma/);
-  await expect(tabs).toBeVisible(); // nothing is removed before the click
-  await page.getByRole("button", { name: "Confirmar" }).click();
-  await expect(tabs).toHaveCount(0);
-  await page.reload();
-  await expect(tabs).toHaveCount(0);
-});
-
-// Manual move/resize (#129): saved as a new version, so it survives a reload and "Desfazer" restores the old layout.
-test("owner reorders and resizes blocks with buttons; reload keeps it and undo restores it", async ({ page }) => {
-  await login(page, "fastapi");
-  await createAndOpen(page, /Minha Empresa/);
-  await sendChatMessage(page, "Quero organizar meus impostos", /Empresa ou Pessoal/);
-  await sendChatMessage(page, "Empresa", /52\.155/);
-
-  const order = () => page.getByTestId(/^widget-/).evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")));
-  const before = await order();
-  expect(before.length).toBeGreaterThan(1);
-  const swapped = [before[1], before[0], ...before.slice(2)];
-
-  await page.getByRole("button", { name: /^Mover para baixo: / }).first().click();
-  await expect.poll(order).toEqual(swapped);
-  await page.reload();
-  await expect.poll(order).toEqual(swapped);
-
-  await page.getByRole("button", { name: "Desfazer" }).click();
-  await expect.poll(order).toEqual(before);
-
-  const size = page.getByLabel(/^Tamanho: /).first();
-  const original = await size.inputValue();
-  await size.selectOption("lg");
-  await page.reload();
-  await expect(size).toHaveValue("lg");
-  await page.getByRole("button", { name: "Desfazer" }).click();
-  await expect(size).toHaveValue(original);
-});
-
-// #122: attach an NF-e in the chat (same upload path and consent), the AI reads it and answers about it.
-const NFE = `<?xml version="1.0"?><nfeProc><NFe><infNFe>
-<ide><nNF>1234</nNF><dhEmi>2026-10-05T10:30:00-03:00</dhEmi></ide>
-<emit><CNPJ>12345678000190</CNPJ></emit>
-<total><ICMSTot><vNF>1500.00</vNF></ICMSTot></total></infNFe></NFe></nfeProc>`;
-
-test("attach an NF-e in the conversation and ask about it", async ({ page }) => {
-  await login(page, "chatattach");
-  await createAndOpen(page, /Minha Empresa/);
-  await page.getByRole("button", { name: "Anexar arquivo" }).click();
-  const tray = page.getByRole("group", { name: "Anexar documentos" });
-  const file = { name: "nota.xml", mimeType: "application/xml", buffer: Buffer.from(NFE) };
-  // without the LGPD authorization nothing is sent
-  await tray.getByLabel(/Arquivos \(PDF/).setInputFiles(file);
-  await expect(page.getByRole("alert").filter({ hasText: "Marque a autorização" })).toBeVisible();
-  await tray.getByRole("checkbox").check();
-  await tray.getByLabel(/Arquivos \(PDF/).setInputFiles(file);
-  await expect(page.getByTestId("attachment-chip")).toContainText("nota.xml");
-  await expect(page.locator('[data-role="assistant"]').filter({ hasText: /Reconheci "nota\.xml".*1\.500/ }).last()).toBeVisible();
-  await sendChatMessage(page, "O que tem nesse documento?", /Número 1234\. Valor total R\$ 1\.500/);
-});
-
-// #179: the service provider's journey in a personal space: missing data becomes a question, then the three options show up
-// in the panel with their premises, the deadlines and the checklist; the medium-confidence rules keep the validation note.
-test("prestador de serviço: conversa, comparação PF x MEI x Simples e painel com premissas", async ({ page }) => {
-  await login(page, "prestador");
-  await createAndOpen(page, /Vida Pessoal/);
-
-  await sendChatMessage(page, "Sou prestador de serviço e recebo R$ 10 mil por mês", /Em qual anexo do Simples/);
-  await expect(page.getByTestId("widget-prestador-opcoes")).toHaveCount(0);
-
-  await sendChatMessage(
-    page,
-    "Sou prestador de serviço, faturo R$ 10 mil por mês, com despesas de R$ 1 mil, anexo III",
-    /Comparei por mês sobre R\$ 10\.000.*precisam de validação/,
-  );
-  const options = page.getByTestId("widget-prestador-opcoes");
-  await expect(options).toContainText("Pessoa física");
-  await expect(options).toContainText("MEI");
-  await expect(options).toContainText("Simples Nacional");
-  await expect(options).toContainText("Não pode ser usada"); // R$ 120 mil a year is over the MEI limit
-  await expect(page.getByTestId("widget-prestador-comparativo")).toBeVisible();
-  await expect(page.getByTestId("widget-prestador-impostos")).toBeVisible();
-  await expect(page.getByTestId("widget-prestador-prazos")).toContainText("carnê-leão");
-  await expect(page.getByTestId("widget-prestador-checklist")).toContainText("livro-caixa");
-  await expect(page.getByTestId("widget-prestador-premissas")).toContainText("aguardam validação de um profissional");
-
-  await page.reload(); // what the Python API saved is what the panel reads back
-  await expect(page.getByTestId("widget-prestador-opcoes")).toContainText("Simples Nacional");
-});
-// Criterio de pronto do #129: so teclado, anunciado por leitor de tela, e sem violacoes axe no desktop e no celular.
-test("owner reorders and resizes blocks using only the keyboard, announced in a live region, with no axe violations", async ({ page }) => {
-  await login(page, "fastapi");
-  await createAndOpen(page, /Minha Empresa/);
-  await sendChatMessage(page, "Quero organizar meus impostos", /Empresa ou Pessoal/);
-  await sendChatMessage(page, "Empresa", /52\.155/);
-
-  for (const width of [1280, 375]) {
-    await page.setViewportSize({ width, height: 800 });
-    await page.waitForLoadState("networkidle");
-    const { violations } = await new AxeBuilder({ page }).include('[role="group"][aria-label^="Organizar bloco"]').withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
-    expect(violations.map((v) => `${v.id}: ${v.help}`), `axe at ${width}px`).toEqual([]);
-  }
-
-  const order = () => page.getByTestId(/^widget-/).evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")));
-  const before = await order();
-  const down = page.getByRole("button", { name: /^Mover para baixo: / }).first();
-  await down.focus();
-  await page.keyboard.press("Enter");
-  await expect.poll(order).toEqual([before[1], before[0], ...before.slice(2)]);
-  await expect(page.getByRole("status").filter({ hasText: /posição 2 de/ })).toBeAttached();
-  // focus stays on the control of the block that moved, so the next key press keeps moving it
-  await expect(page.getByRole("button", { name: /^Mover para baixo: / }).nth(1)).toBeFocused();
-
-  const size = page.getByLabel(/^Tamanho: /).first();
-  await size.focus();
-  await page.keyboard.press("ArrowDown");
-  await expect(page.getByRole("status").filter({ hasText: /: tamanho / })).toBeAttached();
-  await page.getByRole("button", { name: "Desfazer" }).click();
-  await expect.poll(order).toEqual(before);
 });

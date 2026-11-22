@@ -86,7 +86,7 @@ async def call(reg: ToolRegistry, name: str, args: Any = None, untrusted: bool =
 
 # ---- catalogue and schemas ----
 def test_every_tool_has_a_clean_json_schema_and_the_flags_are_consistent() -> None:
-    assert len(TOOL_NAMES) == len(set(TOOL_NAMES)) == 66
+    assert len(TOOL_NAMES) == len(set(TOOL_NAMES)) == 67
     for t in TOOLS:
         schema = tool_parameters(t)
         text = json.dumps(schema)
@@ -108,7 +108,7 @@ def test_specs_follow_the_workspace_kind_and_the_agent_allow_list() -> None:
     assert not {"get_tax_diagnosis", "run_simulation", "create_alert"} & set(names("pessoal"))
     assert "get_tax_diagnosis" in names("empresa") and not {"get_ir_diagnosis", "save_person_data"} & set(names("empresa"))
     assert names("empresa", ("get_tax_diagnosis", "get_ir_diagnosis")) == ["get_tax_diagnosis"]
-    assert len(names(None)) == 66
+    assert len(names(None)) == 67
 
 
 async def test_unknown_wrong_kind_and_not_allowed_tools_are_refused_at_runtime() -> None:
@@ -438,6 +438,22 @@ async def test_cash_impact_block_replaces_itself() -> None:
     w = cash_impact_widget(-100050, -5, ["a."])
     assert w["value"] == "-R$ 1.000,50" and "consome caixa (5 dias" in w["caption"]
     assert validate_widget(blocks[0])["kind"] == "kpi"
+
+
+async def test_reform_impact_block_compares_today_with_each_year_and_replaces_itself() -> None:
+    reg, store = make()
+    args = {"category": "geral", "cbsReferenceRate": 0.09, "ibsReferenceRate": 0.17}
+    for _ in range(2):
+        assert (await call(reg, "add_reform_impact_block", args))["data"]["status"] == "ok"
+    widgets = {w["id"]: w for w in store.history.present["widgets"]}
+    compare = widgets["reforma-ano-a-ano"]
+    assert [r["label"] for r in compare["rows"]] == [str(y) for y in range(2026, 2034)]
+    assert "Premissas" in compare["summary"] and "validação" in compare["summary"]
+    assert validate_widget(compare)["kind"] == "compare"
+    assert validate_widget(widgets["reforma-carga-anual"])["kind"] == "line"
+    assert len([w for w in store.history.present["widgets"] if w["id"].startswith("reforma-")]) == 2
+    sparse = await call(reg, "add_reform_impact_block", {})
+    assert sparse["data"]["status"] == "insufficient_data" and "reforma-ano-a-ano" in widgets
 
 
 def test_dashboard_reducer_is_pure_and_keeps_the_rules() -> None:

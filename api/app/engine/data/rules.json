@@ -334,10 +334,27 @@
       "source": "Receita Federal, Tributação de 2024 e 2025 (dependente R$ 2.275,08; instrução R$ 3.561,50; desconto simplificado de 20% até R$ 16.754,34): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2025",
       "confidence": "medium",
       "requiresValidation": true,
-      "notes": "O limite do desconto simplificado e as deduções de 2026 em diante não foram conferidos (uma fonte cita R$ 17.640).",
+      "notes": "O percentual de 20% do desconto simplificado não consta na página da Receita (Lei 9.250/1995 não lida). Para 2026, veja a versão seguinte.",
       "data": {
         "simplifiedRate": 0.2,
         "simplifiedCap": 16754.34,
+        "educationCap": 3561.5,
+        "dependentYear": 2275.08
+      }
+    },
+    {
+      "id": "irpf-anual-deducoes",
+      "name": "Deduções e desconto simplificado da DIRPF",
+      "jurisdiction": "Federal",
+      "validFrom": "2026-01",
+      "validUntil": "2026-12",
+      "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": "Valores lidos na página oficial baixada com curl em 2026-11-21 (docs/fontes-legais.md). O percentual de 20% do desconto simplificado não consta na página: foi mantido da versão anterior e não foi conferido na Lei 9.250/1995.",
+      "data": {
+        "simplifiedRate": 0.2,
+        "simplifiedCap": 17640,
         "educationCap": 3561.5,
         "dependentYear": 2275.08
       }
@@ -472,6 +489,53 @@
             "deduction": 10853.78
           }
         ]
+      }
+    },
+    {
+      "id": "irpf-tabela-anual",
+      "name": "Tabela progressiva anual do IRPF (DIRPF)",
+      "jurisdiction": "Federal",
+      "validFrom": "2026-01",
+      "validUntil": "2026-12",
+      "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+      "confidence": "medium",
+      "requiresValidation": true,
+      "notes": "Lida na página oficial da Receita (baixada com curl em 2026-11-21; docs/fontes-legais.md). O redutor anual usa como renda o total tributável informado (annualGrossIncome): a página diz \"rendimentos tributáveis sujeitos ao ajuste anual\" e não detalha se é antes ou depois das deduções.",
+      "data": {
+        "brackets": [
+          {
+            "upTo": 29145.6,
+            "rate": 0,
+            "deduction": 0
+          },
+          {
+            "upTo": 33919.8,
+            "rate": 0.075,
+            "deduction": 2185.92
+          },
+          {
+            "upTo": 45012.6,
+            "rate": 0.15,
+            "deduction": 4729.91
+          },
+          {
+            "upTo": 55976.16,
+            "rate": 0.225,
+            "deduction": 8105.85
+          },
+          {
+            "upTo": null,
+            "rate": 0.275,
+            "deduction": 10904.66
+          }
+        ],
+        "reducer": {
+          "fullUpTo": 60000,
+          "fullAmount": 2694.15,
+          "phaseOutUpTo": 88200,
+          "phaseOutConstant": 8429.73,
+          "phaseOutFactor": 0.095575
+        }
       }
     },
     {
@@ -626,10 +690,10 @@
       "jurisdiction": "Estadual",
       "validFrom": "2008-03",
       "validUntil": null,
-      "source": "SP: Lei 10.705/2000 art. 16, 4% sobre a base de cálculo (https://www.al.sp.gov.br/repositorio/legislacao/lei/2000/lei-10705-28.12.2000.html; https://portal.fazenda.sp.gov.br/servicos/itcmd/Paginas/declaracao-e-calculo.aspx). MG: Lei 14.941/2003 art. 10, 5%, alíquota única desde 28/03/2008 (https://www.almg.gov.br/legislacao-mineira/texto/LEI/14941/2003/?cons=1; https://www.fazenda.mg.gov.br/empresas/impostos/itcd/informacoes.html)",
+      "source": "SP: Lei 10.705/2000 art. 16, 4% sobre a base de cálculo (https://www.al.sp.gov.br/repositorio/legislacao/lei/2000/lei-10705-28.12.2000.html; https://portal.fazenda.sp.gov.br/servicos/itcmd/Paginas/declaracao-e-calculo.aspx). MG: Lei 14.941/2003 art. 10 (5%, desde 28/03/2008), art. 13, I (180 dias) e art. 22, I (multa de mora), texto lido em https://www.fazenda.mg.gov.br/empresas/legislacao_tributaria/leis/l14941_2003.html (atualizada até a Lei 25.618/2025; baixado com curl em 2026-11-21; docs/fontes-legais.md)",
       "confidence": "medium",
       "requiresValidation": true,
-      "notes": "Alíquotas conferidas por resumo de busca nos sites oficiais, não pelo texto integral das leis: confirme com um contador. A vigência de SP é anterior a 2008; usa-se 2008-03 (início da alíquota única de MG) para as duas UFs. Isenções (ex.: doação até 2.500 UFESP em SP), prazo e multa por atraso não estão modelados. PL 409/2025 (SP) propõe alíquotas progressivas e não foi considerado.",
+      "notes": "MG: alíquota, prazo e multa de mora lidos no texto da lei publicado pela SEF/MG (docs/fontes-legais.md). SP: alíquota conferida por resumo de busca nos sites oficiais, não pelo texto integral da lei (a SEF/SP não pôde ser baixada): confirme com um contador. A vigência de SP é anterior a 2008; usa-se 2008-03 (início da alíquota única de MG) para as duas UFs. Isenções (ex.: doação até 2.500 UFESP em SP; imóveis e valores isentos em MG), descontos por pagamento antecipado e multa por atraso fora de MG não estão modelados. PL 409/2025 (SP) propõe alíquotas progressivas e não foi considerado.",
       "data": {
         "byUf": {
           "SP": {
@@ -638,7 +702,14 @@
           },
           "MG": {
             "heranca": 0.05,
-            "doacao": 0.05
+            "doacao": 0.05,
+            "prazoHerancaDias": 180,
+            "multaMora": {
+              "porDia": 0.0015,
+              "ateDia": 30,
+              "ate60Dias": 0.09,
+              "apos60Dias": 0.12
+            }
           }
         }
       }

@@ -51700,8 +51700,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 33868.99,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 6773.8,
+      "taxableBase": 27095.19,
+      "tax": 0,
+      "balance": 149646.88
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 25540.03,
+      "taxableBase": 8328.96,
+      "tax": 0,
+      "balance": 149646.88
+     },
+     "best": "simplificada",
+     "annualSavings": 0,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 6.773,80",
+       "amount": 6773.8,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 33.868,99 − deduções R$ 6.773,80 = R$ 27.095,19",
+       "amount": 27095.19,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 27.095,19 × 0,0% − dedução da tabela R$ 0,00 = R$ 0,00",
+       "amount": 0,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 25.540,03",
+       "amount": 25540.03,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 33.868,99 − deduções R$ 25.540,03 = R$ 8.328,96",
+       "amount": 8328.96,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 8.328,96 × 0,0% − dedução da tabela R$ 0,00 = R$ 0,00",
+       "amount": 0,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -51719,8 +51806,93 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 76705.8,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 15341.16,
+      "taxableBase": 61364.64,
+      "tax": 4872.05
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 68827.26,
+      "taxableBase": 7878.54,
+      "tax": 0
+     },
+     "best": "completa",
+     "annualSavings": 4872.05,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "Sem o imposto retido na fonte, não é possível calcular restituição nem imposto a pagar.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 15.341,16",
+       "amount": 15341.16,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 76.705,80 − deduções R$ 15.341,16 = R$ 61.364,64",
+       "amount": 61364.64,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 61.364,64 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 4.872,05",
+       "amount": 4872.05,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 68.827,26",
+       "amount": 68827.26,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 76.705,80 − deduções R$ 68.827,26 = R$ 7.878,54",
+       "amount": 7878.54,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 7.878,54 × 0,0% − dedução da tabela R$ 0,00 = R$ 0,00",
+       "amount": 0,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -51848,8 +52020,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 338326.44,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 320686.44,
+      "tax": 77284.11,
+      "balance": -15958.67
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 55857.32,
+      "taxableBase": 282469.12,
+      "tax": 66774.35,
+      "balance": -5448.91
+     },
+     "best": "completa",
+     "annualSavings": 10509.76,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 338.326,44 − deduções R$ 17.640,00 = R$ 320.686,44",
+       "amount": 320686.44,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 320.686,44 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 77.284,11",
+       "amount": 77284.11,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 55.857,32",
+       "amount": 55857.32,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 338.326,44 − deduções R$ 55.857,32 = R$ 282.469,12",
+       "amount": 282469.12,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 282.469,12 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 66.774,35",
+       "amount": 66774.35,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -51974,8 +52233,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 277809.09,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 260169.09,
+      "tax": 60641.84,
+      "balance": -10503.29
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 42198.71,
+      "taxableBase": 235610.38,
+      "tax": 53888.19,
+      "balance": -3749.64
+     },
+     "best": "completa",
+     "annualSavings": 6753.65,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 277.809,09 − deduções R$ 17.640,00 = R$ 260.169,09",
+       "amount": 260169.09,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 260.169,09 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 60.641,84",
+       "amount": 60641.84,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 42.198,71",
+       "amount": 42198.71,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 277.809,09 − deduções R$ 42.198,71 = R$ 235.610,38",
+       "amount": 235610.38,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 235.610,38 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 53.888,19",
+       "amount": 53888.19,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -53017,8 +53363,93 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 209222.19,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 191582.19,
+      "tax": 41780.44
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 23244.37,
+      "taxableBase": 185977.82,
+      "tax": 40239.24
+     },
+     "best": "completa",
+     "annualSavings": 1541.2,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "Sem o imposto retido na fonte, não é possível calcular restituição nem imposto a pagar.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 209.222,19 − deduções R$ 17.640,00 = R$ 191.582,19",
+       "amount": 191582.19,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 191.582,19 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 41.780,44",
+       "amount": 41780.44,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 23.244,37",
+       "amount": 23244.37,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 209.222,19 − deduções R$ 23.244,37 = R$ 185.977,82",
+       "amount": 185977.82,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 185.977,82 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 40.239,24",
+       "amount": 40239.24,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -53318,8 +53749,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 613060.38,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 595420.38,
+      "tax": 152835.94,
+      "balance": -117529.88
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 34740.93,
+      "taxableBase": 578319.45,
+      "tax": 148133.19,
+      "balance": -112827.13
+     },
+     "best": "completa",
+     "annualSavings": 4702.75,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 613.060,38 − deduções R$ 17.640,00 = R$ 595.420,38",
+       "amount": 595420.38,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 595.420,38 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 152.835,94",
+       "amount": 152835.94,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 34.740,93",
+       "amount": 34740.93,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 613.060,38 − deduções R$ 34.740,93 = R$ 578.319,45",
+       "amount": 578319.45,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 578.319,45 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 148.133,19",
+       "amount": 148133.19,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -53336,8 +53854,93 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 677202.71,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 659562.71,
+      "tax": 170475.09
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 3561.5,
+      "taxableBase": 673641.21,
+      "tax": 174346.67
+     },
+     "best": "simplificada",
+     "annualSavings": 0,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "Sem o imposto retido na fonte, não é possível calcular restituição nem imposto a pagar.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 677.202,71 − deduções R$ 17.640,00 = R$ 659.562,71",
+       "amount": 659562.71,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 659.562,71 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 170.475,09",
+       "amount": 170475.09,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 3.561,50",
+       "amount": 3561.5,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 677.202,71 − deduções R$ 3.561,50 = R$ 673.641,21",
+       "amount": 673641.21,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 673.641,21 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 174.346,67",
+       "amount": 174346.67,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -53358,8 +53961,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 577682.77,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 560042.77,
+      "tax": 143107.1,
+      "balance": -93536.86
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 69622.23,
+      "taxableBase": 508060.54,
+      "tax": 128811.99,
+      "balance": -79241.75
+     },
+     "best": "completa",
+     "annualSavings": 14295.11,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 577.682,77 − deduções R$ 17.640,00 = R$ 560.042,77",
+       "amount": 560042.77,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 560.042,77 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 143.107,10",
+       "amount": 143107.1,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 69.622,23",
+       "amount": 69622.23,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 577.682,77 − deduções R$ 69.622,23 = R$ 508.060,54",
+       "amount": 508060.54,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 508.060,54 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 128.811,99",
+       "amount": 128811.99,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -53635,8 +54325,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 570564.24,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 552924.24,
+      "tax": 141149.51,
+      "balance": -109070.85
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 40053.31,
+      "taxableBase": 530510.93,
+      "tax": 134985.85,
+      "balance": -102907.19
+     },
+     "best": "completa",
+     "annualSavings": 6163.66,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 570.564,24 − deduções R$ 17.640,00 = R$ 552.924,24",
+       "amount": 552924.24,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 552.924,24 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 141.149,51",
+       "amount": 141149.51,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 40.053,31",
+       "amount": 40053.31,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 570.564,24 − deduções R$ 40.053,31 = R$ 530.510,93",
+       "amount": 530510.93,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 530.510,93 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 134.985,85",
+       "amount": 134985.85,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -53656,8 +54433,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 533094.95,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 515454.95,
+      "tax": 130845.45,
+      "balance": -5964.8
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 34510.6,
+      "taxableBase": 498584.35,
+      "tax": 126206.04,
+      "balance": -1325.39
+     },
+     "best": "completa",
+     "annualSavings": 4639.41,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 533.094,95 − deduções R$ 17.640,00 = R$ 515.454,95",
+       "amount": 515454.95,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 515.454,95 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 130.845,45",
+       "amount": 130845.45,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 34.510,60",
+       "amount": 34510.6,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 533.094,95 − deduções R$ 34.510,60 = R$ 498.584,35",
+       "amount": 498584.35,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 498.584,35 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 126.206,04",
+       "amount": 126206.04,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -53696,8 +54560,93 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 732755.29,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 715115.29,
+      "tax": 185752.04
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 49424.8,
+      "taxableBase": 683330.49,
+      "tax": 177011.22
+     },
+     "best": "completa",
+     "annualSavings": 8740.82,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "Sem o imposto retido na fonte, não é possível calcular restituição nem imposto a pagar.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 732.755,29 − deduções R$ 17.640,00 = R$ 715.115,29",
+       "amount": 715115.29,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 715.115,29 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 185.752,04",
+       "amount": 185752.04,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 49.424,80",
+       "amount": 49424.8,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 732.755,29 − deduções R$ 49.424,80 = R$ 683.330,49",
+       "amount": 683330.49,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 683.330,49 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 177.011,22",
+       "amount": 177011.22,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -54268,8 +55217,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 616666.39,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 599026.39,
+      "tax": 153827.6,
+      "balance": -25061.99
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 32157.41,
+      "taxableBase": 584508.98,
+      "tax": 149835.31,
+      "balance": -21069.7
+     },
+     "best": "completa",
+     "annualSavings": 3992.29,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 616.666,39 − deduções R$ 17.640,00 = R$ 599.026,39",
+       "amount": 599026.39,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 599.026,39 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 153.827,60",
+       "amount": 153827.6,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 32.157,41",
+       "amount": 32157.41,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 616.666,39 − deduções R$ 32.157,41 = R$ 584.508,98",
+       "amount": 584508.98,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 584.508,98 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 149.835,31",
+       "amount": 149835.31,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -54291,8 +55327,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 615450.86,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 597810.86,
+      "tax": 153493.33,
+      "balance": -36472.45
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 62779.63,
+      "taxableBase": 552671.23,
+      "tax": 141079.93,
+      "balance": -24059.05
+     },
+     "best": "completa",
+     "annualSavings": 12413.4,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 615.450,86 − deduções R$ 17.640,00 = R$ 597.810,86",
+       "amount": 597810.86,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 597.810,86 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 153.493,33",
+       "amount": 153493.33,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 62.779,63",
+       "amount": 62779.63,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 615.450,86 − deduções R$ 62.779,63 = R$ 552.671,23",
+       "amount": 552671.23,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 552.671,23 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 141.079,93",
+       "amount": 141079.93,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -55329,8 +56452,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 590458.88,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 572818.88,
+      "tax": 146620.53,
+      "balance": -1968.21
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 48006.62,
+      "taxableBase": 542452.26,
+      "tax": 138269.71,
+      "balance": 6382.61
+     },
+     "best": "completa",
+     "annualSavings": 8350.82,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 590.458,88 − deduções R$ 17.640,00 = R$ 572.818,88",
+       "amount": 572818.88,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 572.818,88 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 146.620,53",
+       "amount": 146620.53,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 48.006,62",
+       "amount": 48006.62,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 590.458,88 − deduções R$ 48.006,62 = R$ 542.452,26",
+       "amount": 542452.26,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 542.452,26 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 138.269,71",
+       "amount": 138269.71,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -55607,8 +56817,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 273489.22,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 255849.22,
+      "tax": 59453.88,
+      "balance": 31674.52
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 73088.02,
+      "taxableBase": 200401.2,
+      "tax": 44205.67,
+      "balance": 46922.73
+     },
+     "best": "completa",
+     "annualSavings": 15248.21,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 273.489,22 − deduções R$ 17.640,00 = R$ 255.849,22",
+       "amount": 255849.22,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 255.849,22 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 59.453,88",
+       "amount": 59453.88,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 73.088,02",
+       "amount": 73088.02,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 273.489,22 − deduções R$ 73.088,02 = R$ 200.401,20",
+       "amount": 200401.2,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 200.401,20 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 44.205,67",
+       "amount": 44205.67,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -55757,8 +57054,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 96545.8,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 78905.8,
+      "tax": 10794.44,
+      "balance": 87890.65
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 45468.54,
+      "taxableBase": 51077.26,
+      "tax": 3386.53,
+      "balance": 95298.56
+     },
+     "best": "completa",
+     "annualSavings": 7407.91,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 96.545,80 − deduções R$ 17.640,00 = R$ 78.905,80",
+       "amount": 78905.8,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 78.905,80 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 10.794,44",
+       "amount": 10794.44,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 45.468,54",
+       "amount": 45468.54,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 96.545,80 − deduções R$ 45.468,54 = R$ 51.077,26",
+       "amount": 51077.26,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 51.077,26 × 22,5% − dedução da tabela R$ 8.105,85 = R$ 3.386,53",
+       "amount": 3386.53,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -56796,8 +58180,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 648893.89,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 631253.89,
+      "tax": 162690.16,
+      "balance": -150342.79
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 10401.91,
+      "taxableBase": 638491.98,
+      "tax": 164680.63,
+      "balance": -152333.26
+     },
+     "best": "simplificada",
+     "annualSavings": 0,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 648.893,89 − deduções R$ 17.640,00 = R$ 631.253,89",
+       "amount": 631253.89,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 631.253,89 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 162.690,16",
+       "amount": 162690.16,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 10.401,91",
+       "amount": 10401.91,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 648.893,89 − deduções R$ 10.401,91 = R$ 638.491,98",
+       "amount": 638491.98,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 638.491,98 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 164.680,63",
+       "amount": 164680.63,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -57154,8 +58625,93 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 171567.07,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 153927.07,
+      "tax": 31425.28
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 31667.4,
+      "taxableBase": 139899.67,
+      "tax": 27567.75
+     },
+     "best": "completa",
+     "annualSavings": 3857.53,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "Sem o imposto retido na fonte, não é possível calcular restituição nem imposto a pagar.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 171.567,07 − deduções R$ 17.640,00 = R$ 153.927,07",
+       "amount": 153927.07,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 153.927,07 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 31.425,28",
+       "amount": 31425.28,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 31.667,40",
+       "amount": 31667.4,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 171.567,07 − deduções R$ 31.667,40 = R$ 139.899,67",
+       "amount": 139899.67,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 139.899,67 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 27.567,75",
+       "amount": 27567.75,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -57297,8 +58853,93 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 65477.58,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 13095.52,
+      "taxableBase": 52382.06,
+      "tax": 1508.4
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 20875.93,
+      "taxableBase": 44601.65,
+      "tax": 0
+     },
+     "best": "completa",
+     "annualSavings": 1508.4,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "Sem o imposto retido na fonte, não é possível calcular restituição nem imposto a pagar.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 13.095,52",
+       "amount": 13095.52,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 65.477,58 − deduções R$ 13.095,52 = R$ 52.382,06",
+       "amount": 52382.06,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 52.382,06 × 22,5% − dedução da tabela R$ 8.105,85 = R$ 1.508,40",
+       "amount": 1508.4,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 20.875,93",
+       "amount": 20875.93,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 65.477,58 − deduções R$ 20.875,93 = R$ 44.601,65",
+       "amount": 44601.65,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 44.601,65 × 15,0% − dedução da tabela R$ 4.729,91 = R$ 0,00",
+       "amount": 0,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -57319,8 +58960,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 718560.63,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 700920.63,
+      "tax": 181848.51,
+      "balance": -139602.43
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 34400.18,
+      "taxableBase": 684160.45,
+      "tax": 177239.46,
+      "balance": -134993.38
+     },
+     "best": "completa",
+     "annualSavings": 4609.05,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 718.560,63 − deduções R$ 17.640,00 = R$ 700.920,63",
+       "amount": 700920.63,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 700.920,63 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 181.848,51",
+       "amount": 181848.51,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 34.400,18",
+       "amount": 34400.18,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 718.560,63 − deduções R$ 34.400,18 = R$ 684.160,45",
+       "amount": 684160.45,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 684.160,45 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 177.239,46",
+       "amount": 177239.46,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -57380,8 +59108,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 431691.31,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 414051.31,
+      "tax": 102959.45,
+      "balance": -95518.09
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 66792.23,
+      "taxableBase": 364899.08,
+      "tax": 89442.59,
+      "balance": -82001.23
+     },
+     "best": "completa",
+     "annualSavings": 13516.86,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 431.691,31 − deduções R$ 17.640,00 = R$ 414.051,31",
+       "amount": 414051.31,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 414.051,31 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 102.959,45",
+       "amount": 102959.45,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 66.792,23",
+       "amount": 66792.23,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 431.691,31 − deduções R$ 66.792,23 = R$ 364.899,08",
+       "amount": 364899.08,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 364.899,08 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 89.442,59",
+       "amount": 89442.59,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -57402,8 +59217,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 477454.07,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 459814.07,
+      "tax": 115544.21,
+      "balance": 3740.15
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 41001.82,
+      "taxableBase": 436452.25,
+      "tax": 109119.71,
+      "balance": 10164.65
+     },
+     "best": "completa",
+     "annualSavings": 6424.5,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 477.454,07 − deduções R$ 17.640,00 = R$ 459.814,07",
+       "amount": 459814.07,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 459.814,07 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 115.544,21",
+       "amount": 115544.21,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 41.001,82",
+       "amount": 41001.82,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 477.454,07 − deduções R$ 41.001,82 = R$ 436.452,25",
+       "amount": 436452.25,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 436.452,25 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 109.119,71",
+       "amount": 109119.71,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -58662,8 +60564,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 212556.43,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 194916.43,
+      "tax": 42697.36,
+      "balance": 65089.86
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 24253.26,
+      "taxableBase": 188303.17,
+      "tax": 40878.71,
+      "balance": 66908.51
+     },
+     "best": "completa",
+     "annualSavings": 1818.65,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 212.556,43 − deduções R$ 17.640,00 = R$ 194.916,43",
+       "amount": 194916.43,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 194.916,43 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 42.697,36",
+       "amount": 42697.36,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 24.253,26",
+       "amount": 24253.26,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 212.556,43 − deduções R$ 24.253,26 = R$ 188.303,17",
+       "amount": 188303.17,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 188.303,17 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 40.878,71",
+       "amount": 40878.71,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -58901,8 +60890,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 763050.76,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 745410.76,
+      "tax": 194083.3,
+      "balance": -145426.62
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 28269.63,
+      "taxableBase": 734781.13,
+      "tax": 191160.15,
+      "balance": -142503.47
+     },
+     "best": "completa",
+     "annualSavings": 2923.15,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 763.050,76 − deduções R$ 17.640,00 = R$ 745.410,76",
+       "amount": 745410.76,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 745.410,76 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 194.083,30",
+       "amount": 194083.3,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 28.269,63",
+       "amount": 28269.63,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 763.050,76 − deduções R$ 28.269,63 = R$ 734.781,13",
+       "amount": 734781.13,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 734.781,13 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 191.160,15",
+       "amount": 191160.15,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -59454,8 +61530,93 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 670903.6,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 653263.6,
+      "tax": 168742.83
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 39610.46,
+      "taxableBase": 631293.14,
+      "tax": 162700.95
+     },
+     "best": "completa",
+     "annualSavings": 6041.88,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "Sem o imposto retido na fonte, não é possível calcular restituição nem imposto a pagar.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 670.903,60 − deduções R$ 17.640,00 = R$ 653.263,60",
+       "amount": 653263.6,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 653.263,60 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 168.742,83",
+       "amount": 168742.83,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 39.610,46",
+       "amount": 39610.46,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 670.903,60 − deduções R$ 39.610,46 = R$ 631.293,14",
+       "amount": 631293.14,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 631.293,14 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 162.700,95",
+       "amount": 162700.95,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -59476,8 +61637,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 304953.64,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 287313.64,
+      "tax": 68106.59,
+      "balance": -36063.22
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 68487.04,
+      "taxableBase": 236466.6,
+      "tax": 54123.66,
+      "balance": -22080.29
+     },
+     "best": "completa",
+     "annualSavings": 13982.93,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 304.953,64 − deduções R$ 17.640,00 = R$ 287.313,64",
+       "amount": 287313.64,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 287.313,64 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 68.106,59",
+       "amount": 68106.59,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 68.487,04",
+       "amount": 68487.04,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 304.953,64 − deduções R$ 68.487,04 = R$ 236.466,60",
+       "amount": 236466.6,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 236.466,60 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 54.123,66",
+       "amount": 54123.66,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -60049,8 +62297,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 612770.99,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 595130.99,
+      "tax": 152756.36,
+      "balance": -30560.49
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 73049.88,
+      "taxableBase": 539721.11,
+      "tax": 137518.65,
+      "balance": -15322.78
+     },
+     "best": "completa",
+     "annualSavings": 15237.71,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 612.770,99 − deduções R$ 17.640,00 = R$ 595.130,99",
+       "amount": 595130.99,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 595.130,99 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 152.756,36",
+       "amount": 152756.36,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 73.049,88",
+       "amount": 73049.88,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 612.770,99 − deduções R$ 73.049,88 = R$ 539.721,11",
+       "amount": 539721.11,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 539.721,11 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 137.518,65",
+       "amount": 137518.65,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -60503,8 +62838,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 41552.02,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 8310.4,
+      "taxableBase": 33241.62,
+      "tax": 0,
+      "balance": 37008.71
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 17065.4,
+      "taxableBase": 24486.62,
+      "tax": 0,
+      "balance": 37008.71
+     },
+     "best": "simplificada",
+     "annualSavings": 0,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 8.310,40",
+       "amount": 8310.4,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 41.552,02 − deduções R$ 8.310,40 = R$ 33.241,62",
+       "amount": 33241.62,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 33.241,62 × 7,5% − dedução da tabela R$ 2.185,92 = R$ 0,00",
+       "amount": 0,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 17.065,40",
+       "amount": 17065.4,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 41.552,02 − deduções R$ 17.065,40 = R$ 24.486,62",
+       "amount": 24486.62,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 24.486,62 × 0,0% − dedução da tabela R$ 0,00 = R$ 0,00",
+       "amount": 0,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -60523,8 +62945,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 672479.44,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 654839.44,
+      "tax": 169176.19,
+      "balance": -150120.73
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 61762.95,
+      "taxableBase": 610716.49,
+      "tax": 157042.37,
+      "balance": -137986.91
+     },
+     "best": "completa",
+     "annualSavings": 12133.82,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 672.479,44 − deduções R$ 17.640,00 = R$ 654.839,44",
+       "amount": 654839.44,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 654.839,44 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 169.176,19",
+       "amount": 169176.19,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 61.762,95",
+       "amount": 61762.95,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 672.479,44 − deduções R$ 61.762,95 = R$ 610.716,49",
+       "amount": 610716.49,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 610.716,49 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 157.042,37",
+       "amount": 157042.37,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -60756,8 +63265,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 724015.52,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 706375.52,
+      "tax": 183348.61,
+      "balance": -101832.08
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 44197.98,
+      "taxableBase": 679817.54,
+      "tax": 176045.16,
+      "balance": -94528.63
+     },
+     "best": "completa",
+     "annualSavings": 7303.45,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 724.015,52 − deduções R$ 17.640,00 = R$ 706.375,52",
+       "amount": 706375.52,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 706.375,52 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 183.348,61",
+       "amount": 183348.61,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 44.197,98",
+       "amount": 44197.98,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 724.015,52 − deduções R$ 44.197,98 = R$ 679.817,54",
+       "amount": 679817.54,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 679.817,54 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 176.045,16",
+       "amount": 176045.16,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {
@@ -61200,8 +63796,95 @@
     }
    },
    "output": {
-    "status": "not_applicable",
-    "reason": "A tabela anual do IRPF do ano-calendário 2026 ainda não foi conferida (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)."
+    "status": "ok",
+    "value": {
+     "annualGrossIncome": 315492.16,
+     "simplified": {
+      "model": "simplificada",
+      "deductions": 17640,
+      "taxableBase": 297852.16,
+      "tax": 71004.68,
+      "balance": 78112.1
+     },
+     "complete": {
+      "model": "completa",
+      "deductions": 22160.54,
+      "taxableBase": 293331.62,
+      "tax": 69761.54,
+      "balance": 79355.24
+     },
+     "best": "completa",
+     "annualSavings": 1243.14,
+     "assumptions": [
+      "Tabela anual do IRPF do ano-calendário 2026 (publicada pela Receita Federal).",
+      "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+      "O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela.",
+      "Algumas regras ainda aguardam validação de um profissional.",
+      "Regras versão real-2026-03."
+     ],
+     "disclaimer": "Estimativa ilustrativa: valide com um contador antes de decidir.",
+     "rulesVersion": "real-2026-03",
+     "rulesUsed": [
+      {
+       "id": "irpf-tabela-anual",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      },
+      {
+       "id": "irpf-anual-deducoes",
+       "validFrom": "2026-01",
+       "source": "Receita Federal, Tributação de 2026 (dependente R$ 2.275,08; instrução R$ 3.561,50; limite anual do desconto simplificado R$ 17.640,00): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+       "requiresValidation": true,
+       "confidence": "medium"
+      }
+     ],
+     "steps": [
+      {
+       "label": "Deduções (simplificada)",
+       "formula": "deduções do modelo simplificada = R$ 17.640,00",
+       "amount": 17640,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (simplificada)",
+       "formula": "renda R$ 315.492,16 − deduções R$ 17.640,00 = R$ 297.852,16",
+       "amount": 297852.16,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (simplificada)",
+       "formula": "base R$ 297.852,16 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 71.004,68",
+       "amount": 71004.68,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Deduções (completa)",
+       "formula": "deduções do modelo completa = R$ 22.160,54",
+       "amount": 22160.54,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Base de cálculo (completa)",
+       "formula": "renda R$ 315.492,16 − deduções R$ 22.160,54 = R$ 293.331,62",
+       "amount": 293331.62,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      },
+      {
+       "label": "Imposto (completa)",
+       "formula": "base R$ 293.331,62 × 27,5% − dedução da tabela R$ 10.904,66 = R$ 69.761,54",
+       "amount": 69761.54,
+       "ruleId": "irpf-tabela-anual",
+       "source": "Receita Federal, Tributação de 2026, incidência anual a partir do exercício 2027 (ano-calendário 2026; Lei 15.270/2025): https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026"
+      }
+     ]
+    }
    }
   },
   {

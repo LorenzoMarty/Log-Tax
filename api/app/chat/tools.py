@@ -46,7 +46,7 @@ from app.engine.irpf_bens import build_lines
 from app.engine.itcmd import ItcmdInput, compute_itcmd
 from app.engine.partilha import inventory_deadlines, split_estate
 from app.engine.prestador import PrestadorInput, compare_prestador
-from app.engine.reform_impact import reform_impact
+from app.engine.reform_impact import ReformImpact, reform_impact
 from app.engine.result import EngineResult, InsufficientData, NoneFound, NotApplicable, Ok
 from app.engine.split_payment import split_payment_impact
 from app.integrations.cnpj import fetch_company
@@ -180,6 +180,22 @@ def cash_impact_widget(cents: int, float_days: int, assumptions: list[str]) -> d
         "value": f"{'+' if cents >= 0 else '-'}{_brl(abs(cents))}",
         "caption": f"Estimativa: {effect}. Premissas: {' '.join(assumptions)}",
     }
+
+
+def reform_impact_widgets(impact: ReformImpact) -> list[dict[str, Any]]:
+    """The "Minha empresa na Reforma" blocks (#108): today against each transition year as compare, total load as line."""
+    return [
+        {
+            "id": "reforma-ano-a-ano", "kind": "compare", "title": "Minha empresa na Reforma, ano a ano", "size": "lg",
+            "labels": ["Hoje", "Na Reforma"],
+            "rows": [{"label": str(y.year), "today": _brl(impact.today_cents), "potential": _brl(y.total_cents)} for y in impact.years],
+            "summary": "Carga anual de tributos sobre o consumo e demais. Premissas: " + " ".join(impact.assumptions),
+        },
+        {
+            "id": "reforma-carga-anual", "kind": "line", "title": "Carga anual na transição", "size": "md",
+            "data": [{"label": str(y.year), "value": y.total_cents / 100} for y in impact.years],
+        },
+    ]  # fmt: skip
 
 
 # ---- argument models ----
@@ -585,6 +601,25 @@ async def _get_reform_impact(ctx: ToolContext, a: ReformArgs) -> Any:
         ctx.engine.book, company, lambda: ctx.engine.diagnose(company),
         category=a.category, cbs_reference_rate=_dec(a.cbs_reference_rate), ibs_reference_rate=_dec(a.ibs_reference_rate),
     )  # fmt: skip
+    return _env(result)
+
+
+@_tool(
+    "add_reform_impact_block",
+    "Cria no painel o bloco \"Minha empresa na Reforma\": carga anual de hoje contra cada ano de 2026 a 2033, com as premissas e o aviso de validação. Precisa da categoria da operação e das alíquotas de referência de CBS e IBS (informadas pelo usuário; não invente). Sem esses dados responde o que falta.",
+    ReformArgs, kinds=("empresa",), engine=True,
+)  # fmt: skip
+async def _add_reform_impact_block(ctx: ToolContext, a: ReformArgs) -> Any:
+    company = await ctx.store.get_company()
+    result = reform_impact(
+        ctx.engine.book, company, lambda: ctx.engine.diagnose(company),
+        category=a.category, cbs_reference_rate=_dec(a.cbs_reference_rate), ibs_reference_rate=_dec(a.ibs_reference_rate),
+    )  # fmt: skip
+    if not isinstance(result, Ok):
+        return _env(result)
+    for widget in reform_impact_widgets(result.value):
+        await ctx.store.dispatch({"type": "remove", "id": widget["id"]})
+        await ctx.store.dispatch({"type": "add", "widget": widget})
     return _env(result)
 
 

@@ -37,10 +37,15 @@ const stepper = (rule: RuleVersion<unknown>) => (tax: TaxCode | undefined, label
 const round2 = (n: number) => fromCents(toCents(n));
 
 /** Annual IRPF in cents: base x rate - deduction, straight from the published annual table. Exact, rounded once. */
-function irTaxCents(baseCents: number, table: IrpfAnnualTable): number {
+function irTaxCents(baseCents: number, table: IrpfAnnualTable, incomeCents: number = baseCents): number {
   if (baseCents <= 0) return 0;
   const b = table.brackets.find((x) => x.upTo === Infinity || baseCents <= toCents(x.upTo))!;
-  return Math.max(0, mulRate(baseCents, b.rate, roundingFor("IRPF")) - toCents(b.deduction));
+  const tax = Math.max(0, mulRate(baseCents, b.rate, roundingFor("IRPF")) - toCents(b.deduction));
+  // Lei 15.270/2025 annual reducer (calendar year 2026 on): looks at the taxable income, never below zero nor above the tax.
+  const r = table.reducer;
+  if (!r) return tax;
+  const cut = incomeCents <= toCents(r.fullUpTo) ? toCents(r.fullAmount) : incomeCents <= toCents(r.phaseOutUpTo) ? Math.max(0, toCents(r.phaseOutConstant) - mulRate(incomeCents, r.phaseOutFactor)) : 0;
+  return Math.max(0, tax - cut);
 }
 
 /**
@@ -62,13 +67,13 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
     const annual = book.at<IrpfAnnualRules>("irpf-anual-deducoes", competence);
     if (!monthly || !annual) {
       const year = competence.slice(0, 4);
-      return { status: "not_applicable", reason: `A tabela anual do IRPF do ano-calendário ${year} ainda não foi conferida${Number(year) >= 2026 ? " (as regras de 2026, com isenção até R$ 5 mil por mês e redutor, ainda não estão modeladas)" : ""}.` };
+      return { status: "not_applicable", reason: `A tabela anual do IRPF do ano-calendário ${year} ainda não foi conferida.` };
     }
 
     const gross = p.annualGrossIncome;
     const scenario = (model: IrScenario["model"], deductions: number): IrScenario => {
       const taxableBase = fromCents(Math.max(0, toCents(gross) - toCents(deductions)));
-      const tax = fromCents(irTaxCents(toCents(taxableBase), monthly.data));
+      const tax = fromCents(irTaxCents(toCents(taxableBase), monthly.data, toCents(gross)));
       return { model, deductions: round2(deductions), taxableBase: round2(taxableBase), tax, balance: p.taxWithheld === undefined ? undefined : round2(p.taxWithheld - tax) };
     };
     const dependentYear = annual.data.dependentYear;
@@ -86,6 +91,7 @@ export function createRealEngine(opts: { competence?: string; rulebook?: RuleBoo
         assumptions: [
           `Tabela anual do IRPF do ano-calendário ${competence.slice(0, 4)} (publicada pela Receita Federal).`,
           p.taxWithheld === undefined ? "Sem o imposto retido na fonte, não é possível calcular restituição nem imposto a pagar." : "O imposto retido na fonte foi informado por você e não foi conferido com o informe de rendimentos.",
+          ...(monthly.data.reducer ? ["O redutor anual da Lei 15.270/2025 foi aplicado sobre o imposto da tabela."] : []),
           ...(used.some((u) => u.requiresValidation) ? ["Algumas regras ainda aguardam validação de um profissional."] : []),
           `Regras versão ${version}.`,
         ],
