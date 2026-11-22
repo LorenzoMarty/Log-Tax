@@ -7,7 +7,7 @@ import { AgentList } from "@/agents/agent-list";
 import { AlertBar } from "@/alerts/alert-bar";
 import type { AlertStatus } from "@/alerts/evaluate";
 import { DashboardView, type Focus } from "@/dashboard/dashboard-view";
-import { postLayout, type LayoutChange } from "@/dashboard/layout";
+import { layoutAnnouncement, postLayout, type LayoutChange } from "@/dashboard/layout";
 import { PageTabs, type DashboardPage } from "@/dashboard/page-tabs";
 import { VersionHistory } from "@/dashboard/version-history";
 import { applyWithTransition } from "@/dashboard/view-transition";
@@ -254,7 +254,7 @@ export function ChatPanel(props: { workspaceId: string; initialMessages: Display
     const next = await postLayout(props.workspaceId, c);
     if (!next) return setError("Não consegui salvar a mudança. Tente de novo.");
     setDashboard(next);
-    setLayoutStatus(`Painel atualizado (versão ${next.version}).`);
+    setLayoutStatus(layoutAnnouncement(next, c));
   }
 
   async function rate(index: number, rating: 1 | -1, why?: string) {

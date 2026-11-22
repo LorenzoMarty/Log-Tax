@@ -9,7 +9,7 @@ describe("inviteInput", () => {
   it("accepts only the shareable roles", () => {
     expect(inviteInput.safeParse({ email: "a@b.com", role: "commenter" }).success).toBe(true);
     expect(inviteInput.safeParse({ email: "a@b.com", role: "owner" }).success).toBe(false);
-    expect(inviteInput.safeParse({ email: "a@b.com", role: "admin" }).success).toBe(false);
+    expect(inviteInput.safeParse({ email: "a@b.com", role: "admin" }).success).toBe(true);
   });
 
   it("rejects malformed emails", () => {
@@ -33,6 +33,6 @@ describe("commentInput", () => {
 
 describe("ROLE_LABEL", () => {
   it("names every role in Portuguese", () => {
-    expect(ROLE_LABEL).toEqual({ owner: "Dono", editor: "Edição", commenter: "Comentário", reader: "Leitura" });
+    expect(ROLE_LABEL).toEqual({ owner: "Dono", admin: "Administração", editor: "Edição", commenter: "Comentário", reader: "Leitura" });
   });
 });

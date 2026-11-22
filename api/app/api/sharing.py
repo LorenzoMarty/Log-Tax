@@ -51,14 +51,24 @@ class ScopeIn(_In):
 
 class InviteIn(_In):
     email: Annotated[str, StringConstraints(strip_whitespace=True, to_lower=True, max_length=254), AfterValidator(_email)]
-    role: Literal["editor", "commenter", "reader"]
+    role: Literal["admin", "editor", "commenter", "reader"]
     scope: ScopeIn | None = None
 
     @model_validator(mode="after")
     def _scope_needs_read_only_role(self) -> "InviteIn":
-        if self.scope and self.role == "editor":
-            raise ValueError("convite restrito não pode ter papel de edição")
+        if self.scope and self.role in ("admin", "editor"):
+            raise ValueError("convite restrito não pode ter papel de administração nem de edição")
         return self
+
+
+class RoleIn(_In):
+    """Only the owner changes roles (the database re-checks); 'owner' is never settable here, see the transfer route."""
+
+    role: Literal["admin", "editor", "commenter", "reader"]
+
+
+class TransferIn(_In):
+    new_owner_id: uuid.UUID
 
 
 class CommentIn(_In):
@@ -143,6 +153,28 @@ async def remove_member(workspace_id: uuid.UUID, user_id: uuid.UUID, db: UserDb 
     gone = await db.delete("workspace_members", workspace_id=f"eq.{workspace_id}", user_id=f"eq.{user_id}")
     if gone:
         await audit(db, str(workspace_id), "member_removed", gone[0].get("email") or str(user_id))
+    return Response(status_code=204)
+
+
+@router.put("/v1/workspaces/{workspace_id}/members/{user_id}/role", status_code=204, response_model=None)
+async def set_member_role(workspace_id: uuid.UUID, user_id: uuid.UUID, body: RoleIn, db: UserDb = Depends(user_db)) -> Response:
+    """Promotes to or demotes from admin (or any role). The database lets only the owner, and never the owner row."""
+    ws = str(workspace_id)
+    try:
+        await db.rpc("set_member_role", {"ws": ws, "member": str(user_id), "new_role": body.role})
+    except DbError:
+        return _forbidden()
+    await audit(db, ws, "member_role_changed", f"{user_id} ({body.role})")
+    return Response(status_code=204)
+
+
+@router.post("/v1/workspaces/{workspace_id}/transfer", status_code=204, response_model=None)
+async def transfer_ownership(workspace_id: uuid.UUID, body: TransferIn, db: UserDb = Depends(user_db)) -> Response:
+    """Hands the space to another member; the former owner stays as admin. The database checks and writes the audit row."""
+    try:
+        await db.rpc("transfer_ownership", {"ws": str(workspace_id), "new_owner": str(body.new_owner_id)})
+    except DbError:
+        return _forbidden()
     return Response(status_code=204)
 
 

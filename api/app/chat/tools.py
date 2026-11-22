@@ -42,7 +42,7 @@ from app.documents.search import cited_for_model
 from app.engine.asset_taxes import carrying_tax, patrimony_summary, sale_tax
 from app.engine.calendar import upcoming_deadlines
 from app.engine.company_schema import CompanyFields, apply_fields, inconsistencies, merge_series
-from app.engine.history import tax_history
+from app.engine.history import TaxHistory, tax_history
 from app.engine.irpf_bens import build_lines
 from app.engine.itcmd import ItcmdInput, compute_itcmd
 from app.engine.partilha import inventory_deadlines, split_estate
@@ -198,6 +198,30 @@ def reform_impact_widgets(impact: ReformImpact) -> list[dict[str, Any]]:
             "data": [{"label": str(y.year), "value": y.total_cents / 100} for y in impact.years],
         },
     ]  # fmt: skip
+
+
+def _cents(reais: Decimal) -> int:
+    return round(reais * 100)
+
+
+def tax_history_widgets(history: TaxHistory) -> list[dict[str, Any]]:
+    """The tax history blocks (#100): a line with the recorded months only (a gap is never a value) and the comparison."""
+    data = [{"label": p.month, "value": float(p.monthly_total)} for p in history.points if p.monthly_total is not None]
+    if not data:
+        return []
+    widgets: list[dict[str, Any]] = [
+        {"id": "historico-mensal", "kind": "line", "title": "Imposto por competência (meses com dados gravados)", "size": "lg", "data": data}
+    ]  # fmt: skip
+    c = history.comparison
+    if c:
+        pct = "" if c.delta_pct is None else f" ({float(c.delta_pct) * 100:.1f}%)".replace(".", ",")
+        widgets.append({
+            "id": "historico-ano-a-ano", "kind": "compare", "title": "Imposto do mês, comparação entre competências", "size": "md",
+            "labels": [c.from_month, c.to_month],
+            "rows": [{"label": "Imposto do mês", "today": _brl(_cents(c.from_total)), "potential": _brl(_cents(c.to_total))}],
+            "summary": f"Variação de {_brl(_cents(c.delta))}{pct}. Cada mês usa a regra vigente na competência. Estimativa, não substitui contador.",
+        })  # fmt: skip
+    return widgets
 
 
 # ---- argument models ----
@@ -581,6 +605,22 @@ async def _get_deadlines(ctx: ToolContext, a: DeadlinesArgs) -> Any:
 )  # fmt: skip
 async def _get_tax_history(ctx: ToolContext, a: HistoryArgs) -> Any:
     return wire(tax_history(await ctx.store.get_company(), a.to, a.months or 12, a.compare_with))
+
+
+@_tool(
+    "add_tax_history_block",
+    "Cria no painel o gráfico de imposto por competência (até 24 meses) e, com compareWith, a comparação entre dois meses. Só desenha meses com dados gravados; sem histórico não cria nada e devolve o que falta, nunca estima.",
+    HistoryArgs, kinds=("empresa",), engine=True,
+)  # fmt: skip
+async def _add_tax_history_block(ctx: ToolContext, a: HistoryArgs) -> Any:
+    history = tax_history(await ctx.store.get_company(), a.to, a.months or 12, a.compare_with)
+    widgets = tax_history_widgets(history)
+    if widgets:
+        for wid in ("historico-mensal", "historico-ano-a-ano"):
+            await ctx.store.dispatch({"type": "remove", "id": wid})
+    for widget in widgets:
+        await ctx.store.dispatch({"type": "add", "widget": widget})
+    return wire(history)
 
 
 def _dec(value: float | None) -> Decimal | None:

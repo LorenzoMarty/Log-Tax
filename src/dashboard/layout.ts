@@ -19,6 +19,14 @@ export function moveTarget(widgets: Pick<Widget, "id">[], id: string, delta: -1 
   return from < 0 || to < 0 || to >= widgets.length ? undefined : to;
 }
 
+/** What a screen reader hears after a change (the dashboard is the saved version). Example: "Imposto: posição 2 de 5." */
+export function layoutAnnouncement(next: Pick<Dashboard, "widgets">, change: LayoutChange): string {
+  const index = next.widgets.findIndex((w) => w.id === change.id);
+  const widget = next.widgets[index];
+  if (!widget) return "Painel atualizado.";
+  return change.size ? `${widget.title}: tamanho ${SIZE_LABEL[widget.size]}.` : `${widget.title}: posição ${index + 1} de ${next.widgets.length}.`;
+}
+
 /** Saves the change on the server as a NEW dashboard version (so "Desfazer" restores it) and returns that version. */
 export async function postLayout(workspaceId: string, change: LayoutChange): Promise<Dashboard | undefined> {
   const res = await fetch(`/api/v1/workspaces/${workspaceId}/dashboard/layout`, {

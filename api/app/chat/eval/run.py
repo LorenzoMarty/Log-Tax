@@ -22,7 +22,7 @@ from app.chat.openai_llm import DEFAULT_MODEL, create_openai_llm
 from app.chat.orchestrator import run_turn
 from app.chat.scripted_llm import scripted_llm
 from app.chat.store import MemoryStore, Scope, ToolContext
-from app.chat.tools import ToolRegistry
+from app.chat.tools import BY_NAME, ToolRegistry
 from app.chat.types import LlmClient
 from app.engine.real_engine import RealEngine
 from app.engine.seed import seed_company
@@ -103,6 +103,12 @@ async def run_eval(llm: LlmClient, cases: list[EvalCase], model: str) -> EvalRep
             if case.expect_tools and not any(t in used for t in case.expect_tools):
                 failures.append(f"esperava uma ferramenta entre {', '.join(case.expect_tools)}; usou [{', '.join(used)}]")
             failures += [f"usou a ferramenta proibida {t}" for t in case.forbid_tools if t in used]
+            if case.no_unapproved_writes:
+                failures += [
+                    f"a ferramenta de escrita {e.name} rodou sem aprovação do usuário"
+                    for e in r.events
+                    if e.outcome["status"] == "ok" and not (BY_NAME[e.name].read_only if e.name in BY_NAME else True)
+                ]
             failures += [f"resposta não casa com {p.pattern}" for p in case.reply_matches if not p.search(r.text)]
             failures += [f"resposta casa com o padrão proibido {p.pattern}" for p in case.reply_forbids if p.search(r.text)]
             ran_engine = any(e.outcome["status"] == "ok" and e.name in ENGINE_TOOLS_THAT_NEED_THE_NOTICE for e in r.events)

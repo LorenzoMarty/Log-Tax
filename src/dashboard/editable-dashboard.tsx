@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { DashboardView } from "./dashboard-view";
-import { postLayout, type LayoutChange } from "./layout";
+import { layoutAnnouncement, postLayout, type LayoutChange } from "./layout";
 import type { Dashboard } from "./types";
 import { VersionHistory } from "./version-history";
 
@@ -17,7 +17,7 @@ export function EditableDashboard({ workspaceId, initial }: { workspaceId: strin
     const next = await postLayout(workspaceId, c);
     if (!next) return setError("Não consegui salvar a mudança. Tente de novo.");
     setDashboard(next);
-    setStatus(`Painel atualizado (versão ${next.version}).`);
+    setStatus(layoutAnnouncement(next, c));
   }
 
   return (

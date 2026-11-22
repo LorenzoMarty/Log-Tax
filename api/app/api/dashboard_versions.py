@@ -31,8 +31,8 @@ async def versions(workspace_id: uuid.UUID, db: UserDb = Depends(user_db)) -> Re
 @router.post("/v1/workspaces/{workspace_id}/dashboard/versions/{version}/restore", response_model=None)
 async def restore(workspace_id: uuid.UUID, version: int, db: UserDb = Depends(user_db)) -> Response:
     ws = str(workspace_id)
-    if await db.rpc("my_role", {"ws": ws}) not in ("owner", "editor"):
-        return error_response(403, "forbidden", "Só quem é dono ou editor do espaço restaura versões do painel.")
+    if await db.rpc("my_role", {"ws": ws}) not in ("owner", "admin", "editor"):
+        return error_response(403, "forbidden", "Só quem é dono, administrador ou editor do espaço restaura versões do painel.")
     rows = await db.select("dashboards", select="id,data", workspace_id=f"eq.{ws}", order="created_at", limit="1")
     old = await get_version(db, ws, version)
     if not rows or not rows[0].get("data") or old is None:
@@ -60,8 +60,8 @@ class LayoutChange(BaseModel):
 async def change_layout(workspace_id: uuid.UUID, body: LayoutChange, db: UserDb = Depends(user_db)) -> Response:
     """Moves/resizes a block as a new dashboard version, so the manual edit can be undone like a chat one."""
     ws = str(workspace_id)
-    if await db.rpc("my_role", {"ws": ws}) not in ("owner", "editor"):
-        return error_response(403, "forbidden", "Só quem é dono ou editor do espaço muda o painel.")
+    if await db.rpc("my_role", {"ws": ws}) not in ("owner", "admin", "editor"):
+        return error_response(403, "forbidden", "Só quem é dono, administrador ou editor do espaço muda o painel.")
     rows = await db.select("dashboards", select="id,data", workspace_id=f"eq.{ws}", order="created_at", limit="1")
     if not rows or not rows[0].get("data"):
         return error_response(404, *_NOT_FOUND)

@@ -266,3 +266,44 @@ def test_a_storage_failure_keeps_the_records_so_nothing_is_orphaned(
     assert r.status_code == 500 and r.json()["error"]["code"] == "delete_failed" and len(db.tables["documents"]) == 1
     empty = FakeDb(USER)
     assert empty.tables == {}
+
+
+# ---- admin role and ownership transfer (#156) ----
+def test_an_admin_invite_is_accepted_but_never_scoped(signed_in: TestClient, db: FakeDb) -> None:
+    ws = workspace(db)
+    ok = signed_in.post(f"/v1/workspaces/{ws}/invites", json={"email": "s@example.com", "role": "admin"})
+    assert ok.status_code == 201 and db.tables["workspace_invites"][0]["role"] == "admin"
+    scoped = signed_in.post(
+        f"/v1/workspaces/{ws}/invites", json={"email": "t@example.com", "role": "admin", "scope": {"kinds": ["dashboard"]}}
+    )
+    assert scoped.status_code == 422
+
+
+def test_changing_a_role_goes_through_the_database_and_is_audited(signed_in: TestClient, db: FakeDb) -> None:
+    ws = workspace(db)
+    db.rpcs["set_member_role"] = lambda a: None
+    r = signed_in.put(f"/v1/workspaces/{ws}/members/{OTHER_USER}/role", json={"role": "admin"})
+    assert r.status_code == 204
+    assert ("set_member_role", {"ws": ws, "member": OTHER_USER, "new_role": "admin"}) in db.rpc_calls
+    assert audited(db) == [("member_role_changed", f"{OTHER_USER} (admin)")]
+    assert signed_in.put(f"/v1/workspaces/{ws}/members/{OTHER_USER}/role", json={"role": "owner"}).status_code == 422
+
+    def refuse(a: dict[str, Any]) -> None:
+        raise DbError(403, "only the owner changes roles")
+
+    db.rpcs["set_member_role"] = refuse
+    assert signed_in.put(f"/v1/workspaces/{ws}/members/{OTHER_USER}/role", json={"role": "reader"}).status_code == 403
+
+
+def test_transferring_ownership_is_refused_for_non_owners(signed_in: TestClient, db: FakeDb) -> None:
+    ws = workspace(db)
+    db.rpcs["transfer_ownership"] = lambda a: None
+    r = signed_in.post(f"/v1/workspaces/{ws}/transfer", json={"newOwnerId": OTHER_USER})
+    assert r.status_code == 204
+    assert ("transfer_ownership", {"ws": ws, "new_owner": OTHER_USER}) in db.rpc_calls
+
+    def refuse(a: dict[str, Any]) -> None:
+        raise DbError(403, "only the owner transfers ownership")
+
+    db.rpcs["transfer_ownership"] = refuse
+    assert signed_in.post(f"/v1/workspaces/{ws}/transfer", json={"newOwnerId": OTHER_USER}).status_code == 403

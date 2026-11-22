@@ -24,9 +24,10 @@ from app.chat.tools import (
 )
 from app.chat.untrusted import wrap_untrusted
 from app.core.config import get_settings
+from app.engine.history import shift_month
 from app.engine.partilha import split_estate
 from app.engine.real_engine import RealEngine
-from app.engine.types import CompanyProfile
+from app.engine.types import CompanyProfile, MonthlyEntry
 
 WS = "11111111-1111-4111-8111-111111111111"
 OTHER = "22222222-2222-4222-8222-222222222222"
@@ -86,7 +87,7 @@ async def call(reg: ToolRegistry, name: str, args: Any = None, untrusted: bool =
 
 # ---- catalogue and schemas ----
 def test_every_tool_has_a_clean_json_schema_and_the_flags_are_consistent() -> None:
-    assert len(TOOL_NAMES) == len(set(TOOL_NAMES)) == 69
+    assert len(TOOL_NAMES) == len(set(TOOL_NAMES)) == 70
     for t in TOOLS:
         schema = tool_parameters(t)
         text = json.dumps(schema)
@@ -108,7 +109,7 @@ def test_specs_follow_the_workspace_kind_and_the_agent_allow_list() -> None:
     assert not {"get_tax_diagnosis", "run_simulation", "create_alert"} & set(names("pessoal"))
     assert "get_tax_diagnosis" in names("empresa") and not {"get_ir_diagnosis", "save_person_data"} & set(names("empresa"))
     assert names("empresa", ("get_tax_diagnosis", "get_ir_diagnosis")) == ["get_tax_diagnosis"]
-    assert len(names(None)) == 69
+    assert len(names(None)) == 70
 
 
 async def test_unknown_wrong_kind_and_not_allowed_tools_are_refused_at_runtime() -> None:
@@ -454,6 +455,31 @@ async def test_reform_impact_block_compares_today_with_each_year_and_replaces_it
     assert len([w for w in store.history.present["widgets"] if w["id"].startswith("reforma-")]) == 2
     sparse = await call(reg, "add_reform_impact_block", {})
     assert sparse["data"]["status"] == "insufficient_data" and "reforma-ano-a-ano" in widgets
+
+
+async def test_tax_history_block_draws_only_recorded_months_and_replaces_itself() -> None:
+    def rec(m: str, v: int) -> MonthlyEntry:
+        return MonthlyEntry(m, {"comercio": Decimal(v)}, payroll=Decimal(20_000))
+
+    series = [rec(shift_month("2026-03", i - 23), 100_000 if i < 12 else 150_000) for i in range(24)]
+    reg, store = make()
+    store.company = CompanyProfile(id="c", name="X", regime="simples", activity="comercio", anexo="I", uf="SP", series=series)
+    args = {"to": "2026-03", "months": 12, "compareWith": "2025-03"}
+    for _ in range(2):
+        assert (await call(reg, "add_tax_history_block", args))["status"] == "ok"
+    widgets = {w["id"]: w for w in store.history.present["widgets"] if w["id"].startswith("historico-")}
+    assert list(widgets) == ["historico-mensal", "historico-ano-a-ano"]
+    line = widgets["historico-mensal"]
+    assert validate_widget(line)["kind"] == "line" and len(line["data"]) == 12 and line["data"][-1]["label"] == "2026-03"
+    assert widgets["historico-ano-a-ano"]["labels"] == ["2025-03", "2026-03"]
+    assert validate_widget(widgets["historico-ano-a-ano"])["kind"] == "compare"
+
+
+async def test_tax_history_block_adds_nothing_without_recorded_months() -> None:
+    reg, store = make()
+    out = await call(reg, "add_tax_history_block", {"to": "2026-03", "compareWith": "2025-03"})
+    assert out["status"] == "ok" and any("sem dados gravados" in g for g in out["data"]["gaps"])
+    assert not [w for w in store.history.present["widgets"] if w["id"].startswith("historico-")]
 
 
 def test_dashboard_reducer_is_pure_and_keeps_the_rules() -> None:

@@ -88,13 +88,15 @@ export default async function WorkspaceChatPage({
   const { data: notices } = isOwner
     ? await supabase.from("alert_events").select("id, text, current_text, created_at, read_at").eq("workspace_id", id).order("created_at", { ascending: false }).limit(50)
     : { data: [] };
-  const [{ data: members }, { data: invites }, { data: activity }] = isOwner
+  const [{ data: members }, { data: invites }, { data: activity }, { data: scopes }] = isOwner
     ? await Promise.all([
         supabase.from("workspace_members").select("user_id, email, role").eq("workspace_id", id).order("role", { ascending: false }),
-        supabase.from("workspace_invites").select("id, email, role").eq("workspace_id", id).order("created_at"),
+        supabase.from("workspace_invites").select("id, email, role, scope").eq("workspace_id", id).order("created_at"),
         supabase.from("audit_log").select("id, actor_email, action, target, created_at").eq("workspace_id", id).order("created_at", { ascending: false }).limit(30),
+        supabase.from("member_scopes").select("user_id, kinds, dashboard_ids, document_ids").eq("workspace_id", id),
       ])
-    : [{ data: [] }, { data: [] }, { data: [] }];
+    : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }];
+  const scopeOf = new Map((scopes ?? []).map((s) => [s.user_id, { kinds: s.kinds, ...(s.dashboard_ids ? { dashboardIds: s.dashboard_ids } : {}), ...(s.document_ids ? { documentIds: s.document_ids } : {}) }]));
 
   const alerts = isPersonal(state.kind) ? [] : alertStatuses(mockEngine, state.company, state.alerts);
   const notice = msg ? MESSAGES[msg] : undefined;
@@ -161,7 +163,7 @@ export default async function WorkspaceChatPage({
             initialPrompt={pergunta?.slice(0, 1000)}
           />
           {!isPersonal(state.kind) && <AlertManager workspaceId={id} alerts={state.alerts} />}
-          <SharePanel workspaceId={id} defaultOpen={Boolean(notice)} members={(members ?? []) as MemberRow[]} invites={(invites ?? []) as InviteRow[]} />
+          <SharePanel workspaceId={id} defaultOpen={Boolean(notice)} pages={pages.map((p) => ({ id: p.id, name: p.name }))} members={((members ?? []) as MemberRow[]).map((m) => ({ ...m, scope: (scopeOf.get(m.user_id) as MemberRow["scope"]) ?? null }))} invites={(invites ?? []) as InviteRow[]} />
           {assetsPanel}
           {inventoryPanel}
           {documentsPanel}
@@ -181,7 +183,7 @@ export default async function WorkspaceChatPage({
             </form>
           </div>
           <AlertBar alerts={alerts} />
-          {state.role === "editor" ? (
+          {state.role === "editor" || state.role === "admin" ? (
             <EditableDashboard workspaceId={id} initial={state.dashboard} />
           ) : (
             <>
