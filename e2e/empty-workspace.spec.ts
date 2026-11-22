@@ -7,6 +7,7 @@ test("a new user sees no number before giving any data", async ({ page }) => {
   await createAndOpen(page, /Minha Empresa/);
   await expect(page.locator("body")).not.toContainText("Comercial Exemplo");
   await expect(page.locator("body")).not.toContainText(/42\.800|350\.000/);
+  await expect(page.getByTestId("empty-hint")).toContainText(/faturamento mensal/i);
   await page.goto(page.url() + "/relatorio");
   await expect(page.locator("body")).not.toContainText(/42\.800|350\.000/);
 });

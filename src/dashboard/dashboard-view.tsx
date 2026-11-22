@@ -26,6 +26,12 @@ export function applyFocus(widgets: Widget[], focus: Focus): Widget[] {
   return [...chosen, ...widgets.filter((w) => !ids.has(w.id))];
 }
 
+/** What the assistant needs before it can build the first numbers; shown while the panel is empty (#109). Never a figure. */
+const MISSING: Record<"empresa" | "pessoal", string[]> = {
+  empresa: ["regime tributário", "atividade (comércio ou serviço)", "faturamento mensal", "estado (UF)"],
+  pessoal: ["renda bruta anual", "número de dependentes", "despesas dedutíveis (saúde, educação)", "imposto já retido na fonte"],
+};
+
 /** Painel do espaço: um Panel do design system Log; `theme` troca os tokens só aqui dentro. */
 /** Placeholder card while the AI is working on the dashboard; hidden from assistive tech (the chat says "Pensando…"). */
 function WidgetSkeleton() {
@@ -38,7 +44,7 @@ function WidgetSkeleton() {
 }
 
 /** `onAsk` adds a "Perguntar sobre isto" button to every block (and "Perguntar" to each line of the blocks that list lines): the chat uses the chosen block, and line, as context. */
-export function DashboardView({ dashboard, loading = false, onAsk, onLayout: layoutEdits, focus, onExitFocus }: { dashboard: Dashboard; loading?: boolean; onAsk?: (widget: Widget, row?: string) => void; onLayout?: (change: LayoutChange) => void; focus?: Focus | null; onExitFocus?: () => void }) {
+export function DashboardView({ dashboard, loading = false, onAsk, onLayout: layoutEdits, focus, onExitFocus, baseKind = "empresa" }: { baseKind?: "empresa" | "pessoal"; dashboard: Dashboard; loading?: boolean; onAsk?: (widget: Widget, row?: string) => void; onLayout?: (change: LayoutChange) => void; focus?: Focus | null; onExitFocus?: () => void }) {
   const widgets = focus ? applyFocus(dashboard.widgets, focus) : dashboard.widgets;
   const onLayout = focus ? undefined : layoutEdits; // the temporary view is never edited: positions would not match the saved panel
   const compact = dashboard.density === "compact";
@@ -64,7 +70,14 @@ export function DashboardView({ dashboard, loading = false, onAsk, onLayout: lay
         </div>
       )}
       {widgets.length === 0 && !loading ? (
-        <p className="text-sm text-ink-muted">Nenhum bloco ainda. Peça à IA para adicionar algo.</p>
+        <div data-testid="empty-hint" className="text-sm text-ink-muted">
+          <p>Nenhum bloco ainda: o painel só mostra o que você informar. Conte à IA, na conversa:</p>
+          <ul className="mt-2 list-disc pl-5">
+            {MISSING[baseKind].map((m) => (
+              <li key={m}>{m}</li>
+            ))}
+          </ul>
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4" style={{ gap }}>
           {widgets.map((w, index) => (
