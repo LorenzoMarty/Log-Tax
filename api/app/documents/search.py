@@ -11,8 +11,10 @@ from dataclasses import dataclass
 from typing import Any, Protocol
 
 from app.chat.untrusted import wrap_untrusted
+from app.core.config import Settings
 from app.db.client import UserDb
 from app.documents.classify import DOC_LABEL
+from app.documents.storage import open_stored
 
 MAX_SEARCH_CHARS = 200_000
 SNIPPET_CHARS = 240
@@ -58,6 +60,8 @@ class DocumentSearch(Protocol):
     async def names(self) -> list[str]: ...
     async def arrived(self) -> list[tuple[str, str]]: ...
     async def get(self, document_id: str) -> dict[str, Any] | None: ...
+    async def source(self, document_id: str) -> dict[str, Any] | None: ...
+    async def mark_applied(self, document_id: str, applied: dict[str, Any]) -> bool: ...
     async def missing(self, document_ids: Sequence[str]) -> list[str]: ...
 
 
@@ -68,8 +72,11 @@ class DbDocumentSearch:
     (empty = none). Every read goes through `_scope`, so an id the model makes up or copies is refused here, not in the prompt.
     """
 
-    def __init__(self, db: UserDb, workspace_id: str, allowed_ids: Sequence[str] | None = None) -> None:
+    def __init__(
+        self, db: UserDb, workspace_id: str, allowed_ids: Sequence[str] | None = None, settings: Settings | None = None
+    ) -> None:
         self._db = db
+        self._settings = settings
         self._workspace_id = workspace_id
         self._allowed = None if allowed_ids is None else tuple(allowed_ids)
 
@@ -149,6 +156,42 @@ class DbDocumentSearch:
         if row.get("search_text"):
             out["text"] = wrap_untrusted(f"documento {name}", snippet(str(row["search_text"]), ""))
         return out
+
+    async def source(self, document_id: str) -> dict[str, Any] | None:
+        """The stored extraction as code may use it (identifiers opened, never shown to the model)."""
+        if self._allowed is not None and document_id not in self._allowed:
+            return None
+        rows = await self._db.select(
+            "documents",
+            select="id,doc_type,extracted",
+            id=f"eq.{document_id}",
+            workspace_id=f"eq.{self._workspace_id}",
+            limit="1",
+        )
+        if not rows:
+            return None
+        ex = (open_stored(rows[0].get("extracted"), self._settings) if self._settings else rows[0].get("extracted")) or {}
+        return {
+            "type": str(rows[0].get("doc_type")),
+            "fields": dict(ex.get("fields") or {}),
+            "toConfirm": list(ex.get("toConfirm") or []),
+            "applied": ex.get("applied"),
+        }
+
+    async def mark_applied(self, document_id: str, applied: dict[str, Any]) -> bool:
+        """Records on the document where its data went (the origin of the number). False when the database refused the write."""
+        if self._allowed is not None and document_id not in self._allowed:
+            return False
+        rows = await self._db.select(
+            "documents", select="extracted", id=f"eq.{document_id}", workspace_id=f"eq.{self._workspace_id}", limit="1"
+        )
+        if not rows:
+            return False
+        extracted = {**(rows[0].get("extracted") or {}), "applied": applied}
+        done = await self._db.update(
+            "documents", {"extracted": extracted}, id=f"eq.{document_id}", workspace_id=f"eq.{self._workspace_id}"
+        )
+        return bool(done)
 
 
 def cited_for_model(hits: list[Hit]) -> list[dict[str, str]]:

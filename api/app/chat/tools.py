@@ -34,6 +34,7 @@ from app.chat.state import profile_to_json
 from app.chat.store import Scope, ToolContext
 from app.chat.types import ToolOutcome, ToolSpec
 from app.core.br_ids import cnpj_valid, normalize_cnpj
+from app.documents.apply import NotUsableError, Proposal, propose
 from app.documents.classify import DOC_LABEL
 from app.documents.expected import checklist, checklist_widget
 from app.documents.inventory import inventory_checklist
@@ -49,6 +50,7 @@ from app.engine.prestador import PrestadorInput, compare_prestador
 from app.engine.reform_impact import ReformImpact, reform_impact
 from app.engine.result import EngineResult, InsufficientData, NoneFound, NotApplicable, Ok
 from app.engine.split_payment import split_payment_impact
+from app.engine.types import MonthlyEntry
 from app.integrations.cnpj import fetch_company
 
 MAX_WORKSPACES = 10
@@ -823,6 +825,83 @@ async def _get_document(ctx: ToolContext, a: IdArgs) -> Any:
     except ValueError:
         raise ToolError("Id de documento inválido.") from None
     return await ctx.documents.get(doc_id) or {"message": "Não encontrei esse documento neste espaço."}
+
+
+def _proposal_wire(p: Proposal) -> dict[str, Any]:
+    return {"month": p.month, "kind": p.kind, "amount": str(p.amount), "label": p.label, "toConfirm": p.to_confirm}
+
+
+async def _document_proposal(ctx: ToolContext, doc_id: str) -> Proposal:
+    """What the document would add to the company, from the stored fields; `ToolError` when it cannot be used (#160)."""
+    if ctx.documents is None:
+        raise ToolError("A leitura de documentos não está disponível agora.")
+    source = await ctx.documents.source(doc_id)
+    if source is None:
+        raise ToolError("Não encontrei esse documento neste espaço.")
+    if source["applied"]:
+        raise ToolError("Os dados desse documento já foram usados no perfil. Não vou contar o mesmo valor duas vezes.")
+    try:
+        company = await ctx.store.get_company()
+        return propose(source["type"], source["fields"], source["toConfirm"], company.cnpj)
+    except NotUsableError as e:
+        raise ToolError(str(e)) from None
+
+
+def _document_id(raw: str) -> str:
+    try:
+        return str(uuid.UUID(raw))
+    except ValueError:
+        raise ToolError("Id de documento inválido.") from None
+
+
+@_tool(
+    "propose_document_data",
+    "Mostra quanto de faturamento um documento enviado (NF-e ou NFS-e emitida pela empresa) acrescentaria a um mês do perfil, com mês, tipo e valor. NÃO grava nada: "
+    'apresente ao usuário ("encontrei R$ X de faturamento em março, posso usar?") e só chame use_document_data, com os mesmos valores, depois que ele concordar.',
+    IdArgs,
+    read_only=True,
+    kinds=("empresa",),
+)  # fmt: skip
+async def _propose_document_data(ctx: ToolContext, a: IdArgs) -> Any:
+    return {"proposal": _proposal_wire(await _document_proposal(ctx, _document_id(a.id))), "needsConfirmation": True}
+
+
+class UseDocumentArgs(IdArgs):
+    month: _MONTH
+    kind: Literal["comercio", "servico"]
+    amount: Annotated[Decimal, Field(gt=0, le=Decimal("1e12"), decimal_places=2)]
+
+
+@_tool(
+    "use_document_data",
+    "Acrescenta ao perfil da empresa o faturamento de um documento, com os valores EXATOS de propose_document_data (mês, tipo e valor). O usuário confirma fora do chat; "
+    "o valor é somado ao que já havia no mês e a origem fica registrada no documento. Só use depois de propose_document_data e do pedido do usuário.",
+    UseDocumentArgs,
+    destructive=True,  # changes a number of the diagnosis: always goes through the user's out-of-band confirmation (#160)
+    kinds=("empresa",),
+)  # fmt: skip
+async def _use_document_data(ctx: ToolContext, a: UseDocumentArgs) -> Any:
+    doc_id = _document_id(a.id)
+    proposal = await _document_proposal(ctx, doc_id)
+    if (a.month, a.kind, a.amount) != (proposal.month, proposal.kind, proposal.amount):
+        raise ToolError("Os valores não batem com o que o documento traz. Peça a proposta de novo e confirme com o usuário.")
+    company = await ctx.store.get_company()
+    current = next((e for e in company.series or [] if e.month == proposal.month), None)
+    base = (current.revenue.get(proposal.kind) if current else None) or Decimal(0)
+    entry = MonthlyEntry(proposal.month, {proposal.kind: base + proposal.amount})
+    merged = replace(company, series=merge_series(company.series, [entry]))
+    if problems := inconsistencies(merged):
+        raise ToolError(f"Não usei: {' '.join(problems)}")
+    applied = {
+        "month": proposal.month,
+        "kind": proposal.kind,
+        "amount": str(proposal.amount),
+        "at": datetime.now(UTC).isoformat(),
+    }
+    if ctx.documents is None or not await ctx.documents.mark_applied(doc_id, applied):
+        raise ToolError("Não consegui registrar a origem do dado no documento (só o dono do espaço pode). Nada foi alterado.")
+    saved = await ctx.store.save_company(merged)
+    return {"applied": applied, "documentId": doc_id, "company": wire(saved)}
 
 
 @_tool(
