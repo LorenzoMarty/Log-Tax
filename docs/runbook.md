@@ -58,11 +58,14 @@ Antes do primeiro dado real, o backup precisa estar ativo e a restauração test
 
 ### Gravidade
 
-| Nível | Exemplo | Reação |
-| --- | --- | --- |
-| 1 | Vazamento ou acesso indevido a dados, site fora do ar | Agora, quem estiver disponível |
-| 2 | Um recurso importante quebrado (chat, upload) | Mesmo dia |
-| 3 | Falha parcial ou visual | Próximo ciclo |
+| Nível | Exemplo | Reação | Prazo de resposta / comunicação |
+| --- | --- | --- | --- |
+| 1 | Vazamento ou acesso indevido a dados, site fora do ar | Agora, quem estiver disponível | `[definir]` |
+| 2 | Um recurso importante quebrado (chat, upload) | Mesmo dia | `[definir]` |
+| 3 | Falha parcial ou visual | Próximo ciclo | `[definir]` |
+
+Os prazos e o canal de aviso (quem chama quem, e como) ainda não foram combinados: preencher junto com os contatos abaixo.
+Não existe hoje ferramenta de alerta ou plantão configurada além do `uptime.yml` (ver seção 1) `[definir]`.
 
 ### Primeiros 30 minutos
 
@@ -84,11 +87,44 @@ Antes do primeiro dado real, o backup precisa estar ativo e a restauração test
 
 ### Contatos (preencher antes do go-live)
 
-- Responsável técnico: _a definir_
-- Encarregado de dados (DPO): _a definir_
-- Jurídico: _a definir_
+- Responsável técnico: `[definir]` (nome, telefone/canal)
+- Encarregado de dados (DPO): `[definir]`
+- Jurídico: `[definir]`
+- Suporte Vercel / Supabase `[após #49]`: `[definir]` (plano e canal de suporte contratados)
 
-## 6. Rotinas
+### Quando um serviço de que dependemos cai
+
+| Serviço | Sintoma | O que fazer |
+| --- | --- | --- |
+| **OpenAI** | O chat falha. O cliente já repete a chamada até 2 vezes (timeout, conexão, 408/409/429/5xx) antes de desistir; sem `OPENAI_API_KEY` o chat responde 503 | Confirme na página de status do provedor `[definir URL]`. O resto do app (espaços, documentos, relatório, motor de cálculo) não depende da OpenAI e segue no ar. Não troque de modelo às pressas: `OPENAI_MODEL` precisa existir na conta. Chave inválida ou estourada: ver rotação na seção 6. Gasto fora do esperado: o limite diário vem de `CHAT_DAILY_TOKENS` (API) |
+| **Supabase** (banco, login, arquivos) | `GET /api/health` responde 503; login, leitura e gravação falham | Confirme na página de status do Supabase `[após #49]`. Não há réplica nem segundo provedor: a aplicação fica indisponível até a volta. Anote o horário de início e fim para o registro. Se o banco foi corrompido ou apagado, e não apenas indisponível, siga a seção 4 |
+| **Vercel** `[após #49]` | Site fora do ar apesar do `health` do banco ok | Tente *Instant Rollback* (seção 3); se a plataforma é que está fora, aguarde e registre |
+| **Agendador (cron)** | `job_status` mostra fila parada | `/api/cron/run` exige `Authorization: Bearer $CRON_SECRET`; confira o segredo e rode a chamada à mão |
+
+Enquanto o incidente for nível 1 ou 2 e durar além do prazo `[definir]`, avise quem usa o produto: canal `[definir]`.
+
+## 6. Rotação de segredos
+
+Vale em qualquer vazamento ou suspeita. Troque no provedor, atualize a variável no ambiente (Vercel `[após #49]`, ou `.env` local),
+republique e confira `GET /api/health`.
+
+| Segredo | Como rotacionar | Efeito |
+| --- | --- | --- |
+| `OPENAI_API_KEY` | Crie uma chave nova no painel da OpenAI, troque a variável e revogue a antiga | Chat volta a responder com a nova |
+| `SUPABASE_SERVICE_ROLE_KEY` | Painel do Supabase, *Project Settings → API*, gerar nova chave de serviço e trocar a variável | Burla o RLS: trate vazamento como nível 1 |
+| `CRON_SECRET` | Gere um valor novo e defina o mesmo na aplicação e no agendador | Enquanto os dois não batem, o cron responde 401 |
+| `DATA_ENCRYPTION_KEY` | Não troque a chave no lugar: siga a rotação com `DATA_ENCRYPTION_KEY_ID` em `docs/retencao-de-dados.md` | Trocar sem guardar a antiga impede abrir os valores cifrados |
+| Chave anon e JWT secret do Supabase | Trocar derruba as sessões ativas; planeje o horário | Quem estava logado precisa entrar de novo |
+
+Nunca cole segredo em issue, PR, chat ou log. Se um segredo foi para o Git, considere-o vazado mesmo depois de apagar o commit.
+
+### Backend FastAPI `[após #291]`
+
+Quando a API Python estiver hospedada, ela passa a ter as mesmas variáveis (prefixo `LOGTAX_`, ver `docs/backend-fastapi.md`, seção 3), e o
+deploy e rollback dela seguem a seção 4 daquele documento. Hoje o Next.js ainda acessa o banco por conta própria, então os passos
+deste runbook continuam valendo sozinhos. Reversão rápida do chat: esvaziar `NEXT_PUBLIC_CHAT_API` e republicar o Next.
+
+## 7. Rotinas
 
 - **Chave de cifra** (`DATA_ENCRYPTION_KEY`): ver rotação em `docs/retencao-de-dados.md`.
 - **Dependências:** o Dependabot abre PRs às segundas; junte os de minor/patch quando o CI estiver verde, e trate os de major à parte.
