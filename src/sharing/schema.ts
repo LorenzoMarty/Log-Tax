@@ -1,12 +1,12 @@
 import { z } from "zod";
 
-export const ROLE_LABEL = { owner: "Dono", editor: "Edição", commenter: "Comentário", reader: "Leitura" } as const;
+export const ROLE_LABEL = { owner: "Dono", admin: "Administração", editor: "Edição", commenter: "Comentário", reader: "Leitura" } as const;
 export type Role = keyof typeof ROLE_LABEL;
 
 /** Input of the "convidar" form. The database re-checks everything; this just gives friendly errors. */
 export const inviteInput = z.object({
   email: z.string().trim().toLowerCase().pipe(z.email()),
-  role: z.enum(["editor", "commenter", "reader"]),
+  role: z.enum(["admin", "editor", "commenter", "reader"]),
 });
 
 export const commentInput = z.object({

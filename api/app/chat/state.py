@@ -27,7 +27,7 @@ from app.engine.types import CompanyProfile, PersonProfile
 from app.tasks.event_alerts import notify_event
 
 _UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE)
-Role = Literal["owner", "editor", "commenter", "reader"]
+Role = Literal["owner", "admin", "editor", "commenter", "reader"]
 
 
 def is_persisted(row_id: str) -> bool:
@@ -204,7 +204,7 @@ async def load_workspace_state(
     return WorkspaceState(
         workspace_name=ws["name"],
         kind=ws["kind"],
-        role=role if role in ("owner", "editor", "commenter", "reader") else "reader",
+        role=role if role in ("owner", "admin", "editor", "commenter", "reader") else "reader",
         store=store,
         dashboard_row_id=dashboards[0]["id"] if dashboards else None,
         loaded_version=present["version"],

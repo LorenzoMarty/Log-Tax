@@ -181,7 +181,7 @@ export default async function WorkspaceChatPage({
             </form>
           </div>
           <AlertBar alerts={alerts} />
-          {state.role === "editor" ? (
+          {state.role === "editor" || state.role === "admin" ? (
             <EditableDashboard workspaceId={id} initial={state.dashboard} />
           ) : (
             <>
