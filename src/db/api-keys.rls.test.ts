@@ -19,7 +19,11 @@ beforeAll(async () => {
   [owner, accountant] = await Promise.all([createTestUser("key-owner"), createTestUser("key-accountant")]);
   inScope = await createWorkspace(owner);
   outOfScope = await createWorkspace(owner);
-  for (const ws of [inScope, outOfScope]) await admin.from("workspace_members").insert({ workspace_id: ws, user_id: accountant.id, role: "viewer" });
+  // "reader" is a real role; an invalid one fails the insert silently and the accountant is then not a member at all.
+  for (const ws of [inScope, outOfScope]) {
+    const { error } = await admin.from("workspace_members").insert({ workspace_id: ws, user_id: accountant.id, role: "reader" });
+    expect(error).toBeNull();
+  }
 });
 afterAll(async () => {
   for (const u of [owner, accountant]) await admin.auth.admin.deleteUser(u.id);
