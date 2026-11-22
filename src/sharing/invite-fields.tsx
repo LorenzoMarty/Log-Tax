@@ -29,6 +29,9 @@ export function InviteFields({ pages }: { pages: PageName[] }) {
           <option value="editor" disabled={partial}>
             Edição
           </option>
+          <option value="admin" disabled={partial}>
+            Administração
+          </option>
         </select>
       </label>
       <fieldset className="flex w-full flex-col gap-2">

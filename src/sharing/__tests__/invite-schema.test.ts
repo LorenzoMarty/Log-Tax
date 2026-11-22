@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { commentInput, inviteInput, ROLE_LABEL } from "../schema";
+import { commentInput, inviteInput, roleInput, ROLE_LABEL, transferInput } from "../schema";
+
+describe("roleInput / transferInput", () => {
+  it("accepts only the four assignable roles, never owner", () => {
+    for (const role of ["admin", "editor", "commenter", "reader"]) expect(roleInput.safeParse({ role }).success).toBe(true);
+    expect(roleInput.safeParse({ role: "owner" }).success).toBe(false);
+  });
+  it("needs a uuid to transfer to", () => {
+    expect(transferInput.safeParse({ newOwnerId: "not-a-uuid" }).success).toBe(false);
+    expect(transferInput.safeParse({ newOwnerId: "6f1c3c1e-8a3a-4b0e-9d7f-2a1b5c4d3e2f" }).success).toBe(true);
+  });
+});
 
 describe("inviteInput", () => {
   it("normalises the email to lowercase and trims it", () => {

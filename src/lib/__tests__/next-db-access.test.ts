@@ -33,6 +33,7 @@ const SERVER_ACTION_FILES: string[] = [
   "src/account/mfa-actions.ts",
   "src/account/profile-actions.ts",
   "src/account/session-actions.ts",
+  "src/account/theme-actions.ts", // only sets the theme cookie (#157), no database access; listed because the sweep lists every "use server" file
   "src/app/workspace/actions.ts",
   "src/chat/actions.ts",
   "src/documents/actions.ts",
