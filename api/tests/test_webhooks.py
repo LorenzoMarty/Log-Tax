@@ -107,3 +107,42 @@ async def test_delivery_is_signed_and_never_follows_redirects() -> None:
 async def test_delivery_rechecks_the_destination() -> None:
     async with httpx.AsyncClient(transport=httpx.MockTransport(lambda r: httpx.Response(200))) as http:
         assert await webhooks.deliver("https://evil.example.com/x", "s", "document_uploaded", {}, http) is False
+
+
+async def test_delivery_pins_the_validated_ip_against_dns_rebinding(monkeypatch: pytest.MonkeyPatch) -> None:
+    """DNS answers a public IP on the first lookup and a private one on any later lookup; the connection must use the first."""
+    answers = iter([["93.184.216.34"], ["10.0.0.5"], ["10.0.0.5"]])
+
+    async def rebinding(host: str) -> list[str]:
+        return next(answers)
+
+    monkeypatch.setattr(webhooks, "resolve_host", rebinding)
+    sent: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        sent.append(request)
+        return httpx.Response(204)
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http:
+        ok = await webhooks.deliver("https://hooks.escritorio.com.br/x?a=1", "s", "document_uploaded", {}, http, now=1)
+    assert ok is True and len(sent) == 1
+    req = sent[0]
+    assert req.url.host == "93.184.216.34" and req.url.path == "/x" and req.url.query == b"a=1"
+    assert req.headers["host"] == "hooks.escritorio.com.br"
+    assert req.extensions["sni_hostname"] == "hooks.escritorio.com.br"
+
+
+async def test_delivery_refuses_when_only_private_answers(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def private(host: str) -> list[str]:
+        return ["10.0.0.5"]
+
+    monkeypatch.setattr(webhooks, "resolve_host", private)
+    sent: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        sent.append(request)
+        return httpx.Response(200)
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http:
+        assert await webhooks.deliver("https://hooks.escritorio.com.br/x", "s", "document_uploaded", {}, http) is False
+    assert sent == []
