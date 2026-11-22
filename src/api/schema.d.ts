@@ -895,6 +895,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/me/invites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Invites
+         * @description Invitations addressed to the caller's email.
+         */
+        get: operations["my_invites_v1_me_invites_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/privacy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Privacy
+         * @description Both consents, the history of the documents decision and how many stored documents the person has.
+         */
+        get: operations["privacy_v1_me_privacy_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/me/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sessions
+         * @description The caller's own login sessions, the current one flagged.
+         */
+        get: operations["sessions_v1_me_sessions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/me/support-access": {
         parameters: {
             query?: never;
@@ -1062,7 +1122,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List Spaces
+         * @description Every space the caller can see (their own and the ones shared with them), with their role in each.
+         */
+        get: operations["list_spaces_v1_workspaces_get"];
         put?: never;
         /** Create Workspace */
         post: operations["create_workspace_v1_workspaces_post"];
@@ -1086,6 +1150,46 @@ export interface paths {
          * @description First visit: a company space and a personal one, unless the person already has spaces. Idempotent.
          */
         post: operations["create_default_workspaces_v1_workspaces_defaults_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/workspaces/{workspace_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Space State
+         * @description The state of one space: profile, conversation, dashboard pages, alerts, agents, memory (owner only), assets and estate.
+         */
+        get: operations["space_state_v1_workspaces__workspace_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/workspaces/{workspace_id}/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Activity
+         * @description The latest entries of the audit trail. Owner and admin only.
+         */
+        get: operations["activity_v1_workspaces__workspace_id__activity_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1235,7 +1339,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Comments
+         * @description The latest comments of the space (any member can read them).
+         */
+        get: operations["comments_v1_workspaces__workspace_id__comments_get"];
         put?: never;
         /** Add Comment */
         post: operations["add_comment_v1_workspaces__workspace_id__comments_post"];
@@ -1340,6 +1448,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/workspaces/{workspace_id}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Documents
+         * @description The space's documents, newest first, with the extracted fields opened (identifiers are stored sealed).
+         */
+        get: operations["documents_v1_workspaces__workspace_id__documents_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/workspaces/{workspace_id}/documents/organized": {
         parameters: {
             query?: never;
@@ -1416,7 +1544,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Invites
+         * @description Pending invitations of the space. Owner and admin only.
+         */
+        get: operations["invites_v1_workspaces__workspace_id__invites_get"];
         put?: never;
         /** Invite Member */
         post: operations["invite_member_v1_workspaces__workspace_id__invites_post"];
@@ -1454,6 +1586,26 @@ export interface paths {
         put?: never;
         /** Ir Bens Direitos */
         post: operations["ir_bens_direitos_v1_workspaces__workspace_id__ir_bens_direitos_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/workspaces/{workspace_id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Members
+         * @description Members with the scope of each restricted guest. Owner and admin only.
+         */
+        get: operations["members_v1_workspaces__workspace_id__members_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1746,6 +1898,19 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ActivityOut */
+        ActivityOut: {
+            /** Action */
+            action: string;
+            /** Actoremail */
+            actorEmail?: string | null;
+            /** Createdat */
+            createdAt?: string | null;
+            /** Id */
+            id: string;
+            /** Target */
+            target?: string | null;
+        };
         /** AdminAccount */
         AdminAccount: {
             /** Calls */
@@ -2011,6 +2176,25 @@ export interface components {
              */
             widgetId: string;
         };
+        /** CommentOut */
+        CommentOut: {
+            /** Authoremail */
+            authorEmail?: string | null;
+            /** Authorid */
+            authorId?: string | null;
+            /** Body */
+            body: string;
+            /** Createdat */
+            createdAt?: string | null;
+            /** Id */
+            id: string;
+            /** Parentid */
+            parentId?: string | null;
+            /** Resolvedat */
+            resolvedAt?: string | null;
+            /** Widgetid */
+            widgetId?: string | null;
+        };
         /**
          * CompanyFields
          * @description Fields the user can set through the chat. Same limits as the TypeScript schema.
@@ -2145,6 +2329,17 @@ export interface components {
             /** Provider */
             provider: string;
         };
+        /** ConsentEventOut */
+        ConsentEventOut: {
+            /** Action */
+            action: string;
+            /** Createdat */
+            createdAt?: string | null;
+            /** Id */
+            id: string;
+            /** Version */
+            version: string;
+        };
         /** ConsentIn */
         ConsentIn: {
             /**
@@ -2228,6 +2423,25 @@ export interface components {
             rulesVersion: string;
             /** Steps */
             steps?: components["schemas"]["CalcStep"][];
+        };
+        /** DocumentOut */
+        DocumentOut: {
+            /** Createdat */
+            createdAt?: string | null;
+            /** Doctype */
+            docType?: string | null;
+            /** Extracted */
+            extracted?: {
+                [key: string]: unknown;
+            } | null;
+            /** Id */
+            id: string;
+            /** Mimetype */
+            mimeType?: string | null;
+            /** Name */
+            name: string;
+            /** Sizebytes */
+            sizeBytes?: number | null;
         };
         Envelope_AssetSale_: components["schemas"]["OkOut_AssetSale_"] | components["schemas"]["InsufficientDataOut"] | components["schemas"]["NotApplicableOut"] | components["schemas"]["NoneFoundOut"];
         Envelope_CarryingResult_: components["schemas"]["OkOut_CarryingResult_"] | components["schemas"]["InsufficientDataOut"] | components["schemas"]["NotApplicableOut"] | components["schemas"]["NoneFoundOut"];
@@ -2315,6 +2529,17 @@ export interface components {
              */
             role: "admin" | "editor" | "commenter" | "reader";
             scope?: components["schemas"]["ScopeIn"] | null;
+        };
+        /** InviteOut */
+        InviteOut: {
+            /** Email */
+            email: string;
+            /** Id */
+            id: string;
+            /** Role */
+            role: string;
+            /** Scope */
+            scope?: unknown;
         };
         /** IrBensBody */
         IrBensBody: {
@@ -2436,6 +2661,19 @@ export interface components {
              */
             user_id: string;
         };
+        /** MemberOut */
+        MemberOut: {
+            /** Email */
+            email?: string | null;
+            /** Role */
+            role: string;
+            /** Scope */
+            scope?: {
+                [key: string]: unknown;
+            } | null;
+            /** Userid */
+            userId: string;
+        };
         /** MemoryPatchIn */
         MemoryPatchIn: {
             /** Text */
@@ -2464,6 +2702,17 @@ export interface components {
             ibge?: string | null;
             /** Name */
             name: string;
+        };
+        /** MyInviteOut */
+        MyInviteOut: {
+            /** Id */
+            id: string;
+            /** Invitedbyemail */
+            invitedByEmail?: string | null;
+            /** Role */
+            role: string;
+            /** Workspacename */
+            workspaceName: string;
         };
         /** NoneFoundOut */
         NoneFoundOut: {
@@ -2738,6 +2987,17 @@ export interface components {
             /** Netmonthly */
             netMonthly: string;
             option: components["schemas"]["Option"];
+        };
+        /** PrivacyOut */
+        PrivacyOut: {
+            /** Analytics */
+            analytics: boolean;
+            /** Documentcount */
+            documentCount: number;
+            /** Documents */
+            documents: boolean;
+            /** History */
+            history: components["schemas"]["ConsentEventOut"][];
         };
         /** ProposeIn */
         ProposeIn: {
@@ -3039,6 +3299,21 @@ export interface components {
             /** Hits */
             hits: components["schemas"]["SearchHitOut"][];
         };
+        /** SessionOut */
+        SessionOut: {
+            /** Createdat */
+            createdAt?: string | null;
+            /** Id */
+            id: string;
+            /** Ip */
+            ip?: string | null;
+            /** Iscurrent */
+            isCurrent: boolean;
+            /** Refreshedat */
+            refreshedAt?: string | null;
+            /** Useragent */
+            userAgent?: string | null;
+        };
         /** SimulateIn */
         SimulateIn: {
             company: components["schemas"]["CompanyIn"];
@@ -3051,6 +3326,66 @@ export interface components {
         Simulation: {
             current: components["schemas"]["Diagnosis"];
             scenario: components["schemas"]["Diagnosis"];
+        };
+        /** SpaceOut */
+        SpaceOut: {
+            /** Id */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Name */
+            name: string;
+            /** Ownerid */
+            ownerId: string;
+            /** Role */
+            role: string;
+        };
+        /** SpaceStateOut */
+        SpaceStateOut: {
+            /** Agents */
+            agents: {
+                [key: string]: unknown;
+            }[];
+            /** Alerts */
+            alerts: {
+                [key: string]: unknown;
+            }[];
+            /** Assets */
+            assets: {
+                [key: string]: unknown;
+            }[];
+            /** Estate */
+            estate?: {
+                [key: string]: unknown;
+            } | null;
+            /** Heirs */
+            heirs: {
+                [key: string]: unknown;
+            }[];
+            /** Id */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Memories */
+            memories: {
+                [key: string]: unknown;
+            }[];
+            /** Messages */
+            messages: {
+                [key: string]: string;
+            }[];
+            /** Name */
+            name: string;
+            /** Pages */
+            pages: {
+                [key: string]: unknown;
+            }[];
+            /** Profile */
+            profile: {
+                [key: string]: unknown;
+            };
+            /** Role */
+            role: string;
         };
         /** SupportGrant */
         SupportGrant: {
@@ -4840,6 +5175,99 @@ export interface operations {
             };
         };
     };
+    my_invites_v1_me_invites_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyInviteOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    privacy_v1_me_privacy_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrivacyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sessions_v1_me_sessions_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_support_access_v1_me_support_access_get: {
         parameters: {
             query?: never;
@@ -5180,6 +5608,37 @@ export interface operations {
             };
         };
     };
+    list_spaces_v1_workspaces_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpaceOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     create_workspace_v1_workspaces_post: {
         parameters: {
             query?: never;
@@ -5233,6 +5692,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    space_state_v1_workspaces__workspace_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpaceStateOut"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    activity_v1_workspaces__workspace_id__activity_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityOut"][];
                 };
             };
             /** @description Validation Error */
@@ -5550,6 +6082,39 @@ export interface operations {
             };
         };
     };
+    comments_v1_workspaces__workspace_id__comments_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommentOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     add_comment_v1_workspaces__workspace_id__comments_post: {
         parameters: {
             query?: never;
@@ -5794,6 +6359,39 @@ export interface operations {
             };
         };
     };
+    documents_v1_workspaces__workspace_id__documents_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     organized_v1_workspaces__workspace_id__documents_organized_get: {
         parameters: {
             query?: never;
@@ -5965,6 +6563,39 @@ export interface operations {
             };
         };
     };
+    invites_v1_workspaces__workspace_id__invites_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     invite_member_v1_workspaces__workspace_id__invites_post: {
         parameters: {
             query?: never;
@@ -6058,6 +6689,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    members_v1_workspaces__workspace_id__members_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberOut"][];
                 };
             };
             /** @description Validation Error */
