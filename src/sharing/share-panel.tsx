@@ -1,21 +1,26 @@
 import { removeMember, revokeInvite, inviteMember } from "./actions";
+import { InviteFields } from "./invite-fields";
 import { ROLE_LABEL } from "./schema";
+import { describeScope, type PageName, type Scope } from "./scope";
 
 export interface MemberRow {
   user_id: string;
   email: string | null;
   role: keyof typeof ROLE_LABEL;
+  /** null = the whole space. */
+  scope?: Scope | null;
 }
 export interface InviteRow {
   id: string;
   email: string;
   role: keyof typeof ROLE_LABEL;
+  scope?: Scope | null;
 }
 
 const small = "rounded-lg border border-line px-2 py-1 text-xs";
 
 /** Owner-only: who has access to this workspace, and how to give or take it away. */
-export function SharePanel({ workspaceId, members, invites, defaultOpen = false }: { workspaceId: string; members: MemberRow[]; invites: InviteRow[]; defaultOpen?: boolean }) {
+export function SharePanel({ workspaceId, members, invites, pages = [], defaultOpen = false }: { workspaceId: string; members: MemberRow[]; invites: InviteRow[]; pages?: PageName[]; defaultOpen?: boolean }) {
   return (
     <details open={defaultOpen} className="rounded-3xl border border-line p-4 text-sm">
       <summary className="cursor-pointer font-medium">Compartilhar este espaço ({members.length - 1 + invites.length})</summary>
@@ -24,14 +29,7 @@ export function SharePanel({ workspaceId, members, invites, defaultOpen = false 
           Email de quem vai receber o acesso
           <input name="email" type="email" required autoComplete="off" className="rounded-xl border border-line px-3 py-2" />
         </label>
-        <label className="flex flex-col gap-1">
-          Papel
-          <select name="role" defaultValue="reader" className="rounded-xl border border-line px-3 py-2">
-            <option value="reader">Leitura</option>
-            <option value="commenter">Comentário</option>
-            <option value="editor">Edição</option>
-          </select>
-        </label>
+        <InviteFields pages={pages} />
         <button type="submit" className="rounded-xl bg-inverse px-4 py-2 text-on-inverse">
           Convidar
         </button>
@@ -45,6 +43,7 @@ export function SharePanel({ workspaceId, members, invites, defaultOpen = false 
           <li key={m.user_id} className="flex items-center justify-between gap-2">
             <span>
               {m.email ?? "(sem email)"} — {ROLE_LABEL[m.role]}
+              {m.role !== "owner" && <span className="block text-xs text-ink-muted">Vê: {describeScope(m.scope, pages)}</span>}
             </span>
             {m.role !== "owner" && (
               <form action={removeMember.bind(null, workspaceId, m.user_id)}>
@@ -59,6 +58,7 @@ export function SharePanel({ workspaceId, members, invites, defaultOpen = false 
           <li key={i.id} className="flex items-center justify-between gap-2 text-ink-muted">
             <span>
               {i.email} — {ROLE_LABEL[i.role]} (convite pendente)
+              <span className="block text-xs">Vê: {describeScope(i.scope, pages)}</span>
             </span>
             <form action={revokeInvite.bind(null, workspaceId, i.id)}>
               <button type="submit" className={small}>

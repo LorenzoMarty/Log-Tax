@@ -154,3 +154,17 @@ test("a comment notifies the owner, who replies and resolves the thread", async 
   await owner.ctx.close();
   await guestCtx.close();
 });
+
+test("the owner shares only the report and the access list shows the cut (#152)", async ({ browser }) => {
+  const owner = await ownerWithDashboard(browser);
+  const guestEmail = `parcial-${Date.now()}@example.com`;
+  await openSharePanel(owner.page);
+  await owner.page.getByLabel(/Email de quem vai receber/).fill(guestEmail);
+  await owner.page.getByLabel("Só uma parte").check();
+  await owner.page.getByLabel("Relatório").check();
+  await owner.page.getByRole("button", { name: "Convidar" }).click();
+  await openSharePanel(owner.page);
+  const row = owner.page.getByRole("list", { name: "Quem tem acesso" }).getByRole("listitem").filter({ hasText: guestEmail });
+  await expect(row).toContainText("Vê: Relatório");
+  await owner.ctx.close();
+});
