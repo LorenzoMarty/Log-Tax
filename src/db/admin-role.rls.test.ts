@@ -161,7 +161,10 @@ describe("ownership transfer", () => {
 
   it("the new owner holds the owner-only powers; the former owner lost them", async () => {
     expect((await adm.client.rpc("set_member_role", { ws, member: editor.id, new_role: "admin" })).error).toBeNull();
-    expect(((await adm.client.from("conversations").select()).data ?? []).length).toBe(0); // its own, still empty
+    // The conversation belongs to the workspace, so it goes with the ownership: the new owner reads it, the former owner
+    // (now an admin) no longer does. Whether the history should move is a product decision noted in the PR.
+    expect(((await adm.client.from("conversations").select()).data ?? []).length).toBe(1);
+    expect(((await owner.client.from("conversations").select()).data ?? []).length).toBe(0);
     await owner.client.from("workspaces").update({ name: "antigo dono" }).eq("id", ws);
     expect((await admin.from("workspaces").select("name").eq("id", ws).single()).data?.name).toBe("Minha Empresa");
     expect((await owner.client.rpc("transfer_ownership", { ws, new_owner: owner.id })).error).not.toBeNull();
