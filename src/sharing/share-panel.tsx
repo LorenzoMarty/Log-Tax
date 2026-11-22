@@ -1,7 +1,8 @@
-import { removeMember, revokeInvite, inviteMember } from "./actions";
+import { changeMemberRole, removeMember, revokeInvite, inviteMember } from "./actions";
 import { InviteFields } from "./invite-fields";
 import { ROLE_LABEL } from "./schema";
 import { describeScope, type PageName, type Scope } from "./scope";
+import { TransferOwnership } from "./transfer-ownership";
 
 export interface MemberRow {
   user_id: string;
@@ -17,6 +18,7 @@ export interface InviteRow {
   scope?: Scope | null;
 }
 
+const ASSIGNABLE = ["admin", "editor", "commenter", "reader"] as const;
 const small = "rounded-lg border border-line px-2 py-1 text-xs";
 
 /** Owner-only: who has access to this workspace, and how to give or take it away. */
@@ -35,22 +37,37 @@ export function SharePanel({ workspaceId, members, invites, pages = [], defaultO
         </button>
       </form>
       <p className="mt-2 text-xs text-ink-muted">
-        Leitura: vê painel, alertas e IAs. Comentário: também comenta. Ninguém além de você conversa com a IA nem vê o seu histórico de conversa.
+        Leitura: vê painel, alertas e IAs. Comentário: também comenta. Edição: também edita o painel. Administração: quase tudo que o dono faz, menos transferir, apagar ou renomear o espaço e ver a sua conversa com a IA. Ninguém além de você conversa com a IA nem vê o seu histórico de conversa.
       </p>
 
       <ul aria-label="Quem tem acesso" className="mt-3 space-y-1">
         {members.map((m) => (
-          <li key={m.user_id} className="flex items-center justify-between gap-2">
-            <span>
+          <li key={m.user_id} className="flex flex-wrap items-center justify-between gap-2">
+            <span className="min-w-0 break-words">
               {m.email ?? "(sem email)"} — {ROLE_LABEL[m.role]}
               {m.role !== "owner" && <span className="block text-xs text-ink-muted">Vê: {describeScope(m.scope, pages)}</span>}
             </span>
             {m.role !== "owner" && (
-              <form action={removeMember.bind(null, workspaceId, m.user_id)}>
-                <button type="submit" className={small}>
-                  Remover acesso
-                </button>
-              </form>
+              <div className="flex flex-wrap items-center gap-2">
+                <form action={changeMemberRole.bind(null, workspaceId, m.user_id)} className="flex items-center gap-1">
+                  <select name="role" defaultValue={m.role} aria-label={`Papel de ${m.email ?? m.user_id}`} className="rounded-lg border border-line px-2 py-1 text-xs">
+                    {ASSIGNABLE.map((r) => (
+                      <option key={r} value={r}>
+                        {ROLE_LABEL[r]}
+                      </option>
+                    ))}
+                  </select>
+                  <button type="submit" aria-label={`Salvar papel de ${m.email ?? m.user_id}`} className={small}>
+                    Salvar papel
+                  </button>
+                </form>
+                <form action={removeMember.bind(null, workspaceId, m.user_id)}>
+                  <button type="submit" className={small}>
+                    Remover acesso
+                  </button>
+                </form>
+                <TransferOwnership workspaceId={workspaceId} userId={m.user_id} email={m.email ?? m.user_id} />
+              </div>
             )}
           </li>
         ))}
