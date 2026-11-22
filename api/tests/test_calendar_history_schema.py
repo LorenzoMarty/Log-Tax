@@ -35,8 +35,22 @@ def test_only_the_regimes_obligations_sorted_and_what_is_not_covered() -> None:
     r = upcoming_deadlines("presumido", "2026-11-13", 30)
     assert [d.id for d in r.deadlines] == ["dctfweb"]
     assert r.deadlines[0].date == "2026-11-16"  # 15/11 is a Sunday
-    assert "DARF de IRPJ e CSLL" in r.not_covered
+    assert "DARF de IRPJ e CSLL do Lucro Presumido (cotas trimestrais)" in r.not_covered
     assert r.holiday_scope == "nacional"
+
+
+def test_lucro_real_monthly_irpj_csll_estimate_on_last_business_day() -> None:
+    def due(start: str, horizon: int) -> list[tuple[str, str | None]]:
+        return [
+            (d.date, d.competence)
+            for d in upcoming_deadlines("real", start, horizon).deadlines
+            if d.id == "darf-irpj-csll-estimativa"
+        ]
+
+    assert due("2026-08-20", 20) == [("2026-08-31", "2026-07")]
+    assert due("2026-10-20", 20) == [("2026-10-30", "2026-09")]  # 31/10 is a Saturday
+    assert due("2026-11-13", 30) == [("2026-11-30", "2026-10")]
+    assert "darf-irpj-csll-estimativa" not in [d.id for d in upcoming_deadlines("presumido", "2026-11-13", 30).deadlines]
 
 
 def month(m: str, comercio: int) -> MonthlyEntry:
