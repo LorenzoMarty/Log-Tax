@@ -119,7 +119,7 @@ async def handle_chat(
             engine,
             approve,
             DbWorkspaceAdmin(db, user_id),
-            DbDocumentSearch(db, scope.workspace_id, scope.allowed_documents),
+            DbDocumentSearch(db, scope.workspace_id, scope.allowed_documents, settings),
         )
     )
     store = state.store
