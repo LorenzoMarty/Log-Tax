@@ -13,10 +13,10 @@ beforeEach(() => {
 });
 
 describe("registry", () => {
-  it("exposes the 28 tools with JSON-schema parameters", () => {
-    expect(TOOL_NAMES).toHaveLength(28);
+  it("exposes the 29 tools with JSON-schema parameters", () => {
+    expect(TOOL_NAMES).toHaveLength(29);
     const specs = toolSpecs(ctx.scope);
-    expect(specs).toHaveLength(28);
+    expect(specs).toHaveLength(29);
     for (const s of specs) expect(s.parameters).toMatchObject({ type: "object" });
   });
 
@@ -406,6 +406,33 @@ describe("benefit sunset block (#107)", () => {
   it("maps every year to a point in reais", () => {
     const [line] = benefitSunsetWidgets({ years: [{ year: 2030, remainingShare: 0.8, valueCents: 12_345 }], alert: "a" });
     expect(line).toMatchObject({ data: [{ label: "2030", value: 123.45 }] });
+  });
+});
+
+describe("tax history block (#100)", () => {
+  const rec = (m: string, v: number) => ({ month: m, revenue: { comercio: v }, payroll: 20000 });
+  const ids = () => ctx.store.getDashboard().widgets.filter((w) => w.id.startsWith("historico-"));
+
+  it("charts only the months with recorded data and compares the same month of two years", async () => {
+    const all = Array.from({ length: 24 }, (_, i) => rec(`${2024 + Math.floor((i + 3) / 12)}-${String(((i + 3) % 12) + 1).padStart(2, "0")}`, i < 12 ? 100000 : 150000));
+    ctx.store.saveCompany({ regime: "simples", anexo: "I", series: all });
+    const args = { to: "2026-03", months: 12, compareWith: "2025-03" };
+    await call("add_tax_history_block", args);
+    await call("add_tax_history_block", args);
+    expect(ids().map((w) => w.id)).toEqual(["historico-mensal", "historico-ano-a-ano"]);
+    const line = ids()[0] as { kind: string; data: { label: string }[] };
+    expect(line.kind).toBe("line");
+    expect(line.data.map((p) => p.label)).toHaveLength(12);
+    expect(line.data[0].label).toBe("2025-04");
+    expect(line.data.at(-1)!.label).toBe("2026-03");
+    expect(ids()[1]).toMatchObject({ kind: "compare", labels: ["2025-03", "2026-03"] });
+  });
+
+  it("adds nothing without recorded history and says what is missing", async () => {
+    ctx.store.saveCompany({ regime: "simples", anexo: "I", series: [] });
+    const r = await call("add_tax_history_block", { to: "2026-03", compareWith: "2025-03" });
+    expect(r).toMatchObject({ status: "ok", data: { gaps: expect.arrayContaining([expect.stringContaining("sem dados gravados")]) } });
+    expect(ids()).toHaveLength(0);
   });
 });
 

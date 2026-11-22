@@ -41,12 +41,12 @@ from app.documents.search import cited_for_model
 from app.engine.asset_taxes import carrying_tax, patrimony_summary, sale_tax
 from app.engine.calendar import upcoming_deadlines
 from app.engine.company_schema import CompanyFields, apply_fields, inconsistencies, merge_series
-from app.engine.history import tax_history
+from app.engine.history import TaxHistory, tax_history
 from app.engine.irpf_bens import build_lines
 from app.engine.itcmd import ItcmdInput, compute_itcmd
 from app.engine.partilha import inventory_deadlines, split_estate
 from app.engine.prestador import PrestadorInput, compare_prestador
-from app.engine.reform_impact import reform_impact
+from app.engine.reform_impact import ReformImpact, reform_impact
 from app.engine.result import EngineResult, InsufficientData, NoneFound, NotApplicable, Ok
 from app.engine.split_payment import split_payment_impact
 from app.integrations.cnpj import fetch_company
@@ -180,6 +180,46 @@ def cash_impact_widget(cents: int, float_days: int, assumptions: list[str]) -> d
         "value": f"{'+' if cents >= 0 else '-'}{_brl(abs(cents))}",
         "caption": f"Estimativa: {effect}. Premissas: {' '.join(assumptions)}",
     }
+
+
+def reform_impact_widgets(impact: ReformImpact) -> list[dict[str, Any]]:
+    """The "Minha empresa na Reforma" blocks (#108): today against each transition year as compare, total load as line."""
+    return [
+        {
+            "id": "reforma-ano-a-ano", "kind": "compare", "title": "Minha empresa na Reforma, ano a ano", "size": "lg",
+            "labels": ["Hoje", "Na Reforma"],
+            "rows": [{"label": str(y.year), "today": _brl(impact.today_cents), "potential": _brl(y.total_cents)} for y in impact.years],
+            "summary": "Carga anual de tributos sobre o consumo e demais. Premissas: " + " ".join(impact.assumptions),
+        },
+        {
+            "id": "reforma-carga-anual", "kind": "line", "title": "Carga anual na transição", "size": "md",
+            "data": [{"label": str(y.year), "value": y.total_cents / 100} for y in impact.years],
+        },
+    ]  # fmt: skip
+
+
+def _cents(reais: Decimal) -> int:
+    return round(reais * 100)
+
+
+def tax_history_widgets(history: TaxHistory) -> list[dict[str, Any]]:
+    """The tax history blocks (#100): a line with the recorded months only (a gap is never a value) and the comparison."""
+    data = [{"label": p.month, "value": float(p.monthly_total)} for p in history.points if p.monthly_total is not None]
+    if not data:
+        return []
+    widgets: list[dict[str, Any]] = [
+        {"id": "historico-mensal", "kind": "line", "title": "Imposto por competência (meses com dados gravados)", "size": "lg", "data": data}
+    ]  # fmt: skip
+    c = history.comparison
+    if c:
+        pct = "" if c.delta_pct is None else f" ({float(c.delta_pct) * 100:.1f}%)".replace(".", ",")
+        widgets.append({
+            "id": "historico-ano-a-ano", "kind": "compare", "title": "Imposto do mês, comparação entre competências", "size": "md",
+            "labels": [c.from_month, c.to_month],
+            "rows": [{"label": "Imposto do mês", "today": _brl(_cents(c.from_total)), "potential": _brl(_cents(c.to_total))}],
+            "summary": f"Variação de {_brl(_cents(c.delta))}{pct}. Cada mês usa a regra vigente na competência. Estimativa, não substitui contador.",
+        })  # fmt: skip
+    return widgets
 
 
 # ---- argument models ----
@@ -565,6 +605,22 @@ async def _get_tax_history(ctx: ToolContext, a: HistoryArgs) -> Any:
     return wire(tax_history(await ctx.store.get_company(), a.to, a.months or 12, a.compare_with))
 
 
+@_tool(
+    "add_tax_history_block",
+    "Cria no painel o gráfico de imposto por competência (até 24 meses) e, com compareWith, a comparação entre dois meses. Só desenha meses com dados gravados; sem histórico não cria nada e devolve o que falta, nunca estima.",
+    HistoryArgs, kinds=("empresa",), engine=True,
+)  # fmt: skip
+async def _add_tax_history_block(ctx: ToolContext, a: HistoryArgs) -> Any:
+    history = tax_history(await ctx.store.get_company(), a.to, a.months or 12, a.compare_with)
+    widgets = tax_history_widgets(history)
+    if widgets:
+        for wid in ("historico-mensal", "historico-ano-a-ano"):
+            await ctx.store.dispatch({"type": "remove", "id": wid})
+    for widget in widgets:
+        await ctx.store.dispatch({"type": "add", "widget": widget})
+    return wire(history)
+
+
 def _dec(value: float | None) -> Decimal | None:
     """A rate the model wrote as a JSON number, as an exact decimal (never a binary float)."""
     return None if value is None else Decimal(str(value))
@@ -585,6 +641,25 @@ async def _get_reform_impact(ctx: ToolContext, a: ReformArgs) -> Any:
         ctx.engine.book, company, lambda: ctx.engine.diagnose(company),
         category=a.category, cbs_reference_rate=_dec(a.cbs_reference_rate), ibs_reference_rate=_dec(a.ibs_reference_rate),
     )  # fmt: skip
+    return _env(result)
+
+
+@_tool(
+    "add_reform_impact_block",
+    "Cria no painel o bloco \"Minha empresa na Reforma\": carga anual de hoje contra cada ano de 2026 a 2033, com as premissas e o aviso de validação. Precisa da categoria da operação e das alíquotas de referência de CBS e IBS (informadas pelo usuário; não invente). Sem esses dados responde o que falta.",
+    ReformArgs, kinds=("empresa",), engine=True,
+)  # fmt: skip
+async def _add_reform_impact_block(ctx: ToolContext, a: ReformArgs) -> Any:
+    company = await ctx.store.get_company()
+    result = reform_impact(
+        ctx.engine.book, company, lambda: ctx.engine.diagnose(company),
+        category=a.category, cbs_reference_rate=_dec(a.cbs_reference_rate), ibs_reference_rate=_dec(a.ibs_reference_rate),
+    )  # fmt: skip
+    if not isinstance(result, Ok):
+        return _env(result)
+    for widget in reform_impact_widgets(result.value):
+        await ctx.store.dispatch({"type": "remove", "id": widget["id"]})
+        await ctx.store.dispatch({"type": "add", "widget": widget})
     return _env(result)
 
 

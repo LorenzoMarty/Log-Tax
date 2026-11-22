@@ -25,12 +25,21 @@ describe("obligations calendar", () => {
     const r = upcomingDeadlines({ regime: "presumido" }, "2026-11-13", 30);
     expect(r.deadlines.map((d) => d.id)).toEqual(["dctfweb"]);
     expect(r.deadlines[0].date).toBe("2026-11-16"); // 15/11 is a Sunday
-    expect(r.notCovered).toContain("DARF de IRPJ e CSLL");
+    expect(r.notCovered).toContain("DARF de IRPJ e CSLL do Lucro Presumido (cotas trimestrais)");
     expect(r.holidayScope).toBe("nacional");
   });
 
   it("DIRPF has a date only for the published year", () => {
     expect(upcomingDeadlines({ regime: "presumido" }, "2026-05-10", 30).deadlines.map((d) => d.id)).toContain("dirpf");
     expect(upcomingDeadlines({ regime: "presumido" }, "2027-05-10", 30).deadlines.map((d) => d.id)).not.toContain("dirpf");
+  });
+
+  it("Lucro Real gets the monthly IRPJ/CSLL estimate on the last business day of the next month (agenda da Receita: 31/08, 30/09, 30/10, 30/11 de 2026)", () => {
+    const due = (from: string, horizon: number) =>
+      upcomingDeadlines({ regime: "real" }, from, horizon).deadlines.filter((d) => d.id === "darf-irpj-csll-estimativa");
+    expect(due("2026-08-20", 20)).toMatchObject([{ date: "2026-08-31", competence: "2026-07" }]);
+    expect(due("2026-10-20", 20)).toMatchObject([{ date: "2026-10-30", competence: "2026-09", requiresValidation: true }]); // 31/10 is a Saturday
+    expect(due("2026-11-13", 30)).toMatchObject([{ date: "2026-11-30", competence: "2026-10" }]);
+    expect(upcomingDeadlines({ regime: "presumido" }, "2026-11-13", 30).deadlines.map((d) => d.id)).not.toContain("darf-irpj-csll-estimativa");
   });
 });

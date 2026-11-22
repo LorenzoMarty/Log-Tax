@@ -11,6 +11,7 @@ _LABELS = {
     "list_opportunities": "procurando oportunidades",
     "get_deadlines": "consultando os vencimentos",
     "get_tax_history": "montando o histórico",
+    "add_tax_history_block": "montando o gráfico do histórico",
     "get_reform_impact": "calculando o impacto da reforma",
     "get_ir_diagnosis": "calculando o Imposto de Renda",
     "generate_report": "gerando o relatório",

@@ -66,7 +66,15 @@ def upcoming_deadlines(regime: str, from_date: str, horizon_days: int = 60) -> D
             continue
         when = o["when"]
         candidates: list[tuple[str, str | None]] = []
-        if when["kind"] == "monthly":
+        if when["kind"] == "monthly-last-business-day":
+            for i in range(24):
+                year, month = from_year + i // 12, i % 12 + 1
+                due_year, due_month = (year + 1, 1) if month == 12 else (year, month + 1)
+                last = date(due_year + (due_month == 12), due_month % 12 + 1, 1) - timedelta(days=1)
+                while not is_business_day(last.isoformat()):
+                    last -= timedelta(days=1)
+                candidates.append((last.isoformat(), f"{year}-{month:02d}"))
+        elif when["kind"] == "monthly":
             for i in range(24):
                 year, month = from_year + i // 12, i % 12 + 1
                 due_year, due_month = (year + 1, 1) if month == 12 else (year, month + 1)

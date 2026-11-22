@@ -9,6 +9,7 @@ from app.api import (
     agent_templates,
     agents,
     alert_events,
+    api_keys,
     chat,
     company_lookup,
     cron,
@@ -32,6 +33,7 @@ from app.api import (
     usage,
     validations,
     vitals,
+    webhooks,
     workspaces,
 )
 from app.core.config import get_settings
@@ -83,6 +85,8 @@ def create_app() -> FastAPI:
     app.include_router(admin.router)
     app.include_router(admin_rules.router)
     app.include_router(integrations.router)
+    app.include_router(api_keys.router)
+    app.include_router(webhooks.router)
     app.include_router(dashboard_versions.router)
     return app
 
