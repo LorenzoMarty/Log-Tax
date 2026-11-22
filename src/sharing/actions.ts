@@ -6,7 +6,7 @@ import { headers } from "next/headers";
 import { checkRate, clientIp } from "@/lib/rate-limit";
 import { audit } from "@/lib/audit";
 import { createClient } from "@/lib/supabase/server";
-import { commentInput, inviteInput } from "./schema";
+import { commentInput, inviteInput, roleInput, transferInput } from "./schema";
 
 // Every action runs with the caller's session: the database (RLS) is what actually enforces who may do what.
 // These only turn a failure into a message on the page (?msg=...).
@@ -52,6 +52,26 @@ export async function removeMember(workspaceId: string, userId: string) {
   const { data: gone } = await supabase.from("workspace_members").delete().eq("workspace_id", workspaceId).eq("user_id", userId).select("email");
   if (gone?.length) await audit(supabase, workspaceId, "member_removed", gone[0].email ?? userId);
   return back(workspaceId, "membro-removido");
+}
+
+/** Owner-only (the database re-checks): promotes to or demotes from admin, or sets any other non-owner role. */
+export async function changeMemberRole(workspaceId: string, userId: string, formData: FormData) {
+  const { supabase } = await session();
+  const parsed = roleInput.safeParse({ role: formData.get("role") });
+  if (!parsed.success) return back(workspaceId, "papel-invalido");
+  const { error } = await supabase.rpc("set_member_role", { ws: workspaceId, member: userId, new_role: parsed.data.role });
+  if (error) return back(workspaceId, "sem-permissao");
+  await audit(supabase, workspaceId, "member_role_changed", `${userId} (${parsed.data.role})`);
+  return back(workspaceId, "papel-alterado");
+}
+
+/** Owner-only (the database re-checks): the new owner must already be a member; the caller stays as admin. The database writes the audit row. */
+export async function transferOwnership(workspaceId: string, formData: FormData) {
+  const { supabase } = await session();
+  const parsed = transferInput.safeParse({ newOwnerId: formData.get("newOwnerId") });
+  if (!parsed.success) return back(workspaceId, "sem-permissao");
+  const { error } = await supabase.rpc("transfer_ownership", { ws: workspaceId, new_owner: parsed.data.newOwnerId });
+  return back(workspaceId, error ? "sem-permissao" : "propriedade-transferida");
 }
 
 export async function acceptInvite(inviteId: string) {
