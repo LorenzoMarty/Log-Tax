@@ -115,10 +115,25 @@
           "confidence": "high",
           "requiresValidation": false,
           "notes": "Só o calendário de 2026 está publicado; os demais anos ficam sem data até a Receita divulgar."
+        },
+        {
+          "id": "darf-irpj-csll-estimativa",
+          "label": "DARF de IRPJ e CSLL (estimativa mensal, Lucro Real)",
+          "regimes": [
+            "real"
+          ],
+          "when": {
+            "kind": "monthly-last-business-day"
+          },
+          "shift": "none",
+          "source": "Receita Federal, Agenda Tributária 2026 (códigos 2362, 5993 e 2484: \"Estimativa Mensal, Mês Anterior\"; listados em 31/08, 30/09, 30/10 e 30/11/2026): https://www.gov.br/receitafederal/pt-br/assuntos/agenda-tributaria/2026/Novembro/dia-30-11-2026",
+          "confidence": "medium",
+          "requiresValidation": true,
+          "notes": "Último dia útil do mês seguinte: regra deduzida das datas da agenda (31/08, 30/09, 30/10 porque 31/10 é sábado, e 30/11); o texto da lei não foi lido. Vale para a estimativa mensal; apuração trimestral não coberta."
         }
       ],
       "notCovered": [
-        "DARF de IRPJ e CSLL",
+        "DARF de IRPJ e CSLL do Lucro Presumido (cotas trimestrais)",
         "EFD-Contribuições",
         "EFD ICMS/IPI e guias de ICMS por UF",
         "ISS por município",
