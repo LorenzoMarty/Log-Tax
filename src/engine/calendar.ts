@@ -13,7 +13,7 @@ interface Obligation {
   label: string;
   regimes: CompanyProfile["regime"][];
   /** Competence-based: due on `day` of the month after the competence. Annual: due on `month`/`day` of each year. */
-  when: { kind: "monthly"; day: number } | { kind: "annual"; month: number; day: number; years?: number[] };
+  when: { kind: "monthly"; day: number } | { kind: "monthly-last-business-day" } | { kind: "annual"; month: number; day: number; years?: number[] };
   shift: Shift;
   source: string;
   confidence: "low" | "medium" | "high";
@@ -22,6 +22,9 @@ interface Obligation {
 }
 
 const RFB_SN = "Receita Federal, Simples Nacional (vencimento do DAS no dia 20 do mês seguinte): https://www8.receita.fazenda.gov.br/simplesnacional/noticias/NoticiaCompleta.aspx?id=a7fff48b-2a23-4bb5-a30c-e616e6f5c79e ; Resolução CGSN 140/2018";
+
+const DARF_SRC =
+  "Receita Federal, Agenda Tributária 2026 (códigos 2362, 5993 e 2484: \"Estimativa Mensal, Mês Anterior\"; listados em 31/08, 30/09, 30/10 e 30/11/2026): https://www.gov.br/receitafederal/pt-br/assuntos/agenda-tributaria/2026/Novembro/dia-30-11-2026";
 
 export const OBLIGATIONS: Obligation[] = [
   {
@@ -89,10 +92,21 @@ export const OBLIGATIONS: Obligation[] = [
     requiresValidation: false,
     notes: "Só o calendário de 2026 está publicado; os demais anos ficam sem data até a Receita divulgar.",
   },
+  {
+    id: "darf-irpj-csll-estimativa",
+    label: "DARF de IRPJ e CSLL (estimativa mensal, Lucro Real)",
+    regimes: ["real"],
+    when: { kind: "monthly-last-business-day" },
+    shift: "none",
+    source: DARF_SRC,
+    confidence: "medium",
+    requiresValidation: true,
+    notes: "Último dia útil do mês seguinte: regra deduzida das datas da agenda (31/08, 30/09, 30/10 porque 31/10 é sábado, e 30/11); o texto da lei não foi lido. Vale para a estimativa mensal; apuração trimestral não coberta.",
+  },
 ];
 
 /** Not covered yet, so the answer never looks complete when it is not. */
-export const NOT_COVERED = ["DARF de IRPJ e CSLL", "EFD-Contribuições", "EFD ICMS/IPI e guias de ICMS por UF", "ISS por município", "ECF e ECD", "eSocial e GPS/DAE"];
+export const NOT_COVERED = ["DARF de IRPJ e CSLL do Lucro Presumido (cotas trimestrais)", "EFD-Contribuições", "EFD ICMS/IPI e guias de ICMS por UF", "ISS por município", "ECF e ECD", "eSocial e GPS/DAE"];
 
 /** National holidays: Lei 662/1949 (with Lei 10.607/2002) and Lei 14.759/2023 (20/11). Movable feasts are not legal holidays. */
 export const NATIONAL_HOLIDAYS = ["01-01", "04-21", "05-01", "09-07", "11-02", "11-15", "12-25", "11-20"];
@@ -149,7 +163,16 @@ export function upcomingDeadlines(profile: Pick<CompanyProfile, "regime">, from:
     const { regimes: _r, when: _w, shift: _s, ...meta } = o;
     void _r; void _w; void _s;
     const candidates: { date: string; competence?: string }[] = [];
-    if (o.when.kind === "monthly") {
+    if (o.when.kind === "monthly-last-business-day") {
+      for (let i = 0; i < 24; i++) {
+        const y = fromYear + Math.floor(i / 12);
+        const m = (i % 12) + 1;
+        const [dy, dm] = addMonth(y, m);
+        let d = utc(dy, dm + 1, 0); // day 0 of the next month = last day of month `dm`
+        while (!isBusinessDay(iso(d))) d = new Date(d.getTime() - 86_400_000);
+        candidates.push({ date: iso(d), competence: `${y}-${String(m).padStart(2, "0")}` });
+      }
+    } else if (o.when.kind === "monthly") {
       for (let i = 0; i < 24; i++) {
         const y = fromYear + Math.floor(i / 12);
         const m = (i % 12) + 1;
