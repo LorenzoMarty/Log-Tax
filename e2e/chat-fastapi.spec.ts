@@ -1,3 +1,4 @@
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { createAndOpen, login } from "./helpers";
 import { sendChatMessage } from "./workspace-actions";
@@ -436,4 +437,30 @@ test("prestador de serviço: conversa, comparação PF x MEI x Simples e painel 
 
   await page.reload(); // what the Python API saved is what the panel reads back
   await expect(page.getByTestId("widget-prestador-opcoes")).toContainText("Simples Nacional");
+});
+
+// #129: keyboard only, announced by a screen reader live region, and no axe violations on desktop and phone.
+test("owner reorders and resizes blocks using only the keyboard, announced in a live region, with no axe violations", async ({ page }) => {
+  await login(page, "fastapi");
+  await createAndOpen(page, /Minha Empresa/);
+  await sendChatMessage(page, "Quero organizar meus impostos", /Empresa ou Pessoal/);
+  await sendChatMessage(page, "Empresa", /52\.155/);
+
+  for (const width of [1280, 375]) {
+    await page.setViewportSize({ width, height: 800 });
+    await page.waitForLoadState("networkidle");
+    const { violations } = await new AxeBuilder({ page })
+      .include('[role="group"][aria-label^="Organizar bloco"]')
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+      .analyze();
+    expect(violations.map((v) => `${v.id}: ${v.help}`), `axe at ${width}px`).toEqual([]);
+  }
+
+  const order = () => page.getByTestId(/^widget-/).evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")));
+  const before = await order();
+  const down = page.getByRole("button", { name: /^Mover para baixo: / }).first();
+  await down.focus();
+  await page.keyboard.press("Enter");
+  await expect.poll(order).toEqual([before[1], before[0], ...before.slice(2)]);
+  await expect(page.getByRole("status").filter({ hasText: /posição 2 de/ })).toBeAttached();
 });
