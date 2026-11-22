@@ -144,9 +144,10 @@ function Body({ w, onAskRow }: { w: Widget; onAskRow?: (label: string) => void }
           <table className="lg-table">
             <thead>
               <tr>
-                <th scope="col" />
+                <th scope="col"><span className="sr-only">Item</span></th>
                 <th scope="col" className="!text-right">{w.labels?.[0] ?? "Hoje"}</th>
                 <th scope="col" className="!text-right">{w.labels?.[1] ?? "Potencial"}</th>
+                {onAskRow && <th scope="col"><span className="sr-only">Ação</span></th>}
               </tr>
             </thead>
             <tbody>
