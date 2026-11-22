@@ -1,6 +1,57 @@
 {
   "components": {
     "schemas": {
+      "ActivityOut": {
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "actorEmail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actoremail"
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Createdat"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target"
+          }
+        },
+        "required": [
+          "id",
+          "action"
+        ],
+        "title": "ActivityOut",
+        "type": "object"
+      },
       "AdminAccount": {
         "properties": {
           "calls": {
@@ -745,6 +796,90 @@
           "body"
         ],
         "title": "CommentIn",
+        "type": "object"
+      },
+      "CommentOut": {
+        "properties": {
+          "authorEmail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Authoremail"
+          },
+          "authorId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Authorid"
+          },
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Createdat"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "parentId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parentid"
+          },
+          "resolvedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolvedat"
+          },
+          "widgetId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Widgetid"
+          }
+        },
+        "required": [
+          "id",
+          "body"
+        ],
+        "title": "CommentOut",
         "type": "object"
       },
       "CompanyFields": {
@@ -1561,6 +1696,40 @@
         "title": "ConnectBody",
         "type": "object"
       },
+      "ConsentEventOut": {
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Createdat"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "action"
+        ],
+        "title": "ConsentEventOut",
+        "type": "object"
+      },
       "ConsentIn": {
         "additionalProperties": false,
         "properties": {
@@ -1797,6 +1966,80 @@
           "rulesVersion"
         ],
         "title": "Diagnosis",
+        "type": "object"
+      },
+      "DocumentOut": {
+        "properties": {
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Createdat"
+          },
+          "docType": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Doctype"
+          },
+          "extracted": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extracted"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "mimeType": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mimetype"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "sizeBytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sizebytes"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "DocumentOut",
         "type": "object"
       },
       "Envelope_AssetSale_": {
@@ -2283,6 +2526,32 @@
         "title": "InviteIn",
         "type": "object"
       },
+      "InviteOut": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "scope": {
+            "title": "Scope"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "role"
+        ],
+        "title": "InviteOut",
+        "type": "object"
+      },
       "IrBensBody": {
         "additionalProperties": false,
         "properties": {
@@ -2642,6 +2911,47 @@
         "title": "Me",
         "type": "object"
       },
+      "MemberOut": {
+        "properties": {
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope"
+          },
+          "userId": {
+            "title": "Userid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "role"
+        ],
+        "title": "MemberOut",
+        "type": "object"
+      },
       "MemoryPatchIn": {
         "additionalProperties": false,
         "properties": {
@@ -2765,6 +3075,40 @@
           "name"
         ],
         "title": "Municipio",
+        "type": "object"
+      },
+      "MyInviteOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "invitedByEmail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invitedbyemail"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "workspaceName": {
+            "title": "Workspacename",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "workspaceName",
+          "role"
+        ],
+        "title": "MyInviteOut",
         "type": "object"
       },
       "NoneFoundOut": {
@@ -3599,6 +3943,37 @@
           "assumptions"
         ],
         "title": "PrestadorOption",
+        "type": "object"
+      },
+      "PrivacyOut": {
+        "properties": {
+          "analytics": {
+            "title": "Analytics",
+            "type": "boolean"
+          },
+          "documentCount": {
+            "title": "Documentcount",
+            "type": "integer"
+          },
+          "documents": {
+            "title": "Documents",
+            "type": "boolean"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/ConsentEventOut"
+            },
+            "title": "History",
+            "type": "array"
+          }
+        },
+        "required": [
+          "documents",
+          "analytics",
+          "documentCount",
+          "history"
+        ],
+        "title": "PrivacyOut",
         "type": "object"
       },
       "ProposeIn": {
@@ -4561,6 +4936,68 @@
         "title": "SearchOut",
         "type": "object"
       },
+      "SessionOut": {
+        "properties": {
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Createdat"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "ip": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip"
+          },
+          "isCurrent": {
+            "title": "Iscurrent",
+            "type": "boolean"
+          },
+          "refreshedAt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refreshedat"
+          },
+          "userAgent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Useragent"
+          }
+        },
+        "required": [
+          "id",
+          "isCurrent"
+        ],
+        "title": "SessionOut",
+        "type": "object"
+      },
       "SimulateIn": {
         "additionalProperties": false,
         "properties": {
@@ -4608,6 +5045,150 @@
           "scenario"
         ],
         "title": "Simulation",
+        "type": "object"
+      },
+      "SpaceOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "ownerId": {
+            "title": "Ownerid",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "ownerId",
+          "role"
+        ],
+        "title": "SpaceOut",
+        "type": "object"
+      },
+      "SpaceStateOut": {
+        "properties": {
+          "agents": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Agents",
+            "type": "array"
+          },
+          "alerts": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Alerts",
+            "type": "array"
+          },
+          "assets": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Assets",
+            "type": "array"
+          },
+          "estate": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estate"
+          },
+          "heirs": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Heirs",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "memories": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Memories",
+            "type": "array"
+          },
+          "messages": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "title": "Messages",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "pages": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Pages",
+            "type": "array"
+          },
+          "profile": {
+            "additionalProperties": true,
+            "title": "Profile",
+            "type": "object"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "role",
+          "profile",
+          "messages",
+          "pages",
+          "alerts",
+          "agents",
+          "memories",
+          "assets",
+          "heirs"
+        ],
+        "title": "SpaceStateOut",
         "type": "object"
       },
       "SupportGrant": {
@@ -7870,6 +8451,164 @@
         ]
       }
     },
+    "/v1/me/invites": {
+      "get": {
+        "description": "Invitations addressed to the caller's email.",
+        "operationId": "my_invites_v1_me_invites_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MyInviteOut"
+                  },
+                  "title": "Response My Invites V1 Me Invites Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "My Invites",
+        "tags": [
+          "reads"
+        ]
+      }
+    },
+    "/v1/me/privacy": {
+      "get": {
+        "description": "Both consents, the history of the documents decision and how many stored documents the person has.",
+        "operationId": "privacy_v1_me_privacy_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivacyOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Privacy",
+        "tags": [
+          "reads"
+        ]
+      }
+    },
+    "/v1/me/sessions": {
+      "get": {
+        "description": "The caller's own login sessions, the current one flagged.",
+        "operationId": "sessions_v1_me_sessions_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SessionOut"
+                  },
+                  "title": "Response Sessions V1 Me Sessions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sessions",
+        "tags": [
+          "reads"
+        ]
+      }
+    },
     "/v1/me/support-access": {
       "delete": {
         "description": "Ends every active consent right now.",
@@ -8395,6 +9134,58 @@
       }
     },
     "/v1/workspaces": {
+      "get": {
+        "description": "Every space the caller can see (their own and the ones shared with them), with their role in each.",
+        "operationId": "list_spaces_v1_workspaces_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SpaceOut"
+                  },
+                  "title": "Response List Spaces V1 Workspaces Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Spaces",
+        "tags": [
+          "reads"
+        ]
+      },
       "post": {
         "operationId": "create_workspace_v1_workspaces_post",
         "parameters": [
@@ -8496,6 +9287,133 @@
         "summary": "Create Default Workspaces",
         "tags": [
           "workspaces"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}": {
+      "get": {
+        "description": "The state of one space: profile, conversation, dashboard pages, alerts, agents, memory (owner only), assets and estate.",
+        "operationId": "space_state_v1_workspaces__workspace_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpaceStateOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Space State",
+        "tags": [
+          "reads"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/activity": {
+      "get": {
+        "description": "The latest entries of the audit trail. Owner and admin only.",
+        "operationId": "activity_v1_workspaces__workspace_id__activity_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ActivityOut"
+                  },
+                  "title": "Response Activity V1 Workspaces  Workspace Id  Activity Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Activity",
+        "tags": [
+          "reads"
         ]
       }
     },
@@ -9074,6 +9992,68 @@
       }
     },
     "/v1/workspaces/{workspace_id}/comments": {
+      "get": {
+        "description": "The latest comments of the space (any member can read them).",
+        "operationId": "comments_v1_workspaces__workspace_id__comments_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CommentOut"
+                  },
+                  "title": "Response Comments V1 Workspaces  Workspace Id  Comments Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Comments",
+        "tags": [
+          "reads"
+        ]
+      },
       "post": {
         "operationId": "add_comment_v1_workspaces__workspace_id__comments_post",
         "parameters": [
@@ -9539,6 +10519,70 @@
         ]
       }
     },
+    "/v1/workspaces/{workspace_id}/documents": {
+      "get": {
+        "description": "The space's documents, newest first, with the extracted fields opened (identifiers are stored sealed).",
+        "operationId": "documents_v1_workspaces__workspace_id__documents_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentOut"
+                  },
+                  "title": "Response Documents V1 Workspaces  Workspace Id  Documents Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Documents",
+        "tags": [
+          "reads"
+        ]
+      }
+    },
     "/v1/workspaces/{workspace_id}/documents/organized": {
       "get": {
         "operationId": "organized_v1_workspaces__workspace_id__documents_organized_get",
@@ -9853,6 +10897,68 @@
       }
     },
     "/v1/workspaces/{workspace_id}/invites": {
+      "get": {
+        "description": "Pending invitations of the space. Owner and admin only.",
+        "operationId": "invites_v1_workspaces__workspace_id__invites_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/InviteOut"
+                  },
+                  "title": "Response Invites V1 Workspaces  Workspace Id  Invites Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Invites",
+        "tags": [
+          "reads"
+        ]
+      },
       "post": {
         "operationId": "invite_member_v1_workspaces__workspace_id__invites_post",
         "parameters": [
@@ -10045,6 +11151,70 @@
         "summary": "Ir Bens Direitos",
         "tags": [
           "irpf"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/members": {
+      "get": {
+        "description": "Members with the scope of each restricted guest. Owner and admin only.",
+        "operationId": "members_v1_workspaces__workspace_id__members_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MemberOut"
+                  },
+                  "title": "Response Members V1 Workspaces  Workspace Id  Members Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Members",
+        "tags": [
+          "reads"
         ]
       }
     },
