@@ -6,11 +6,13 @@ import { ApiError, apiDelete, apiPatch } from "@/api/client";
 import type { Agent } from "@/chat/types";
 
 /** Detail screen of a specialised agent: edit name, objective and allowed tools, or delete it (with confirmation). */
-export function AgentEditor({ workspaceId, agent, allTools }: { workspaceId: string; agent: Agent; allTools: string[] }) {
+export function AgentEditor({ workspaceId, agent, allTools, documents = [] }: { workspaceId: string; agent: Agent; allTools: string[]; documents?: { id: string; name: string }[] }) {
   const router = useRouter();
   const [name, setName] = useState(agent.name);
   const [objective, setObjective] = useState(agent.objective);
   const [tools, setTools] = useState(new Set(agent.tools));
+  // No `documents` key means the AI reads every document, so every box starts checked.
+  const [docs, setDocs] = useState(new Set(agent.documents ?? documents.map((d) => d.id)));
   const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
   const [confirming, setConfirming] = useState(false);
   const url = `/v1/workspaces/${workspaceId}/agents/${agent.id}`;
@@ -19,7 +21,7 @@ export function AgentEditor({ workspaceId, agent, allTools }: { workspaceId: str
   async function save(e: React.FormEvent) {
     e.preventDefault();
     try {
-      await apiPatch(url, { name, objective, tools: allTools.filter((t) => tools.has(t)) });
+      await apiPatch(url, { name, objective, tools: allTools.filter((t) => tools.has(t)), ...(documents.length || agent.documents ? { documents: documents.filter((d) => docs.has(d.id)).map((d) => d.id) } : {}) });
       setStatus({ ok: true, text: "Alterações salvas." });
       router.refresh();
     } catch (err) {
@@ -41,6 +43,14 @@ export function AgentEditor({ workspaceId, agent, allTools }: { workspaceId: str
       return next;
     });
 
+  const toggleDoc = (id: string) =>
+    setDocs((cur) => {
+      const next = new Set(cur);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  const usable = documents.filter((d) => docs.has(d.id)).length;
+
   return (
     <div className="flex flex-col gap-6">
       <form onSubmit={save} className="flex flex-col gap-4">
@@ -61,6 +71,28 @@ export function AgentEditor({ workspaceId, agent, allTools }: { workspaceId: str
             </label>
           ))}
         </fieldset>
+        {documents.length > 0 && (
+          <fieldset className="flex flex-col gap-2 text-sm">
+            <legend className="mb-1">Documentos que esta IA pode usar</legend>
+            <p role="status" className="text-ink-muted">
+              {usable === 0 ? "Nenhum documento" : `${usable} de ${documents.length} documentos`}
+            </p>
+            <div className="flex gap-2">
+              <button type="button" className="lg-btn lg-btn-ghost lg-btn-sm" onClick={() => setDocs(new Set(documents.map((d) => d.id)))}>
+                Todos
+              </button>
+              <button type="button" className="lg-btn lg-btn-ghost lg-btn-sm" onClick={() => setDocs(new Set())}>
+                Nenhum
+              </button>
+            </div>
+            {documents.map((d) => (
+              <label key={d.id} className="flex items-center gap-2">
+                <input type="checkbox" checked={docs.has(d.id)} onChange={() => toggleDoc(d.id)} />
+                {d.name}
+              </label>
+            ))}
+          </fieldset>
+        )}
         <button type="submit" className="lg-btn self-start">
           Salvar alterações
         </button>
