@@ -21,6 +21,7 @@ export default async function AgentPage({ params }: { params: Promise<{ id: stri
   if (!state || state.role !== "owner") notFound();
   const agent = state.agents.find((a) => a.id === agentId);
   if (!agent) notFound();
+  const { data: docs } = await supabase.from("documents").select("id, name").eq("workspace_id", id).order("created_at", { ascending: false });
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
@@ -29,7 +30,7 @@ export default async function AgentPage({ params }: { params: Promise<{ id: stri
           Voltar ao espaço
         </Link>
       </header>
-      <AgentEditor workspaceId={id} agent={agent} allTools={TOOL_NAMES} />
+      <AgentEditor workspaceId={id} agent={agent} allTools={TOOL_NAMES} documents={(docs ?? []) as { id: string; name: string }[]} />
     </main>
   );
 }

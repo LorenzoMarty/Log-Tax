@@ -61,6 +61,8 @@ export interface Agent {
   name: string;
   objective: string;
   tools: string[];
+  /** Ids of the documents this AI may read: [] = none; undefined = all (#134, #429). */
+  documents?: string[];
 }
 
 /** A short fact or preference the user asked the assistant to remember in this workspace. */
